@@ -1,4 +1,5 @@
 <resources>
     <string name="app_name">MuRom</string>
     <string name="upload_avatar">Upload</string>
+    <string name="test">Test</string>
 </resources>

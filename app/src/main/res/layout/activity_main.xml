@@ -26,9 +26,32 @@
         android:layout_marginStart="24dp"
         android:layout_marginTop="24dp"
         android:backgroundTint="@color/secondary"
-        android:onClick="pickMedia"
         android:text="@string/upload_avatar"
         android:textColor="@color/black"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/avatar" />
+
+    <ImageView
+        android:id="@+id/test_image"
+        android:layout_width="120dp"
+        android:layout_height="120dp"
+        android:background="@color/secondary"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:srcCompat="@drawable/baseline_camera_alt_24"
+        android:contentDescription="@string/test" />
+
+    <Button
+        android:id="@+id/test_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/test"
+        android:backgroundTint="@color/secondary"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/test_image"
+        app:layout_constraintVertical_bias="0.132" />
 </androidx.constraintlayout.widget.ConstraintLayout>
