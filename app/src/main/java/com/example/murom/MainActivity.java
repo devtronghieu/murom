@@ -16,7 +16,7 @@ import com.bumptech.glide.Glide;
 
 
 public class MainActivity extends AppCompatActivity {
-    ImageView imageView;
+    ImageView pickedImageView;
     ActivityResultLauncher<PickVisualMediaRequest> launcher =
             registerForActivityResult(new ActivityResultContracts.PickVisualMedia(), new ActivityResultCallback<Uri>() {
                 @Override
@@ -24,7 +24,7 @@ public class MainActivity extends AppCompatActivity {
                     if (o == null) {
                         Toast.makeText(MainActivity.this, "No image selected!", Toast.LENGTH_SHORT).show();
                     } else {
-                        Glide.with(getApplicationContext()).load(o).into(imageView);
+                        Glide.with(getApplicationContext()).load(o).into(pickedImageView);
                     }
                 }
             });
@@ -34,27 +34,19 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        // This runs well
-        imageView = findViewById(R.id.avatar);
+        // Avatar
+        ImageView avatar = findViewById(R.id.avatar);
         Button uploadAvatarBtn = findViewById(R.id.upload_avatar);
-        uploadAvatarBtn.setOnClickListener(view -> launcher.launch(new PickVisualMediaRequest.Builder().setMediaType(ActivityResultContracts.PickVisualMedia.ImageOnly.INSTANCE).build()));
+        uploadAvatarBtn.setOnClickListener(view -> setupImagePicker(avatar));
 
-        // This one crashes the app immediately without any erros
+        // Test image
         ImageView testImageView = findViewById(R.id.test_image);
         Button testUploadImageBtn = findViewById(R.id.test_button);
-        testUploadImageBtn.setOnClickListener(view -> launchImagePicker(testImageView));
+        testUploadImageBtn.setOnClickListener(view -> setupImagePicker(testImageView));
     }
 
-    private void launchImagePicker(ImageView imageView) {
-        ActivityResultLauncher<PickVisualMediaRequest> launcher =
-                registerForActivityResult(new ActivityResultContracts.PickVisualMedia(), o -> {
-                    if (o == null) {
-                        Toast.makeText(MainActivity.this, "No image selected!", Toast.LENGTH_SHORT).show();
-                    } else {
-                        Glide.with(getApplicationContext()).load(o).into(imageView);
-                    }
-                });
-
+    private void setupImagePicker(ImageView imageView) {
+        this.pickedImageView = imageView;
         launcher.launch(new PickVisualMediaRequest.Builder().setMediaType(ActivityResultContracts.PickVisualMedia.ImageOnly.INSTANCE).build());
     }
 }
