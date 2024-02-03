@@ -14,7 +14,6 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.bumptech.glide.Glide;
 
-
 public class MainActivity extends AppCompatActivity {
     ImageView pickedImageView;
     ActivityResultLauncher<PickVisualMediaRequest> launcher =
