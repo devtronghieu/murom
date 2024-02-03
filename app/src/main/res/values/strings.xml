@@ -2,4 +2,9 @@
     <string name="app_name">MuRom</string>
     <string name="upload_avatar">Upload</string>
     <string name="test">Test</string>
+    <string name="bottom_nav_home">Home</string>
+    <string name="bottom_nav_image">Image</string>
+    <string name="bottom_nav_search">Search</string>
+    <string name="bottom_nav_video">Video</string>
+    <string name="bottom_nav_profile">Profile</string>
 </resources>
