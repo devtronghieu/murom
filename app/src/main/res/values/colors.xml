@@ -13,4 +13,5 @@
     <color name="secondary_200">#2F443B</color>
     <color name="secondary_100">#3A544B</color>
     <color name="gray_500">#95938C</color>
+    <color name="gray_400">#95938C</color>
 </resources>
