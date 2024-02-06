@@ -1,20 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
     <item
-        android:id="@+id/bottom_nav_home"
+        android:id="@+id/bottom_nav_newsfeed"
         android:title="@string/bottom_nav_home"
         android:icon="@drawable/murom_home"/>
     <item
-        android:id="@+id/bottom_nav_image"
-        android:title="@string/bottom_nav_image"
+        android:id="@+id/bottom_nav_post"
+        android:title="@string/bottom_nav_post"
         android:icon="@drawable/murom_image"/>
     <item
         android:id="@+id/bottom_nav_search"
         android:title="@string/bottom_nav_search"
         android:icon="@drawable/murom_search"/>
     <item
-        android:id="@+id/bottom_nav_video"
-        android:title="@string/bottom_nav_video"
+        android:id="@+id/bottom_nav_reels"
+        android:title="@string/bottom_nav_reels"
+        android:titleCondensed=""
         android:icon="@drawable/murom_video"/>
     <item
         android:id="@+id/bottom_nav_profile"

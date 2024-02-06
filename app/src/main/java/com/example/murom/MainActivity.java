@@ -1,5 +1,6 @@
 package com.example.murom;
 
+
 import android.net.Uri;
 import android.os.Bundle;
 import android.widget.Button;
@@ -11,10 +12,16 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.PickVisualMediaRequest;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
+import androidx.fragment.app.FragmentTransaction;
 
 import com.bumptech.glide.Glide;
+import com.example.murom.databinding.ActivityMainBinding;
 
 public class MainActivity extends AppCompatActivity {
+    ActivityMainBinding binding;
+
     ImageView pickedImageView;
     ActivityResultLauncher<PickVisualMediaRequest> launcher =
             registerForActivityResult(new ActivityResultContracts.PickVisualMedia(), new ActivityResultCallback<Uri>() {
@@ -31,7 +38,27 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        binding = ActivityMainBinding.inflate(getLayoutInflater());
+        setContentView(binding.getRoot());
+        replaceFragment(new NewsfeedFragment());
+
+        binding.bottomNavigation.setOnItemSelectedListener(item -> {
+            int itemId = item.getItemId();
+
+            if (itemId == R.id.bottom_nav_newsfeed) {
+                replaceFragment(new NewsfeedFragment());
+            } else if (itemId == R.id.bottom_nav_post) {
+                replaceFragment(new NewsfeedFragment());
+            } else if (itemId == R.id.bottom_nav_search) {
+                replaceFragment(new SearchFragment());
+            } else if (itemId == R.id.bottom_nav_reels) {
+                replaceFragment(new ReelsFragment());
+            } else if (itemId == R.id.bottom_nav_profile) {
+                replaceFragment(new ProfileFragment());
+            }
+
+            return true;
+        });
 
         // Avatar
         ImageView avatar = findViewById(R.id.avatar);
@@ -42,6 +69,13 @@ public class MainActivity extends AppCompatActivity {
         ImageView testImageView = findViewById(R.id.test_image);
         Button testUploadImageBtn = findViewById(R.id.test_button);
         testUploadImageBtn.setOnClickListener(view -> setupImagePicker(testImageView));
+    }
+
+    private void replaceFragment(Fragment fragment) {
+        FragmentManager fragmentManager = getSupportFragmentManager();
+        FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+        fragmentTransaction.replace(R.id.relative_layout, fragment);
+        fragmentTransaction.commit();
     }
 
     private void setupImagePicker(ImageView imageView) {
