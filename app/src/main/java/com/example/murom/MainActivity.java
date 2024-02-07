@@ -48,7 +48,7 @@ public class MainActivity extends AppCompatActivity {
             if (itemId == R.id.bottom_nav_newsfeed) {
                 replaceFragment(new NewsfeedFragment());
             } else if (itemId == R.id.bottom_nav_post) {
-                replaceFragment(new NewsfeedFragment());
+                replaceFragment(new PostFragment());
             } else if (itemId == R.id.bottom_nav_search) {
                 replaceFragment(new SearchFragment());
             } else if (itemId == R.id.bottom_nav_reels) {
