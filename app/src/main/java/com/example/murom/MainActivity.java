@@ -18,9 +18,11 @@ import androidx.fragment.app.FragmentTransaction;
 
 import com.bumptech.glide.Glide;
 import com.example.murom.databinding.ActivityMainBinding;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 public class MainActivity extends AppCompatActivity {
     ActivityMainBinding binding;
+    FloatingActionButton search;
 
     ImageView pickedImageView;
     ActivityResultLauncher<PickVisualMediaRequest> launcher =
@@ -39,6 +41,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         binding = ActivityMainBinding.inflate(getLayoutInflater());
+        search = findViewById(R.id.bottom_nav_search);
         setContentView(binding.getRoot());
         replaceFragment(new NewsfeedFragment());
 
@@ -49,8 +52,6 @@ public class MainActivity extends AppCompatActivity {
                 replaceFragment(new NewsfeedFragment());
             } else if (itemId == R.id.bottom_nav_post) {
                 replaceFragment(new PostFragment());
-            } else if (itemId == R.id.bottom_nav_search) {
-                replaceFragment(new SearchFragment());
             } else if (itemId == R.id.bottom_nav_reels) {
                 replaceFragment(new ReelsFragment());
             } else if (itemId == R.id.bottom_nav_profile) {
@@ -60,21 +61,25 @@ public class MainActivity extends AppCompatActivity {
             return true;
         });
 
-        // Avatar
-        ImageView avatar = findViewById(R.id.avatar);
-        Button uploadAvatarBtn = findViewById(R.id.upload_avatar);
-        uploadAvatarBtn.setOnClickListener(view -> setupImagePicker(avatar));
+        binding.floatingButtonSearch.setOnClickListener(v -> {
+            replaceFragment(new SearchFragment());
+        });
 
-        // Test image
-        ImageView testImageView = findViewById(R.id.test_image);
-        Button testUploadImageBtn = findViewById(R.id.test_button);
-        testUploadImageBtn.setOnClickListener(view -> setupImagePicker(testImageView));
+//        // Avatar
+//        ImageView avatar = findViewById(R.id.avatar);
+//        Button uploadAvatarBtn = findViewById(R.id.upload_avatar);
+//        uploadAvatarBtn.setOnClickListener(view -> setupImagePicker(avatar));
+//
+//        // Test image
+//        ImageView testImageView = findViewById(R.id.test_image);
+//        Button testUploadImageBtn = findViewById(R.id.test_button);
+//        testUploadImageBtn.setOnClickListener(view -> setupImagePicker(testImageView));
     }
 
     private void replaceFragment(Fragment fragment) {
         FragmentManager fragmentManager = getSupportFragmentManager();
         FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
-        fragmentTransaction.replace(R.id.relative_layout, fragment);
+        fragmentTransaction.replace(R.id.main_layout, fragment);
         fragmentTransaction.commit();
     }
 

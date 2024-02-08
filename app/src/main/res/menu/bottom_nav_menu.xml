@@ -10,8 +10,7 @@
         android:icon="@drawable/murom_image"/>
     <item
         android:id="@+id/bottom_nav_search"
-        android:title="@string/bottom_nav_search"
-        android:icon="@drawable/murom_search"/>
+        android:title="" />
     <item
         android:id="@+id/bottom_nav_reels"
         android:title="@string/bottom_nav_reels"
