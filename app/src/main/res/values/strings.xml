@@ -3,8 +3,10 @@
     <string name="upload_avatar">Upload</string>
     <string name="test">Test</string>
     <string name="bottom_nav_home">Home</string>
-    <string name="bottom_nav_image">Image</string>
+    <string name="bottom_nav_post">Post</string>
     <string name="bottom_nav_search">Search</string>
-    <string name="bottom_nav_video">Video</string>
+    <string name="bottom_nav_reels">Reels</string>
     <string name="bottom_nav_profile">Profile</string>
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
 </resources>
