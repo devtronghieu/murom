@@ -6,95 +6,104 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 
+import androidx.activity.result.ActivityResult;
+import androidx.activity.result.ActivityResultCallback;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.IntentSenderRequest;
+import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.credentials.Credential;
-import androidx.credentials.CredentialManager;
-import androidx.credentials.CredentialManagerCallback;
-import androidx.credentials.CustomCredential;
-import androidx.credentials.GetCredentialRequest;
-import androidx.credentials.GetCredentialResponse;
-import androidx.credentials.PasswordCredential;
-import androidx.credentials.PublicKeyCredential;
-import androidx.credentials.exceptions.GetCredentialException;
 
-import com.google.android.libraries.identity.googleid.GetGoogleIdOption;
-import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential;
+import com.google.android.gms.auth.api.identity.BeginSignInRequest;
+import com.google.android.gms.auth.api.identity.BeginSignInResult;
+import com.google.android.gms.auth.api.identity.Identity;
+import com.google.android.gms.auth.api.identity.SignInClient;
+import com.google.android.gms.auth.api.identity.SignInCredential;
+import com.google.android.gms.common.api.ApiException;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+
+import java.util.Objects;
 
 public class LoginActivity extends AppCompatActivity {
-    CredentialManager credentialManager;
-    GetGoogleIdOption googleIdOption;
+    private SignInClient oneTapClient;
+    private BeginSignInRequest signInRequest;
+    private FirebaseAuth mAuth;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
 
-        // Setup credentials
-        credentialManager = CredentialManager.create(this);
-        googleIdOption = new GetGoogleIdOption.Builder()
-                .setFilterByAuthorizedAccounts(true)
-                .setServerClientId("CLIENT_ID")
+        oneTapClient = Identity.getSignInClient(this);
+        signInRequest = BeginSignInRequest.builder()
+                .setGoogleIdTokenRequestOptions(BeginSignInRequest.GoogleIdTokenRequestOptions.builder()
+                        .setSupported(true)
+                        .setServerClientId("528776764567-lk7vepg2lbpo4cg3h67h6u8svn9aetd5.apps.googleusercontent.com")
+                        .setFilterByAuthorizedAccounts(false)
+                        .build())
                 .build();
+        mAuth = FirebaseAuth.getInstance();
 
-        // Add button functions
+        ActivityResultLauncher<IntentSenderRequest> activityResultLauncher = registerForActivityResult(
+                new ActivityResultContracts.StartIntentSenderForResult(),
+                new ActivityResultCallback<ActivityResult>() {
+                    @Override
+                    public void onActivityResult(ActivityResult result) {
+                        try {
+                            SignInCredential credential = oneTapClient.getSignInCredentialFromIntent(result.getData());
+                            String idToken = credential.getGoogleIdToken();
+                            String username = credential.getId();
+                            String password = credential.getPassword();
+                            if (idToken !=  null) {
+                                String email = credential.getGoogleIdToken();
+                                Log.d("-->", "Got ID token: " + email);
+                            } else if (password != null) {
+                                Log.d("-->", "Got password.");
+                            }
+                        } catch (ApiException e) {
+                            Log.d("-->", "ApiException " + e.toString());
+                        }
+                    }
+                }
+        );
+
+        Button googleLoginBtn = findViewById(R.id.google_login_btn);
+        googleLoginBtn.setOnClickListener(v -> {
+            oneTapClient.beginSignIn(signInRequest)
+                    .addOnSuccessListener(LoginActivity.this, new OnSuccessListener<BeginSignInResult>() {
+                        @Override
+                        public void onSuccess(BeginSignInResult result) {
+                            Log.d("-->", "onSuccess");
+                            IntentSenderRequest intentSenderRequest =
+                                    new IntentSenderRequest.Builder(result.getPendingIntent().getIntentSender()).build();
+                            activityResultLauncher.launch(intentSenderRequest);
+                        }
+                    })
+                    .addOnFailureListener(LoginActivity.this, new OnFailureListener() {
+                        @Override
+                        public void onFailure(@NonNull Exception e) {
+                            // No saved credentials found. Launch the One Tap sign-up flow, or
+                            // do nothing and continue presenting the signed-out UI.
+                            Log.d("-->", "onFailure " + Objects.requireNonNull(e.getLocalizedMessage()));
+                        }
+                    });
+        });
+
         Button devLoginBtn = findViewById(R.id.dev_login_btn);
         devLoginBtn.setOnClickListener(this::handleDevLogin);
-        
-        Button googleLoginBtn = findViewById(R.id.google_login_btn);
-        googleLoginBtn.setOnClickListener(this::handleGoogleLogin);
-    }
-    
-    private void handleGoogleLogin(View view) {
-        GetCredentialRequest request = new GetCredentialRequest.Builder()
-                .addCredentialOption(googleIdOption)
-                .build();
-
-        Log.d("-->", "Hello I'm here");
-
-        credentialManager.getCredentialAsync(
-            this,
-            request,
-            null,
-            null,
-            new CredentialManagerCallback<GetCredentialResponse, GetCredentialException>() {
-                @Override
-                public void onResult(GetCredentialResponse result) {
-                    handleSignIn(result);
-                }
-
-                @Override
-                public void onError(GetCredentialException e) {
-                    Log.d("-->", "On error " + e.toString());
-                }
-            }
-        );
     }
 
-    public void handleSignIn(GetCredentialResponse result) {
-        // Handle the successfully returned credential.
-        Credential credential = result.getCredential();
-
-        Log.d("-->", "Welcome to handleSignIn");
-
-        if (credential instanceof PublicKeyCredential) {
-            String responseJson = ((PublicKeyCredential) credential).getAuthenticationResponseJson();
-            // Share responseJson i.e. a GetCredentialResponse on your server to validate and authenticate
-        } else if (credential instanceof PasswordCredential) {
-            String username = ((PasswordCredential) credential).getId();
-            String password = ((PasswordCredential) credential).getPassword();
-            // Use id and password to send to your server to validate and authenticate
-        } else if (credential instanceof CustomCredential) {
-            if (GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL.equals(credential.getType())) {
-                // Use googleIdTokenCredential and extract id to validate and
-                // authenticate on your server
-                GoogleIdTokenCredential googleIdTokenCredential = GoogleIdTokenCredential.createFrom(((CustomCredential) credential).getData());
-            } else {
-                // Catch any unrecognized custom credential type here.
-                Log.d("-->", "Unexpected type of credential");
-            }
+    @Override
+    public void onStart() {
+        super.onStart();
+        FirebaseUser currentUser = mAuth.getCurrentUser();
+        if (currentUser != null) {
+            Log.d("-->", "User " + currentUser.getEmail());
         } else {
-            // Catch any unrecognized credential type here.
-            Log.d("-->", "Unexpected type of credential");
+            Log.d("-->", "Not logged in");
         }
     }
 

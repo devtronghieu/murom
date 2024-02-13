@@ -12,7 +12,12 @@
           "package_name": "com.example.murom"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "528776764567-lk7vepg2lbpo4cg3h67h6u8svn9aetd5.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyCLsSJ0r3DkAlT33Swb-YU4gFwLB9Jr5QQ"
@@ -20,7 +25,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "528776764567-lk7vepg2lbpo4cg3h67h6u8svn9aetd5.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }
