@@ -1,6 +1,10 @@
 # Instamurom
 
-## Team convention
+## Setup
+
+Go to our discord channel, look for the `secret` thread, and get the `google-services.json` file, and put it in the `project_folder/app` folder.
+
+## Guide
 
 ### How to contribute your code
 
@@ -10,3 +14,15 @@
 4. Resolve the comments from other teammates
 5. Wait for at least 1 approval
 6. Merge your code
+
+### Add your fingerprint
+
+Why do we need to add a fingerprint? Because we need to make sure that the app is running on the right device, Google Play Store uses the fingerprint to verify the app.
+
+To add your fingerprint, follow these steps:
+
+1. Open the terminal
+2. Go to the project folder
+3. Run `./gradlew signingReport` or `keytool -list -v -keystore ~/.android/debug.keystore -alias androiddebugkey -storepass android -keypass android`
+4. Copy the SHA1 and SHA256
+5. Give these keys to @devtronghieu, he will add them to the firebase console
