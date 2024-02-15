@@ -20,6 +20,8 @@ import com.google.firebase.auth.AuthCredential;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.GoogleAuthProvider;
+import com.google.firebase.firestore.FieldValue;
+import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.Objects;
 
@@ -27,6 +29,8 @@ public class LoginActivity extends AppCompatActivity {
     private SignInClient oneTapClient;
     private BeginSignInRequest signInRequest;
     private FirebaseAuth mAuth;
+
+    private FirebaseFirestore db;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -42,6 +46,9 @@ public class LoginActivity extends AppCompatActivity {
                         .build())
                 .build();
         mAuth = FirebaseAuth.getInstance();
+        db = FirebaseFirestore.getInstance();
+
+        increaseCountInFirestore();
 
         ActivityResultLauncher<IntentSenderRequest> activityResultLauncher = registerForActivityResult(
                 new ActivityResultContracts.StartIntentSenderForResult(),
@@ -104,5 +111,17 @@ public class LoginActivity extends AppCompatActivity {
     private void handleDevLogin(View view) {
         Intent i = new Intent(LoginActivity.this, MainActivity.class);
         startActivity(i);
+    }
+
+    private void increaseCountInFirestore() {
+        db.collection("test")
+                .document("test_id")
+                .update("count", FieldValue.increment(1))
+                .addOnCompleteListener(runnable -> {
+                    Log.d("-->", "Increase count successfully");
+                })
+                .addOnFailureListener(e -> {
+                    Log.d("-->", "Increase count failed: " + e);
+                });
     }
 }
