@@ -27,11 +27,12 @@ public class ProfileFragment extends Fragment {
     ActivityResultLauncher<PickVisualMediaRequest> launcher =
             registerForActivityResult(new ActivityResultContracts.PickVisualMedia(), new ActivityResultCallback<Uri>() {
                 @Override
-                public void onActivityResult(Uri o) {
-                    if (o == null) {
+                public void onActivityResult(Uri uri) {
+                    if (uri == null) {
                         Toast.makeText(requireContext(), "No image selected!", Toast.LENGTH_SHORT).show();
                     } else {
-                        Glide.with(requireContext()).load(o).into(pickedImageView);
+                        Glide.with(requireContext()).load(uri).into(pickedImageView);
+                        StorageUtils.uploadImage(requireContext(), uri, "test_avatar.png");
                     }
                 }
             });
