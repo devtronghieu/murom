@@ -1,5 +1,6 @@
 package com.example.murom;
 
+import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -16,6 +17,8 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.fragment.app.Fragment;
 
 import com.bumptech.glide.Glide;
+import com.example.murom.Firebase.Auth;
+import com.example.murom.Firebase.Storage;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -32,7 +35,7 @@ public class ProfileFragment extends Fragment {
                         Toast.makeText(requireContext(), "No image selected!", Toast.LENGTH_SHORT).show();
                     } else {
                         Glide.with(requireContext()).load(uri).into(pickedImageView);
-                        StorageUtils.uploadImage(requireContext(), uri, "test_avatar.png");
+                        Storage.uploadImage(requireContext(), uri, "test_avatar.png");
                     }
                 }
             });
@@ -84,8 +87,11 @@ public class ProfileFragment extends Fragment {
         View rootView = inflater.inflate(R.layout.fragment_profile, container, false);
 
         ImageView avatar = rootView.findViewById(R.id.avatar);
-        Button uploadAvatarBtn = rootView.findViewById(R.id.upload_avatar);
+        Button uploadAvatarBtn = rootView.findViewById(R.id.upload_avatar_btn);
         uploadAvatarBtn.setOnClickListener(view -> setupImagePicker(avatar));
+
+        Button logoutBtn = rootView.findViewById(R.id.logout_btn);
+        logoutBtn.setOnClickListener(this::handleSignOut);
 
         return rootView;
     }
@@ -93,5 +99,11 @@ public class ProfileFragment extends Fragment {
     private void setupImagePicker(ImageView imageView) {
         this.pickedImageView = imageView;
         launcher.launch(new PickVisualMediaRequest.Builder().setMediaType(ActivityResultContracts.PickVisualMedia.ImageOnly.INSTANCE).build());
+    }
+
+    private void handleSignOut(View view) {
+        Auth.signOut();
+        Intent i = new Intent(requireContext(), LoginActivity.class);
+        startActivity(i);
     }
 }

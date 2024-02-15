@@ -11,15 +11,14 @@ import androidx.activity.result.IntentSenderRequest;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.example.murom.Firebase.Auth;
 import com.google.android.gms.auth.api.identity.BeginSignInRequest;
 import com.google.android.gms.auth.api.identity.Identity;
 import com.google.android.gms.auth.api.identity.SignInClient;
 import com.google.android.gms.auth.api.identity.SignInCredential;
 import com.google.android.gms.common.api.ApiException;
-import com.google.firebase.auth.AuthCredential;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.auth.GoogleAuthProvider;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 
@@ -28,6 +27,7 @@ import java.util.Objects;
 public class LoginActivity extends AppCompatActivity {
     private SignInClient oneTapClient;
     private BeginSignInRequest signInRequest;
+    private ActivityResultLauncher<IntentSenderRequest> activityResultLauncher;
     private FirebaseAuth mAuth;
 
     private FirebaseFirestore db;
@@ -50,30 +50,25 @@ public class LoginActivity extends AppCompatActivity {
 
         increaseCountInFirestore();
 
-        ActivityResultLauncher<IntentSenderRequest> activityResultLauncher = registerForActivityResult(
+        activityResultLauncher = registerForActivityResult(
                 new ActivityResultContracts.StartIntentSenderForResult(),
                 result -> {
                     try {
                         SignInCredential credential = oneTapClient.getSignInCredentialFromIntent(result.getData());
                         String idToken = credential.getGoogleIdToken();
-                        if (idToken !=  null) {
-                            AuthCredential firebaseCredential = GoogleAuthProvider.getCredential(idToken, null);
 
-                            mAuth.signInWithCredential(firebaseCredential).addOnCompleteListener(runnable -> {
-                                if (runnable.isSuccessful()) {
-                                    FirebaseUser user = mAuth.getCurrentUser();
-                                    if (user != null) {
-                                        Log.d("-->", "Welcome " + user.getEmail());
-                                    } else {
-                                        Log.d("-->", "Welcome null user!?");
-                                    }
-                                } else {
-                                    Log.d("-->", "Failed to signInWithCredential");
-                                }
-                            });
-                        } else {
-                            Log.d("-->", "User not found");
-                        }
+                        Auth.signIn(idToken, new Auth.AuthCallback() {
+                            @Override
+                            public void onSignInSuccess(FirebaseUser user) {
+                                Log.d("-->", "Welcome " + user.getEmail());
+                                navigateToMain();
+                            }
+
+                            @Override
+                            public  void onSignInFailure() {
+                                Log.d("-->", "Failed to signInWithCredential");
+                            }
+                        });
                     } catch (ApiException e) {
                         Log.d("-->", "ApiException " + e.toString());
                     }
@@ -81,17 +76,7 @@ public class LoginActivity extends AppCompatActivity {
         );
 
         Button googleLoginBtn = findViewById(R.id.google_login_btn);
-        googleLoginBtn.setOnClickListener(v -> {
-            oneTapClient.beginSignIn(signInRequest)
-                    .addOnSuccessListener(LoginActivity.this, result -> {
-                        IntentSenderRequest intentSenderRequest = new IntentSenderRequest.Builder
-                                (result.getPendingIntent().getIntentSender()).build();
-                        activityResultLauncher.launch(intentSenderRequest);
-                    })
-                    .addOnFailureListener(LoginActivity.this, e -> {
-                            Log.d("-->", "onFailure " + Objects.requireNonNull(e.getLocalizedMessage()));
-                    });
-        });
+        googleLoginBtn.setOnClickListener(this::handleGoogleLogin);
 
         Button devLoginBtn = findViewById(R.id.dev_login_btn);
         devLoginBtn.setOnClickListener(this::handleDevLogin);
@@ -103,12 +88,29 @@ public class LoginActivity extends AppCompatActivity {
         FirebaseUser currentUser = mAuth.getCurrentUser();
         if (currentUser != null) {
             Log.d("-->", "Welcome back, " + currentUser.getEmail());
+            navigateToMain();
         } else {
             Log.d("-->", "Not logged in");
         }
     }
 
     private void handleDevLogin(View view) {
+        navigateToMain();
+    }
+
+    private void handleGoogleLogin(View view) {
+        oneTapClient.beginSignIn(signInRequest)
+                .addOnSuccessListener(LoginActivity.this, result -> {
+                    IntentSenderRequest intentSenderRequest = new IntentSenderRequest.Builder
+                            (result.getPendingIntent().getIntentSender()).build();
+                    activityResultLauncher.launch(intentSenderRequest);
+                })
+                .addOnFailureListener(LoginActivity.this, e -> {
+                    Log.d("-->", "onFailure " + Objects.requireNonNull(e.getLocalizedMessage()));
+                });
+    }
+
+    private void navigateToMain() {
         Intent i = new Intent(LoginActivity.this, MainActivity.class);
         startActivity(i);
     }

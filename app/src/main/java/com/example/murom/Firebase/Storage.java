@@ -1,4 +1,4 @@
-package com.example.murom;
+package com.example.murom.Firebase;
 
 import android.content.Context;
 import android.net.Uri;
@@ -10,7 +10,7 @@ import com.google.firebase.storage.StorageReference;
 import java.io.IOException;
 import java.io.InputStream;
 
-public class StorageUtils {
+public class Storage {
     private static final FirebaseStorage storage = FirebaseStorage.getInstance();
 
     private static final StorageReference storageRef = storage.getReference();
