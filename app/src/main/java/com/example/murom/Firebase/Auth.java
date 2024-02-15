@@ -29,4 +29,8 @@ public class Auth {
     public static void signOut() {
         auth.signOut();
     }
+
+    public static FirebaseUser getUser() {
+        return auth.getCurrentUser();
+    }
 }

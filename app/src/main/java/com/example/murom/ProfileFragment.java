@@ -3,6 +3,7 @@ package com.example.murom;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -19,6 +20,7 @@ import androidx.fragment.app.Fragment;
 import com.bumptech.glide.Glide;
 import com.example.murom.Firebase.Auth;
 import com.example.murom.Firebase.Storage;
+import com.google.firebase.storage.StorageReference;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -35,7 +37,7 @@ public class ProfileFragment extends Fragment {
                         Toast.makeText(requireContext(), "No image selected!", Toast.LENGTH_SHORT).show();
                     } else {
                         Glide.with(requireContext()).load(uri).into(pickedImageView);
-                        Storage.uploadImage(requireContext(), uri, "test_avatar.png");
+                        Storage.uploadImage(uri, "avatar/" + Auth.getUser().getEmail());
                     }
                 }
             });
@@ -92,6 +94,18 @@ public class ProfileFragment extends Fragment {
 
         Button logoutBtn = rootView.findViewById(R.id.logout_btn);
         logoutBtn.setOnClickListener(this::handleSignOut);
+
+        StorageReference avatarRef = Storage.getRef("avatar/" + Auth.getUser().getEmail());
+        avatarRef.getDownloadUrl()
+                .addOnSuccessListener(uri -> {
+                    String imageUrl = uri.toString();
+                    Glide.with(avatar.getContext())
+                            .load(imageUrl)
+                            .into(avatar);
+                })
+                .addOnFailureListener(e -> {
+                    Log.d("-->", "failed to get avatar: " + e);
+                });
 
         return rootView;
     }

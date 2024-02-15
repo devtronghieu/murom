@@ -77,9 +77,6 @@ public class LoginActivity extends AppCompatActivity {
 
         Button googleLoginBtn = findViewById(R.id.google_login_btn);
         googleLoginBtn.setOnClickListener(this::handleGoogleLogin);
-
-        Button devLoginBtn = findViewById(R.id.dev_login_btn);
-        devLoginBtn.setOnClickListener(this::handleDevLogin);
     }
 
     @Override
@@ -92,10 +89,6 @@ public class LoginActivity extends AppCompatActivity {
         } else {
             Log.d("-->", "Not logged in");
         }
-    }
-
-    private void handleDevLogin(View view) {
-        navigateToMain();
     }
 
     private void handleGoogleLogin(View view) {
