@@ -40,7 +40,8 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             app:maxImageSize="30dp"
-            app:tint="@color/white" />
+            app:tint="@color/white"
+            android:contentDescription="@string/bottom_nav_search" />
 
 
     </androidx.constraintlayout.widget.ConstraintLayout>
