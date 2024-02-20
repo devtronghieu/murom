@@ -1,12 +1,18 @@
 package com.example.murom;
 
 import android.os.Bundle;
-
-import androidx.fragment.app.Fragment;
-
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+
+import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
+import com.example.murom.Recycler.SpacingItemDecoration;
+import com.example.murom.Recycler.StoryBubbleAdapter;
+
+import java.util.ArrayList;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -58,7 +64,23 @@ public class NewsfeedFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_newsfeed, container, false);
+        View rootView = inflater.inflate(R.layout.fragment_newsfeed, container, false);
+
+
+        RecyclerView recyclerView = rootView.findViewById(R.id.stories_recycler);
+        recyclerView.setLayoutManager(new LinearLayoutManager(getContext(), RecyclerView.HORIZONTAL, false));
+        recyclerView.addItemDecoration(new SpacingItemDecoration(40));
+
+        ArrayList<StoryBubbleAdapter.StoryBubbleModel> stories = new ArrayList<>();
+
+        for (int i = 0; i < 10; i++) {
+            stories.add(new StoryBubbleAdapter.StoryBubbleModel("https://picsum.photos/200", "username" + i));
+        }
+
+        StoryBubbleAdapter storyBubbleAdapter = new StoryBubbleAdapter(stories);
+
+        recyclerView.setAdapter(storyBubbleAdapter);
+
+        return rootView;
     }
 }
