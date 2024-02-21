@@ -83,7 +83,7 @@ public class NewsfeedFragment extends Fragment {
 
         RecyclerView newsfeedsRecycler = rootView.findViewById(R.id.newsfeeds_recycler);
         newsfeedsRecycler.setLayoutManager(new LinearLayoutManager(getContext(), RecyclerView.VERTICAL, false));
-        newsfeedsRecycler.addItemDecoration(new SpacingItemDecoration(0, 80));
+        newsfeedsRecycler.addItemDecoration(new SpacingItemDecoration(0, 45));
         ArrayList<NewsfeedAdapter.NewsfeedModel> newsfeeds = new ArrayList<>();
 
         for (int i = 0; i < rand.nextInt(5) + 5; i++) {
