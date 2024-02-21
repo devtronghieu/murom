@@ -6,6 +6,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -24,23 +25,29 @@ public class StoryBubbleAdapter extends RecyclerView.Adapter<StoryBubbleAdapter.
     public static class StoryBubbleModel {
         private final String imageUrl;
         private final String text;
+        private final boolean isRead;
 
-        public StoryBubbleModel(String imageUrl, String text) {
+        public StoryBubbleModel(String imageUrl, String text, boolean isRead) {
             this.imageUrl = imageUrl;
             this.text = text;
+            this.isRead = isRead;
         }
     }
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
+        private final LinearLayout storyImageContainer;
         private final ImageView storyImage;
         private final TextView storyText;
 
         public ViewHolder(View view) {
             super(view);
 
+            storyImageContainer = view.findViewById(R.id.story_bubble_image_container);
             storyImage = view.findViewById(R.id.story_bubble_image);
             storyText = view.findViewById(R.id.story_bubble_text);
         }
+
+        public LinearLayout getStoryImageContainer() { return storyImageContainer; }
 
         public ImageView getStoryImage() {
             return storyImage;
@@ -68,8 +75,14 @@ public class StoryBubbleAdapter extends RecyclerView.Adapter<StoryBubbleAdapter.
 
     @Override
     public void onBindViewHolder(ViewHolder viewHolder, final int position) {
-        viewHolder.getStoryText().setText(localDataSet.get(position).text);
-        Glide.with(this.context).load(localDataSet.get(position).imageUrl).into(viewHolder.getStoryImage());
+        StoryBubbleModel data = localDataSet.get(position);
+
+        viewHolder.getStoryText().setText(data.text);
+        Glide.with(this.context).load(data.imageUrl).into(viewHolder.getStoryImage());
+
+        if (!data.isRead) {
+            viewHolder.getStoryImageContainer().setBackgroundResource(R.drawable.gradient_border);
+        }
     }
 
     @Override

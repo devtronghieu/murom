@@ -74,7 +74,7 @@ public class NewsfeedFragment extends Fragment {
         ArrayList<StoryBubbleAdapter.StoryBubbleModel> stories = new ArrayList<>();
 
         for (int i = 0; i < 10; i++) {
-            stories.add(new StoryBubbleAdapter.StoryBubbleModel("https://picsum.photos/200", "username" + i));
+            stories.add(new StoryBubbleAdapter.StoryBubbleModel("https://picsum.photos/200", "username" + i, i % 2 == 0));
         }
 
         StoryBubbleAdapter storyBubbleAdapter = new StoryBubbleAdapter(stories);
