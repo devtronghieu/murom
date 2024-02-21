@@ -9,10 +9,12 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.murom.Recycler.NewsfeedAdapter;
 import com.example.murom.Recycler.SpacingItemDecoration;
 import com.example.murom.Recycler.StoryBubbleAdapter;
 
 import java.util.ArrayList;
+import java.util.Random;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -66,20 +68,43 @@ public class NewsfeedFragment extends Fragment {
                              Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_newsfeed, container, false);
 
+        Random rand = new Random();
 
-        RecyclerView recyclerView = rootView.findViewById(R.id.stories_recycler);
-        recyclerView.setLayoutManager(new LinearLayoutManager(getContext(), RecyclerView.HORIZONTAL, false));
-        recyclerView.addItemDecoration(new SpacingItemDecoration(40));
 
+        RecyclerView storiesRecycler = rootView.findViewById(R.id.stories_recycler);
+        storiesRecycler.setLayoutManager(new LinearLayoutManager(getContext(), RecyclerView.HORIZONTAL, false));
+        storiesRecycler.addItemDecoration(new SpacingItemDecoration(40, 0));
         ArrayList<StoryBubbleAdapter.StoryBubbleModel> stories = new ArrayList<>();
-
-        for (int i = 0; i < 10; i++) {
-            stories.add(new StoryBubbleAdapter.StoryBubbleModel("https://picsum.photos/200", "username" + i, i % 2 == 0));
+        for (int i = 0; i < rand.nextInt(5) + 3; i++) {
+            stories.add(new StoryBubbleAdapter.StoryBubbleModel("https://picsum.photos/200", "username" + i, rand.nextBoolean()));
         }
-
         StoryBubbleAdapter storyBubbleAdapter = new StoryBubbleAdapter(stories);
+        storiesRecycler.setAdapter(storyBubbleAdapter);
 
-        recyclerView.setAdapter(storyBubbleAdapter);
+        RecyclerView newsfeedsRecycler = rootView.findViewById(R.id.newsfeeds_recycler);
+        newsfeedsRecycler.setLayoutManager(new LinearLayoutManager(getContext(), RecyclerView.VERTICAL, false));
+        newsfeedsRecycler.addItemDecoration(new SpacingItemDecoration(0, 80));
+        ArrayList<NewsfeedAdapter.NewsfeedModel> newsfeeds = new ArrayList<>();
+
+        for (int i = 0; i < rand.nextInt(5) + 5; i++) {
+            ArrayList<String> images = new ArrayList<>();
+            images.add("https://picsum.photos/200");
+
+            ArrayList<String> lovedByUsers = new ArrayList<>();
+            for (int j = 0; j < rand.nextInt(5); j++) {
+                lovedByUsers.add("username" + j);
+            }
+
+            newsfeeds.add(new NewsfeedAdapter.NewsfeedModel(
+                    "https://picsum.photos/200",
+                    "username" + i, images,
+                    "Caption" + i,
+                    lovedByUsers,
+                    rand.nextBoolean()
+            ));
+        }
+        NewsfeedAdapter newsfeedAdapter = new NewsfeedAdapter(newsfeeds);
+        newsfeedsRecycler.setAdapter(newsfeedAdapter);
 
         return rootView;
     }

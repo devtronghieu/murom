@@ -7,10 +7,12 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 public class SpacingItemDecoration extends RecyclerView.ItemDecoration {
-    private final int spacingInPixels;
+    private final int horizontalSpacingInPx;
+    private final int verticalSpacingInPx;
 
-    public SpacingItemDecoration(int spacingInPixels) {
-        this.spacingInPixels = spacingInPixels;
+    public SpacingItemDecoration(int horizontalSpacingInPx, int verticalSpacingInPx) {
+        this.horizontalSpacingInPx = horizontalSpacingInPx;
+        this.verticalSpacingInPx = verticalSpacingInPx;
     }
 
     @Override
@@ -19,7 +21,8 @@ public class SpacingItemDecoration extends RecyclerView.ItemDecoration {
 
         // Skip the first item
         if (position > 0) {
-            outRect.left = spacingInPixels;
+            outRect.left = horizontalSpacingInPx;
+            outRect.top = verticalSpacingInPx;
         }
     }
 }

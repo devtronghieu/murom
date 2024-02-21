@@ -1,6 +1,5 @@
 package com.example.murom.Recycler;
 
-
 import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -76,12 +75,11 @@ public class StoryBubbleAdapter extends RecyclerView.Adapter<StoryBubbleAdapter.
     @Override
     public void onBindViewHolder(ViewHolder viewHolder, final int position) {
         StoryBubbleModel data = localDataSet.get(position);
-
-        viewHolder.getStoryText().setText(data.text);
-        Glide.with(this.context).load(data.imageUrl).into(viewHolder.getStoryImage());
+        viewHolder.storyText.setText(data.text);
+        Glide.with(this.context).load(data.imageUrl).into(viewHolder.storyImage);
 
         if (!data.isRead) {
-            viewHolder.getStoryImageContainer().setBackgroundResource(R.drawable.gradient_border);
+            viewHolder.storyImageContainer.setBackgroundResource(R.drawable.gradient_border);
         }
     }
 
