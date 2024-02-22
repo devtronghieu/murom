@@ -33,6 +33,8 @@ public class MainActivity extends AppCompatActivity {
                 replaceFragment(new PostFragment());
             } else if (itemId == R.id.bottom_nav_search) {
                 replaceFragment(new SearchFragment());
+            } else if (itemId == R.id.bottom_nav_home) {
+                replaceFragment(new NewsfeedFragment());
             } else if (itemId == R.id.bottom_nav_reels) {
                 replaceFragment(new ReelsFragment());
             } else if (itemId == R.id.bottom_nav_profile) {
@@ -40,10 +42,6 @@ public class MainActivity extends AppCompatActivity {
             }
 
             return true;
-        });
-
-        binding.bottomNavHome.setOnClickListener(v -> {
-            replaceFragment(new NewsfeedFragment());
         });
     }
 

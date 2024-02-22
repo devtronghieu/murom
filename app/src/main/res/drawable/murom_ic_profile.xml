@@ -9,7 +9,7 @@
       android:strokeWidth="1.5"
       android:fillColor="#00000000"
       android:fillType="evenOdd"
-      android:strokeColor="#95938C"
+      android:strokeColor="@color/gray_500"
       android:strokeLineCap="round"/>
   <path
       android:pathData="M10.291,10.987C13.049,10.987 15.285,8.751 15.285,5.993C15.285,3.235 13.049,1 10.291,1C7.533,1 5.297,3.235 5.297,5.993C5.288,8.742 7.509,10.978 10.256,10.987H10.291Z"
@@ -17,6 +17,6 @@
       android:strokeWidth="1.42857"
       android:fillColor="#00000000"
       android:fillType="evenOdd"
-      android:strokeColor="#95938C"
+      android:strokeColor="@color/gray_500"
       android:strokeLineCap="round"/>
 </vector>
