@@ -16,4 +16,5 @@
     <string name="newsfeed_image">newsfeed_image</string>
     <string name="default_post_likes">0 likes</string>
     <string name="default_post_desc">Default post desc</string>
+    <string name="keyword">#keyword</string>
 </resources>
