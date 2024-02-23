@@ -8,4 +8,12 @@
         <item name="android:textSize">18sp</item>
         <item name="android:textStyle">bold</item>
     </style>
+
+    <style name="fab_home" parent="Widget.Design.FloatingActionButton">
+        <item name="backgroundTint">@color/primary_500</item>
+        <item name="tint">@color/white</item>
+        <item name="fabCustomSize">60dp</item>
+        <item name="maxImageSize">30dp</item>
+        <item name="shapeAppearance">@style/circular</item>
+    </style>
 </resources>

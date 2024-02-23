@@ -18,13 +18,15 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
         binding = ActivityMainBinding.inflate(getLayoutInflater());
-        home = findViewById(R.id.bottom_nav_home);
+
         setContentView(binding.getRoot());
-        replaceFragment(new NewsfeedFragment());
 
         binding.bottomNavigation.setItemActiveIndicatorEnabled(false);
         binding.bottomNavigation.setItemRippleColor(null);
+
+        home = findViewById(R.id.bottom_nav_home);
 
         binding.bottomNavigation.setOnItemSelectedListener(item -> {
             int itemId = item.getItemId();
@@ -33,7 +35,7 @@ public class MainActivity extends AppCompatActivity {
                 replaceFragment(new PostFragment());
             } else if (itemId == R.id.bottom_nav_search) {
                 replaceFragment(new SearchFragment());
-            } else if (itemId == R.id.bottom_nav_home) {
+            } else if (itemId == R.id.bottom_nav_home_hidden) {
                 replaceFragment(new NewsfeedFragment());
             } else if (itemId == R.id.bottom_nav_reels) {
                 replaceFragment(new ReelsFragment());
@@ -43,6 +45,15 @@ public class MainActivity extends AppCompatActivity {
 
             return true;
         });
+
+        binding.bottomNavHome.setOnClickListener(v -> {
+            replaceFragment(new NewsfeedFragment());
+            setHomeActive();
+        });
+
+        // Set default fragment to Newsfeed (Home icon)
+        replaceFragment(new NewsfeedFragment());
+        setHomeActive();
     }
 
     private void replaceFragment(Fragment fragment) {
@@ -50,5 +61,9 @@ public class MainActivity extends AppCompatActivity {
         FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
         fragmentTransaction.replace(R.id.main_layout_fragment, fragment);
         fragmentTransaction.commit();
+    }
+
+    private void setHomeActive() {
+        binding.bottomNavigation.getMenu().findItem(R.id.bottom_nav_home_hidden).setChecked(true);
     }
 }
