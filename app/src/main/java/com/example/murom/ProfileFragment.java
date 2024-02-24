@@ -9,6 +9,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultCallback;
@@ -16,11 +17,18 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.PickVisualMediaRequest;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.example.murom.Firebase.Auth;
 import com.example.murom.Firebase.Storage;
+import com.example.murom.Recycler.HighlightAdapter;
+import com.example.murom.Recycler.SpacingItemDecoration;
 import com.google.firebase.storage.StorageReference;
+
+import java.util.ArrayList;
+import java.util.Random;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -86,14 +94,36 @@ public class ProfileFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
+        Random rand = new Random();
+
         View rootView = inflater.inflate(R.layout.fragment_profile, container, false);
 
         ImageView avatar = rootView.findViewById(R.id.avatar);
-        Button uploadAvatarBtn = rootView.findViewById(R.id.upload_avatar_btn);
-        uploadAvatarBtn.setOnClickListener(view -> setupImagePicker(avatar));
+        Button editBtn = rootView.findViewById(R.id.edit);
+        TextView numberPost = rootView.findViewById(R.id.number_post);
+        TextView post = rootView.findViewById(R.id.post);
+        TextView numberFollower = rootView.findViewById(R.id.number_follower);
+        TextView numberFollowing = rootView.findViewById(R.id.number_following);
+        TextView follower = rootView.findViewById(R.id.follower);
+        TextView following = rootView.findViewById(R.id.following);
+        TextView username = rootView.findViewById(R.id.username);
+        TextView bio = rootView.findViewById(R.id.bio);
 
-        Button logoutBtn = rootView.findViewById(R.id.logout_btn);
-        logoutBtn.setOnClickListener(this::handleSignOut);
+        RecyclerView highlightsRecycler = rootView.findViewById(R.id.highlights_recycler);
+        highlightsRecycler.setLayoutManager(new LinearLayoutManager(getContext(),RecyclerView.HORIZONTAL,false));
+        highlightsRecycler.addItemDecoration(new SpacingItemDecoration(40, 0));
+        ArrayList<HighlightAdapter.HighlightBubbleModel> highlights = new ArrayList<>();
+        String[] url= new String[5];
+        for (int i = 0 ; i < 5; i++)
+        {
+            url[i] = "https://picsum.photo/200";
+        }
+        for (int i = 0; i < rand.nextInt(5) +3; i++) {
+            highlights.add(new HighlightAdapter.HighlightBubbleModel(url, "hehe"+ i, "https://picsum.photos/200"));
+        }
+
+        HighlightAdapter highlightAdapter = new HighlightAdapter(highlights);
+        highlightsRecycler.setAdapter(highlightAdapter);
 
         StorageReference avatarRef = Storage.getRef("avatar/" + Auth.getUser().getEmail());
         avatarRef.getDownloadUrl()
