@@ -17,6 +17,7 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.PickVisualMediaRequest;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -24,6 +25,7 @@ import com.bumptech.glide.Glide;
 import com.example.murom.Firebase.Auth;
 import com.example.murom.Firebase.Storage;
 import com.example.murom.Recycler.HighlightAdapter;
+import com.example.murom.Recycler.PostAdapter;
 import com.example.murom.Recycler.SpacingItemDecoration;
 import com.google.firebase.storage.StorageReference;
 
@@ -113,10 +115,10 @@ public class ProfileFragment extends Fragment {
         highlightsRecycler.setLayoutManager(new LinearLayoutManager(getContext(),RecyclerView.HORIZONTAL,false));
         highlightsRecycler.addItemDecoration(new SpacingItemDecoration(40, 0));
         ArrayList<HighlightAdapter.HighlightBubbleModel> highlights = new ArrayList<>();
-        String[] url= new String[5];
+        ArrayList<String> url= new ArrayList<>();
         for (int i = 0 ; i < 5; i++)
         {
-            url[i] = "https://picsum.photo/200";
+            url.add("https://picsum.photo/200") ;
         }
         for (int i = 0; i < rand.nextInt(5) +3; i++) {
             highlights.add(new HighlightAdapter.HighlightBubbleModel(url, "hehe"+ i, "https://picsum.photos/200"));
@@ -124,6 +126,18 @@ public class ProfileFragment extends Fragment {
 
         HighlightAdapter highlightAdapter = new HighlightAdapter(highlights);
         highlightsRecycler.setAdapter(highlightAdapter);
+
+        RecyclerView postRecycler = rootView.findViewById(R.id.posts_recycler);
+
+        postRecycler.addItemDecoration(new SpacingItemDecoration(10,10));
+        ArrayList<PostAdapter.PostModel> posts = new ArrayList<>();
+
+        for (int i = 0; i < rand.nextInt(5)+3; i++){
+            posts.add(new PostAdapter.PostModel("https://picsum.photos/200"));
+        }
+        PostAdapter postAdapter = new PostAdapter(posts);
+        postRecycler.setAdapter(postAdapter);
+        postRecycler.setLayoutManager(new GridLayoutManager(getContext(),3));
 
         StorageReference avatarRef = Storage.getRef("avatar/" + Auth.getUser().getEmail());
         avatarRef.getDownloadUrl()

@@ -20,9 +20,12 @@ public class SpacingItemDecoration extends RecyclerView.ItemDecoration {
         int position = parent.getChildAdapterPosition(view);
 
         // Skip the first item
-        if (position > 0) {
-            outRect.left = horizontalSpacingInPx;
+        if (position >= parent.getChildCount()) {
             outRect.top = verticalSpacingInPx;
         }
+
+        // Apply horizontal spacing to all items
+        outRect.left = horizontalSpacingInPx;
+        outRect.right = horizontalSpacingInPx;
     }
 }

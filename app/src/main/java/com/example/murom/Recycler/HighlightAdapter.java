@@ -21,11 +21,11 @@ public class HighlightAdapter extends RecyclerView.Adapter<HighlightAdapter.View
 
     private final ArrayList<HighlightBubbleModel> localDataSet;
     public static class HighlightBubbleModel {
-        private final String[] url;
+        private final ArrayList<String> url;
         private final String name;
         private final String image_url;
 
-        public HighlightBubbleModel(String[] url, String name, String image_url)
+        public HighlightBubbleModel(ArrayList<String> url, String name, String image_url)
         {
             this.url = url;
             this.name = name;
