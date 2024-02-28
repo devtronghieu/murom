@@ -1,10 +1,17 @@
 package com.example.murom;
 
+import android.net.Uri;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Toast;
 
+import androidx.activity.result.ActivityResultCallback;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.PickVisualMediaRequest;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -32,19 +39,22 @@ public class NewsfeedFragment extends Fragment {
     private String mParam1;
     private String mParam2;
 
+    ActivityResultLauncher<PickVisualMediaRequest> launcher =
+            registerForActivityResult(new ActivityResultContracts.PickVisualMedia(), new ActivityResultCallback<Uri>() {
+                @Override
+                public void onActivityResult(Uri uri) {
+                    if (uri == null) {
+                        Toast.makeText(requireContext(), "No image selected!", Toast.LENGTH_SHORT).show();
+                    } else {
+                        Log.d("-->", "upload story: " + uri);
+                    }
+                }
+            });
+
     public NewsfeedFragment() {
         // Required empty public constructor
     }
 
-    /**
-     * Use this factory method to create a new instance of
-     * this fragment using the provided parameters.
-     *
-     * @param param1 Parameter 1.
-     * @param param2 Parameter 2.
-     * @return A new instance of fragment NewsfeedFragment.
-     */
-    // TODO: Rename and change types and number of parameters
     public static NewsfeedFragment newInstance(String param1, String param2) {
         NewsfeedFragment fragment = new NewsfeedFragment();
         Bundle args = new Bundle();
@@ -71,16 +81,33 @@ public class NewsfeedFragment extends Fragment {
         Random rand = new Random();
 
 
+        // Stories Recycler
         RecyclerView storiesRecycler = rootView.findViewById(R.id.stories_recycler);
         storiesRecycler.setLayoutManager(new LinearLayoutManager(getContext(), RecyclerView.HORIZONTAL, false));
         storiesRecycler.addItemDecoration(new SpacingItemDecoration(40, 0));
+
         ArrayList<StoryBubbleAdapter.StoryBubbleModel> stories = new ArrayList<>();
+        stories.add(new StoryBubbleAdapter.StoryBubbleModel("my_id", "", "Your story", false));
+
         for (int i = 0; i < rand.nextInt(5) + 3; i++) {
-            stories.add(new StoryBubbleAdapter.StoryBubbleModel("https://picsum.photos/200", "username" + i, rand.nextBoolean()));
+            stories.add(new StoryBubbleAdapter.StoryBubbleModel("id" + i, "https://picsum.photos/200", "username" + i, rand.nextBoolean()));
         }
-        StoryBubbleAdapter storyBubbleAdapter = new StoryBubbleAdapter(stories);
+        StoryBubbleAdapter storyBubbleAdapter = new StoryBubbleAdapter(stories, new StoryBubbleAdapter.StoryBubbleCallback() {
+            @Override
+            public void handleUploadStory() {
+                launcher.launch(new PickVisualMediaRequest.Builder()
+                        .setMediaType(ActivityResultContracts.PickVisualMedia.ImageAndVideo.INSTANCE)
+                        .build());
+            }
+
+            @Override
+            public void handleViewStories(String uid) {
+                Log.d("-->", "View stories of " + uid);
+            }
+        });
         storiesRecycler.setAdapter(storyBubbleAdapter);
 
+        // Newsfeeds Recycler
         RecyclerView newsfeedsRecycler = rootView.findViewById(R.id.newsfeeds_recycler);
         newsfeedsRecycler.setLayoutManager(new LinearLayoutManager(getContext(), RecyclerView.VERTICAL, false));
         newsfeedsRecycler.addItemDecoration(new SpacingItemDecoration(0, 45));

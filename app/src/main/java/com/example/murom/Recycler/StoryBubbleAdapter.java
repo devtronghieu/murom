@@ -21,12 +21,21 @@ public class StoryBubbleAdapter extends RecyclerView.Adapter<StoryBubbleAdapter.
 
     private final ArrayList<StoryBubbleModel> localDataSet;
 
+    private StoryBubbleCallback callback;
+
+    public interface StoryBubbleCallback {
+        void handleUploadStory();
+        void handleViewStories(String uid);
+    }
+
     public static class StoryBubbleModel {
+        private final String uid;
         private final String imageUrl;
         private final String text;
         private final boolean isRead;
 
-        public StoryBubbleModel(String imageUrl, String text, boolean isRead) {
+        public StoryBubbleModel(String uid, String imageUrl, String text, boolean isRead) {
+            this.uid = uid;
             this.imageUrl = imageUrl;
             this.text = text;
             this.isRead = isRead;
@@ -36,6 +45,7 @@ public class StoryBubbleAdapter extends RecyclerView.Adapter<StoryBubbleAdapter.
     public static class ViewHolder extends RecyclerView.ViewHolder {
         private final LinearLayout storyImageContainer;
         private final ImageView storyImage;
+        private final ImageView uploadButton;
         private final TextView storyText;
 
         public ViewHolder(View view) {
@@ -43,22 +53,15 @@ public class StoryBubbleAdapter extends RecyclerView.Adapter<StoryBubbleAdapter.
 
             storyImageContainer = view.findViewById(R.id.story_bubble_image_container);
             storyImage = view.findViewById(R.id.story_bubble_image);
+            uploadButton = view.findViewById(R.id.story_bubble_upload);
             storyText = view.findViewById(R.id.story_bubble_text);
-        }
-
-        public LinearLayout getStoryImageContainer() { return storyImageContainer; }
-
-        public ImageView getStoryImage() {
-            return storyImage;
-        }
-
-        public TextView getStoryText() {
-            return storyText;
         }
     }
 
-    public StoryBubbleAdapter(ArrayList<StoryBubbleModel> dataSet) {
+
+    public StoryBubbleAdapter(ArrayList<StoryBubbleModel> dataSet, StoryBubbleCallback callback) {
         localDataSet = dataSet;
+        this.callback = callback;
     }
 
     @NonNull
@@ -75,8 +78,21 @@ public class StoryBubbleAdapter extends RecyclerView.Adapter<StoryBubbleAdapter.
     @Override
     public void onBindViewHolder(ViewHolder viewHolder, final int position) {
         StoryBubbleModel data = localDataSet.get(position);
+
         viewHolder.storyText.setText(data.text);
+
         Glide.with(this.context).load(data.imageUrl).into(viewHolder.storyImage);
+
+        viewHolder.storyImage.setOnClickListener(v -> {
+            callback.handleViewStories(data.uid);
+        });
+
+        if (position == 0) {
+            viewHolder.uploadButton.setVisibility(View.VISIBLE);
+            viewHolder.uploadButton.setOnClickListener(v -> {
+                callback.handleUploadStory();
+            });
+        }
 
         if (!data.isRead) {
             viewHolder.storyImageContainer.setBackgroundResource(R.drawable.gradient_border);
