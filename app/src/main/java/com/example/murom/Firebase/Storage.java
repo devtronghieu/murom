@@ -14,8 +14,8 @@ public class Storage {
         return storageRef.child(storagePath);
     }
 
-    public static void uploadImage(Uri uri, String storagePath) {
-        StorageReference imageRef = storageRef.child(storagePath);
-        imageRef.putFile(uri);
+    public static void uploadAsset(Uri uri, String storagePath) {
+        StorageReference assetRef = storageRef.child(storagePath);
+        assetRef.putFile(uri);
     }
 }

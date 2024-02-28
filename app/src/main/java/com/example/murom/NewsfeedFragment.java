@@ -14,12 +14,15 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.murom.Firebase.Auth;
+import com.example.murom.Firebase.Storage;
 import com.example.murom.Recycler.NewsfeedAdapter;
 import com.example.murom.Recycler.SpacingItemDecoration;
 import com.example.murom.Recycler.StoryBubbleAdapter;
 
 import java.util.ArrayList;
 import java.util.Random;
+import java.util.UUID;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -42,7 +45,9 @@ public class NewsfeedFragment extends Fragment {
                 if (uri == null) {
                     Toast.makeText(requireContext(), "No image selected!", Toast.LENGTH_SHORT).show();
                 } else {
-                    Log.d("-->", "upload story: " + uri);
+                    String storagePath = "story/" + Auth.getUser().getUid() + "/" + UUID.randomUUID().toString();
+                    Storage.uploadAsset(uri, storagePath);
+                    Toast.makeText(requireContext(), "Uploaded!", Toast.LENGTH_SHORT).show();
                 }
             });
 

@@ -37,7 +37,7 @@ public class ProfileFragment extends Fragment {
                         Toast.makeText(requireContext(), "No image selected!", Toast.LENGTH_SHORT).show();
                     } else {
                         Glide.with(requireContext()).load(uri).into(pickedImageView);
-                        Storage.uploadImage(uri, "avatar/" + Auth.getUser().getEmail());
+                        Storage.uploadAsset(uri, "avatar/" + Auth.getUser().getEmail());
                     }
                 }
             });
