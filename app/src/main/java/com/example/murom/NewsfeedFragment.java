@@ -1,6 +1,5 @@
 package com.example.murom;
 
-import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -8,7 +7,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Toast;
 
-import androidx.activity.result.ActivityResultCallback;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.PickVisualMediaRequest;
 import androidx.activity.result.contract.ActivityResultContracts;
@@ -40,14 +38,11 @@ public class NewsfeedFragment extends Fragment {
     private String mParam2;
 
     ActivityResultLauncher<PickVisualMediaRequest> launcher =
-            registerForActivityResult(new ActivityResultContracts.PickVisualMedia(), new ActivityResultCallback<Uri>() {
-                @Override
-                public void onActivityResult(Uri uri) {
-                    if (uri == null) {
-                        Toast.makeText(requireContext(), "No image selected!", Toast.LENGTH_SHORT).show();
-                    } else {
-                        Log.d("-->", "upload story: " + uri);
-                    }
+            registerForActivityResult(new ActivityResultContracts.PickVisualMedia(), uri -> {
+                if (uri == null) {
+                    Toast.makeText(requireContext(), "No image selected!", Toast.LENGTH_SHORT).show();
+                } else {
+                    Log.d("-->", "upload story: " + uri);
                 }
             });
 

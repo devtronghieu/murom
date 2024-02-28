@@ -21,7 +21,7 @@ public class StoryBubbleAdapter extends RecyclerView.Adapter<StoryBubbleAdapter.
 
     private final ArrayList<StoryBubbleModel> localDataSet;
 
-    private StoryBubbleCallback callback;
+    private final StoryBubbleCallback callback;
 
     public interface StoryBubbleCallback {
         void handleUploadStory();
@@ -83,15 +83,11 @@ public class StoryBubbleAdapter extends RecyclerView.Adapter<StoryBubbleAdapter.
 
         Glide.with(this.context).load(data.imageUrl).into(viewHolder.storyImage);
 
-        viewHolder.storyImage.setOnClickListener(v -> {
-            callback.handleViewStories(data.uid);
-        });
+        viewHolder.storyImage.setOnClickListener(v -> callback.handleViewStories(data.uid));
 
         if (position == 0) {
             viewHolder.uploadButton.setVisibility(View.VISIBLE);
-            viewHolder.uploadButton.setOnClickListener(v -> {
-                callback.handleUploadStory();
-            });
+            viewHolder.uploadButton.setOnClickListener(v -> callback.handleUploadStory());
         }
 
         if (!data.isRead) {
