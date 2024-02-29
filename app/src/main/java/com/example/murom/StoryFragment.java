@@ -66,9 +66,7 @@ public class StoryFragment extends Fragment {
         });
 
         ImageButton closeBtn = rootView.findViewById(R.id.story_fragment_close_button);
-        closeBtn.setOnClickListener(v -> {
-            callback.onClose();
-        });
+        closeBtn.setOnClickListener(v -> callback.onClose());
 
         progressBar = rootView.findViewById(R.id.story_fragment_image_loading);
         imageView = rootView.findViewById(R.id.story_fragment_image);
@@ -100,9 +98,7 @@ public class StoryFragment extends Fragment {
             progressBar.setVisibility(View.GONE);
         } else {
             videoView.setVideoPath(story.url);
-            videoView.setOnPreparedListener(mediaPlayer -> {
-                progressBar.setVisibility(View.GONE);
-            });
+            videoView.setOnPreparedListener(mediaPlayer -> progressBar.setVisibility(View.GONE));
             videoView.setVisibility(View.VISIBLE);
             videoView.start();
         }
