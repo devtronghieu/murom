@@ -17,4 +17,5 @@
     <string name="default_post_likes">0 likes</string>
     <string name="default_post_desc">Default post desc</string>
     <string name="close_button">close button</string>
+    <string name="story_image">story_image</string>
 </resources>

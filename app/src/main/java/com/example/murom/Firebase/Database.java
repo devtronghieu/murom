@@ -6,12 +6,59 @@ import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.QuerySnapshot;
 
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class Database {
     private static final FirebaseFirestore db = FirebaseFirestore.getInstance();
+
+    public static final CollectionReference userCollection = db.collection("User");
+
+    public interface GetUserCallback {
+        void onGetUserSuccess(Schema.User user);
+        void onGetUserFailure();
+    }
+
+    public static void getUser(String uid, GetUserCallback callback) {
+        DocumentReference docRef = userCollection.document(uid);
+
+        docRef.get().addOnCompleteListener(task -> {
+            if (task.isSuccessful()) {
+                DocumentSnapshot document = task.getResult();
+
+                if (document.exists()) {
+                    Schema.User user = new Schema.User(
+                            "",
+                            "",
+                            "",
+                            "",
+                            "",new ArrayList<>()
+                    );
+
+                    user.bio = document.getString("bio");
+                    user.email = document.getString("email");
+                    user.passwordHash = document.getString("password");
+                    user.profilePicture = document.getString("profile_picture");
+                    user.username = document.getString("username");
+                    ArrayList<String> viewedStories = (ArrayList<String>) document.get("viewed_stories");
+                    if (viewedStories != null) {
+                        user.viewedStories = viewedStories;
+                    }
+
+                    callback.onGetUserSuccess(user);
+                } else {
+                    callback.onGetUserFailure();
+                }
+            } else {
+                callback.onGetUserFailure();
+            }
+        });
+    }
 
     public static final CollectionReference storyCollection = db.collection("Story");
 
@@ -20,6 +67,7 @@ public class Database {
         documentData.put("created_at", doc.createdAt);
         documentData.put("user_id", doc.uid);
         documentData.put("url", doc.url);
+        documentData.put("type", doc.type);
 
         storyCollection
                 .add(documentData)
@@ -27,26 +75,46 @@ public class Database {
                 .addOnFailureListener(e -> Log.d("-->", "Failed to add Story doc: " + e));;
     }
 
-    public static Schema.Story getStory(String docID) {
-        DocumentReference docRef = storyCollection.document(docID);
+    public interface GetStoriesByUIDCallback {
+        void onGetStoriesSuccess(ArrayList<Schema.Story> stories);
+        void onGetStoriesFailure();
+    }
 
-        Schema.Story story = new Schema.Story("", "", "");
+    public static void getStoriesByUID(String uid, GetStoriesByUIDCallback callback) {
+        storyCollection
+                .whereEqualTo("user_id", uid)
+                .get()
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        ArrayList<Schema.Story> stories = new ArrayList<>();
 
-        docRef.get().addOnCompleteListener(task -> {
-            if (task.isSuccessful()) {
+                        QuerySnapshot snap = task.getResult();
+                        List<DocumentSnapshot> docs = snap.getDocuments();
 
-                DocumentSnapshot document = task.getResult();
+                        for (int i = 0; i < docs.size(); i++) {
+                            DocumentSnapshot doc = docs.get(i);
 
-                if (document.exists()) {
-                    Log.d("-->", "DocumentSnapshot data: " + document.getData());
-                } else {
-                    Log.d("-->", "No such document");
-                }
-            } else {
-                Log.d("-->", "get failed with ", task.getException());
-            }
-        });
+                            Schema.Story story = new Schema.Story(
+                                    "",
+                                    "",
+                                    "",
+                                    ""
+                            );
 
-        return story;
+                            story.createdAt = doc.getString("created_at");
+                            story.uid = uid;
+                            story.url = doc.getString("url");
+                            story.type = doc.getString("type");
+
+                            stories.add(story);
+                        }
+
+                        stories.sort(Comparator.comparing(Schema.Story::getCreatedAt));
+
+                        callback.onGetStoriesSuccess(stories);
+                    } else {
+                        callback.onGetStoriesFailure();
+                    }
+                });
     }
 }

@@ -1,11 +1,11 @@
 package com.example.murom;
 
+import android.app.Activity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
@@ -29,26 +29,35 @@ import java.util.ArrayList;
 import java.util.Random;
 
 public class NewsfeedFragment extends Fragment {
-    ProgressBar appSpinner;
+    Activity activity;
 
     ActivityResultLauncher<PickVisualMediaRequest> launcher =
             registerForActivityResult(new ActivityResultContracts.PickVisualMedia(), uri -> {
                 if (uri == null) {
                     Toast.makeText(requireContext(), "No image selected!", Toast.LENGTH_SHORT).show();
                 } else {
-                    appSpinner.setVisibility(View.VISIBLE);
-
                     String createdAt = Instant.now().toString();
                     String uid = Auth.getUser().getUid();
 
                     String storagePath = "story/" + uid + "/" + createdAt;
+
+                    String mimeType = activity.getContentResolver().getType(uri);
+
+                    boolean isImage = mimeType != null && mimeType.startsWith("image/");
+
+                    String type;
+                    if (isImage) {
+                        type = "image";
+                    } else {
+                        type = "video";
+                    }
 
                     Storage.getRef(storagePath).putFile(uri)
                             .addOnSuccessListener(taskSnapshot -> {
                                 StorageReference storyRef = Storage.getRef(storagePath);
                                 storyRef.getDownloadUrl()
                                         .addOnSuccessListener(storyURI -> {
-                                            Schema.Story story = new Schema.Story(createdAt, uid, storyURI.toString());
+                                            Schema.Story story = new Schema.Story(createdAt, uid, storyURI.toString(), type);
                                             Database.addStory(story);
                                             Toast.makeText(requireContext(), "Uploaded!", Toast.LENGTH_SHORT).show();
                                         })
@@ -60,8 +69,6 @@ public class NewsfeedFragment extends Fragment {
                                 Log.d("-->", "failed to get story: " + e);
                                 Toast.makeText(requireContext(), "Failed to upload story!", Toast.LENGTH_SHORT).show();
                             });
-
-                    appSpinner.setVisibility(View.GONE);
                 }
             });
 
@@ -71,8 +78,7 @@ public class NewsfeedFragment extends Fragment {
 
     NewsfeedFragmentCallback callback;
 
-    public NewsfeedFragment(ProgressBar spinner, NewsfeedFragmentCallback callback) {
-        appSpinner = spinner;
+    public NewsfeedFragment(NewsfeedFragmentCallback callback) {
         this.callback = callback;
     }
 
@@ -86,60 +92,75 @@ public class NewsfeedFragment extends Fragment {
                              Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_newsfeed, container, false);
 
+        activity = getActivity();
+
         Random rand = new Random();
 
+        String uid = Auth.getUser().getUid();
 
-        // Stories Recycler
-        RecyclerView storiesRecycler = rootView.findViewById(R.id.stories_recycler);
-        storiesRecycler.setLayoutManager(new LinearLayoutManager(getContext(), RecyclerView.HORIZONTAL, false));
-        storiesRecycler.addItemDecoration(new SpacingItemDecoration(40, 0));
-
-        ArrayList<StoryBubbleAdapter.StoryBubbleModel> stories = new ArrayList<>();
-        stories.add(new StoryBubbleAdapter.StoryBubbleModel("my_id", "", "Your story", false));
-
-        for (int i = 0; i < rand.nextInt(5) + 3; i++) {
-            stories.add(new StoryBubbleAdapter.StoryBubbleModel("id" + i, "https://picsum.photos/200", "username" + i, rand.nextBoolean()));
-        }
-        StoryBubbleAdapter storyBubbleAdapter = new StoryBubbleAdapter(stories, new StoryBubbleAdapter.StoryBubbleCallback() {
+        Database.getUser(uid, new Database.GetUserCallback() {
             @Override
-            public void handleUploadStory() {
-                launcher.launch(new PickVisualMediaRequest.Builder()
-                        .setMediaType(ActivityResultContracts.PickVisualMedia.ImageAndVideo.INSTANCE)
-                        .build());
+            public void onGetUserSuccess(Schema.User user) {
+                // Stories Recycler
+                RecyclerView storiesRecycler = rootView.findViewById(R.id.stories_recycler);
+                storiesRecycler.setLayoutManager(new LinearLayoutManager(getContext(), RecyclerView.HORIZONTAL, false));
+                storiesRecycler.addItemDecoration(new SpacingItemDecoration(40, 0));
+
+                ArrayList<StoryBubbleAdapter.StoryBubbleModel> stories = new ArrayList<>();
+                stories.add(new StoryBubbleAdapter.StoryBubbleModel(
+                        uid,
+                        user.profilePicture,
+                        "Your story",
+                        false
+                ));
+
+                StoryBubbleAdapter storyBubbleAdapter = new StoryBubbleAdapter(stories, new StoryBubbleAdapter.StoryBubbleCallback() {
+                    @Override
+                    public void handleUploadStory() {
+                        launcher.launch(new PickVisualMediaRequest.Builder()
+                                .setMediaType(ActivityResultContracts.PickVisualMedia.ImageAndVideo.INSTANCE)
+                                .build());
+                    }
+
+                    @Override
+                    public void handleViewStories(String uid) {
+                        callback.onViewStory(uid);
+                    }
+                });
+                storiesRecycler.setAdapter(storyBubbleAdapter);
+
+                // Newsfeeds Recycler
+                RecyclerView newsfeedsRecycler = rootView.findViewById(R.id.newsfeeds_recycler);
+                newsfeedsRecycler.setLayoutManager(new LinearLayoutManager(getContext(), RecyclerView.VERTICAL, false));
+                newsfeedsRecycler.addItemDecoration(new SpacingItemDecoration(0, 45));
+                ArrayList<NewsfeedAdapter.NewsfeedModel> newsfeeds = new ArrayList<>();
+
+                for (int i = 0; i < rand.nextInt(5) + 5; i++) {
+                    ArrayList<String> images = new ArrayList<>();
+                    images.add("https://picsum.photos/200");
+
+                    ArrayList<String> lovedByUsers = new ArrayList<>();
+                    for (int j = 0; j < rand.nextInt(5); j++) {
+                        lovedByUsers.add("username" + j);
+                    }
+
+                    newsfeeds.add(new NewsfeedAdapter.NewsfeedModel(
+                            "https://picsum.photos/200",
+                            "username" + i, images,
+                            "Caption" + i,
+                            lovedByUsers,
+                            rand.nextBoolean()
+                    ));
+                }
+                NewsfeedAdapter newsfeedAdapter = new NewsfeedAdapter(newsfeeds);
+                newsfeedsRecycler.setAdapter(newsfeedAdapter);
             }
 
             @Override
-            public void handleViewStories(String uid) {
-                callback.onViewStory(uid);
+            public void onGetUserFailure() {
+                Toast.makeText(requireContext(), "Failed to load data!", Toast.LENGTH_SHORT).show();
             }
         });
-        storiesRecycler.setAdapter(storyBubbleAdapter);
-
-        // Newsfeeds Recycler
-        RecyclerView newsfeedsRecycler = rootView.findViewById(R.id.newsfeeds_recycler);
-        newsfeedsRecycler.setLayoutManager(new LinearLayoutManager(getContext(), RecyclerView.VERTICAL, false));
-        newsfeedsRecycler.addItemDecoration(new SpacingItemDecoration(0, 45));
-        ArrayList<NewsfeedAdapter.NewsfeedModel> newsfeeds = new ArrayList<>();
-
-        for (int i = 0; i < rand.nextInt(5) + 5; i++) {
-            ArrayList<String> images = new ArrayList<>();
-            images.add("https://picsum.photos/200");
-
-            ArrayList<String> lovedByUsers = new ArrayList<>();
-            for (int j = 0; j < rand.nextInt(5); j++) {
-                lovedByUsers.add("username" + j);
-            }
-
-            newsfeeds.add(new NewsfeedAdapter.NewsfeedModel(
-                    "https://picsum.photos/200",
-                    "username" + i, images,
-                    "Caption" + i,
-                    lovedByUsers,
-                    rand.nextBoolean()
-            ));
-        }
-        NewsfeedAdapter newsfeedAdapter = new NewsfeedAdapter(newsfeeds);
-        newsfeedsRecycler.setAdapter(newsfeedAdapter);
 
         return rootView;
     }

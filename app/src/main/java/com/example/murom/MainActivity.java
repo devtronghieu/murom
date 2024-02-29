@@ -3,7 +3,6 @@ package com.example.murom;
 
 import android.os.Bundle;
 import android.view.View;
-import android.widget.ProgressBar;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
@@ -19,7 +18,6 @@ public class MainActivity extends AppCompatActivity {
     View fragmentContainer;
     View fullscreenFragmentContainer;
     BottomNavigationView bottomMenu;
-    ProgressBar spinner;
 
     // Fragments
     FragmentManager fragmentManager;
@@ -49,18 +47,13 @@ public class MainActivity extends AppCompatActivity {
 
         home = findViewById(R.id.bottom_nav_home);
 
-        spinner = findViewById(R.id.loading_animation);
-
         // Setup fragments
         fragmentManager = getSupportFragmentManager();
         postFragment = new PostFragment();
         searchFragment = new SearchFragment();
-        newsfeedFragment = new NewsfeedFragment(spinner, this::handleViewStory);
+        newsfeedFragment = new NewsfeedFragment(this::handleViewStory);
         reelsFragment = new ReelsFragment();
         profileFragment = new ProfileFragment();
-        storyFragment = new StoryFragment(() -> {
-            removeFullscreenFragment(storyFragment);
-        });
 
         bottomMenu.setOnItemSelectedListener(item -> {
             int itemId = item.getItemId();
@@ -131,6 +124,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void handleViewStory(String uid) {
-        addFullscreenFragment(new StoryFragment(() -> addFullscreenFragment(storyFragment)));
+        storyFragment = new StoryFragment(uid, () -> removeFullscreenFragment(storyFragment));
+        addFullscreenFragment(storyFragment);
     }
 }
