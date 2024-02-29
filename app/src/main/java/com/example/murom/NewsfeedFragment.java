@@ -5,6 +5,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
@@ -27,67 +28,57 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Random;
 
-/**
- * A simple {@link Fragment} subclass.
- * Use the {@link NewsfeedFragment#newInstance} factory method to
- * create an instance of this fragment.
- */
 public class NewsfeedFragment extends Fragment {
-
-    // TODO: Rename parameter arguments, choose names that match
-    // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-    private static final String ARG_PARAM1 = "param1";
-    private static final String ARG_PARAM2 = "param2";
-
-    // TODO: Rename and change types of parameters
-    private String mParam1;
-    private String mParam2;
-
-    public static NewsfeedFragment newInstance(String param1, String param2) {
-        NewsfeedFragment fragment = new NewsfeedFragment();
-        Bundle args = new Bundle();
-        args.putString(ARG_PARAM1, param1);
-        args.putString(ARG_PARAM2, param2);
-        fragment.setArguments(args);
-        return fragment;
-    }
+    ProgressBar appSpinner;
 
     ActivityResultLauncher<PickVisualMediaRequest> launcher =
             registerForActivityResult(new ActivityResultContracts.PickVisualMedia(), uri -> {
                 if (uri == null) {
                     Toast.makeText(requireContext(), "No image selected!", Toast.LENGTH_SHORT).show();
                 } else {
+                    appSpinner.setVisibility(View.VISIBLE);
+
                     String createdAt = Instant.now().toString();
                     String uid = Auth.getUser().getUid();
 
                     String storagePath = "story/" + uid + "/" + createdAt;
-                    Storage.uploadAsset(uri, storagePath);
 
-                    StorageReference storyRef = Storage.getRef(storagePath);
-                    storyRef.getDownloadUrl()
-                            .addOnSuccessListener(storyURI -> {
-                                Schema.Story story = new Schema.Story(createdAt, uid, storyURI.toString());
-                                Database.addStory(story);
-                                Toast.makeText(requireContext(), "Uploaded!", Toast.LENGTH_SHORT).show();
-                            })
-                            .addOnFailureListener(e -> {
+                    Storage.getRef(storagePath).putFile(uri)
+                            .addOnSuccessListener(taskSnapshot -> {
+                                StorageReference storyRef = Storage.getRef(storagePath);
+                                storyRef.getDownloadUrl()
+                                        .addOnSuccessListener(storyURI -> {
+                                            Schema.Story story = new Schema.Story(createdAt, uid, storyURI.toString());
+                                            Database.addStory(story);
+                                            Toast.makeText(requireContext(), "Uploaded!", Toast.LENGTH_SHORT).show();
+                                        })
+                                        .addOnFailureListener(e -> {
+                                            Log.d("-->", "failed to get story: " + e);
+                                            Toast.makeText(requireContext(), "Failed to upload story!", Toast.LENGTH_SHORT).show();
+                                        });
+                            }).addOnFailureListener(e -> {
                                 Log.d("-->", "failed to get story: " + e);
                                 Toast.makeText(requireContext(), "Failed to upload story!", Toast.LENGTH_SHORT).show();
                             });
+
+                    appSpinner.setVisibility(View.GONE);
                 }
             });
 
-    public NewsfeedFragment() {
-        // Required empty public constructor
+    public interface  NewsfeedFragmentCallback {
+        void onViewStory(String uid);
+    }
+
+    NewsfeedFragmentCallback callback;
+
+    public NewsfeedFragment(ProgressBar spinner, NewsfeedFragmentCallback callback) {
+        appSpinner = spinner;
+        this.callback = callback;
     }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        if (getArguments() != null) {
-            mParam1 = getArguments().getString(ARG_PARAM1);
-            mParam2 = getArguments().getString(ARG_PARAM2);
-        }
     }
 
     @Override
@@ -119,7 +110,7 @@ public class NewsfeedFragment extends Fragment {
 
             @Override
             public void handleViewStories(String uid) {
-                Log.d("-->", "View stories of " + uid);
+                callback.onViewStory(uid);
             }
         });
         storiesRecycler.setAdapter(storyBubbleAdapter);

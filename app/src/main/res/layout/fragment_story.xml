@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/white"
+    tools:context=".StoryFragment">
+
+    <ImageButton
+        android:id="@+id/story_fragment_close_button"
+        android:layout_width="20dp"
+        android:layout_height="20dp"
+        android:contentDescription="@string/close_button"
+        android:src="@drawable/murom_ic_close" />
+
+</FrameLayout>
