@@ -15,14 +15,17 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.murom.Firebase.Auth;
+import com.example.murom.Firebase.Database;
+import com.example.murom.Firebase.Schema;
 import com.example.murom.Firebase.Storage;
 import com.example.murom.Recycler.NewsfeedAdapter;
 import com.example.murom.Recycler.SpacingItemDecoration;
 import com.example.murom.Recycler.StoryBubbleAdapter;
+import com.google.firebase.storage.StorageReference;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Random;
-import java.util.UUID;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -40,21 +43,6 @@ public class NewsfeedFragment extends Fragment {
     private String mParam1;
     private String mParam2;
 
-    ActivityResultLauncher<PickVisualMediaRequest> launcher =
-            registerForActivityResult(new ActivityResultContracts.PickVisualMedia(), uri -> {
-                if (uri == null) {
-                    Toast.makeText(requireContext(), "No image selected!", Toast.LENGTH_SHORT).show();
-                } else {
-                    String storagePath = "story/" + Auth.getUser().getUid() + "/" + UUID.randomUUID().toString();
-                    Storage.uploadAsset(uri, storagePath);
-                    Toast.makeText(requireContext(), "Uploaded!", Toast.LENGTH_SHORT).show();
-                }
-            });
-
-    public NewsfeedFragment() {
-        // Required empty public constructor
-    }
-
     public static NewsfeedFragment newInstance(String param1, String param2) {
         NewsfeedFragment fragment = new NewsfeedFragment();
         Bundle args = new Bundle();
@@ -62,6 +50,35 @@ public class NewsfeedFragment extends Fragment {
         args.putString(ARG_PARAM2, param2);
         fragment.setArguments(args);
         return fragment;
+    }
+
+    ActivityResultLauncher<PickVisualMediaRequest> launcher =
+            registerForActivityResult(new ActivityResultContracts.PickVisualMedia(), uri -> {
+                if (uri == null) {
+                    Toast.makeText(requireContext(), "No image selected!", Toast.LENGTH_SHORT).show();
+                } else {
+                    String createdAt = Instant.now().toString();
+                    String uid = Auth.getUser().getUid();
+
+                    String storagePath = "story/" + uid + "/" + createdAt;
+                    Storage.uploadAsset(uri, storagePath);
+
+                    StorageReference storyRef = Storage.getRef(storagePath);
+                    storyRef.getDownloadUrl()
+                            .addOnSuccessListener(storyURI -> {
+                                Schema.Story story = new Schema.Story(createdAt, uid, storyURI.toString());
+                                Database.addStory(story);
+                                Toast.makeText(requireContext(), "Uploaded!", Toast.LENGTH_SHORT).show();
+                            })
+                            .addOnFailureListener(e -> {
+                                Log.d("-->", "failed to get story: " + e);
+                                Toast.makeText(requireContext(), "Failed to upload story!", Toast.LENGTH_SHORT).show();
+                            });
+                }
+            });
+
+    public NewsfeedFragment() {
+        // Required empty public constructor
     }
 
     @Override
