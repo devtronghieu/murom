@@ -1,6 +1,5 @@
 package com.example.murom;
 
-import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -100,14 +99,12 @@ public class StoryFragment extends Fragment {
             imageView.setVisibility(View.VISIBLE);
             progressBar.setVisibility(View.GONE);
         } else {
-            Uri uri = Uri.parse(story.url);
-            videoView.setVideoURI(uri);
-            videoView.requestFocus();
-            videoView.setOnPreparedListener(mp -> {
+            videoView.setVideoPath(story.url);
+            videoView.setOnPreparedListener(mediaPlayer -> {
                 progressBar.setVisibility(View.GONE);
-                videoView.setVisibility(View.VISIBLE);
-                mp.start();
             });
+            videoView.setVisibility(View.VISIBLE);
+            videoView.start();
         }
     }
 }
