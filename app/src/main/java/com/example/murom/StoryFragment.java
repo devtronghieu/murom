@@ -8,6 +8,7 @@ import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.Toast;
 import android.widget.VideoView;
 
 import androidx.constraintlayout.widget.ConstraintLayout;
@@ -51,6 +52,12 @@ public class StoryFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_story, container, false);
+
+        if (stories.size() == 0) {
+            Toast.makeText(requireContext(), "No stories found!", Toast.LENGTH_SHORT).show();
+            callback.onClose();
+            return rootView;
+        }
 
         ImageButton closeBtn = rootView.findViewById(R.id.story_fragment_close_button);
         closeBtn.setOnClickListener(v -> callback.onClose());
