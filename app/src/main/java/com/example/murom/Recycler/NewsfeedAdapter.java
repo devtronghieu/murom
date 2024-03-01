@@ -88,8 +88,6 @@ public class NewsfeedAdapter extends RecyclerView.Adapter<NewsfeedAdapter.ViewHo
     public void onBindViewHolder(@NonNull ViewHolder viewHolder, int position) {
         NewsfeedModel data = localDataSet.get(position);
 
-        Log.d("-->", "newsfeed" + data.username);
-
         viewHolder.username.setText(data.username);
 
         Glide.with(this.context).load(data.avatarUrl).into(viewHolder.avatar);

@@ -61,6 +61,7 @@ public class LoginActivity extends AppCompatActivity {
                             @Override
                             public void onSignInSuccess(FirebaseUser user) {
                                 Log.d("-->", "Welcome " + user.getEmail());
+                                Log.d("-->", "Your UID: " + user.getUid());
                                 navigateToMain();
                             }
 
@@ -85,6 +86,7 @@ public class LoginActivity extends AppCompatActivity {
         FirebaseUser currentUser = mAuth.getCurrentUser();
         if (currentUser != null) {
             Log.d("-->", "Welcome back, " + currentUser.getEmail());
+            Log.d("-->", "Your UID: " + currentUser.getUid());
             navigateToMain();
         } else {
             Log.d("-->", "Not logged in");
