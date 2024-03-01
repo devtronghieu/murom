@@ -13,6 +13,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 public class Database {
     private static final FirebaseFirestore db = FirebaseFirestore.getInstance();
@@ -37,15 +38,18 @@ public class Database {
                             "",
                             "",
                             "",
-                            "",new ArrayList<>()
+                            "",
+                            "",
+                            new HashMap<>()
                     );
 
+                    user.id = document.getString("id");
                     user.bio = document.getString("bio");
                     user.email = document.getString("email");
                     user.passwordHash = document.getString("password");
                     user.profilePicture = document.getString("profile_picture");
                     user.username = document.getString("username");
-                    ArrayList<String> viewedStories = (ArrayList<String>) document.get("viewed_stories");
+                    HashMap<String, String> viewedStories = (HashMap<String, String>) document.get("viewed_stories");
                     if (viewedStories != null) {
                         user.viewedStories = viewedStories;
                     }
@@ -69,9 +73,14 @@ public class Database {
         documentData.put("url", doc.url);
         documentData.put("type", doc.type);
 
+        String storyID = UUID.randomUUID().toString();
+
         storyCollection
-                .add(documentData)
-                .addOnSuccessListener(documentReference -> Log.d("-->", "Uploaded Story doc: " + documentReference.getId()))
+                .document(storyID)
+                .set(documentData)
+                .addOnSuccessListener(documentReference -> {
+                    Log.d("-->", "Uploaded Story doc: " + storyID);
+                })
                 .addOnFailureListener(e -> Log.d("-->", "Failed to add Story doc: " + e));;
     }
 
@@ -101,6 +110,7 @@ public class Database {
                                     ""
                             );
 
+                            story.id = doc.getString("id");
                             story.createdAt = doc.getString("created_at");
                             story.uid = uid;
                             story.url = doc.getString("url");

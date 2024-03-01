@@ -1,6 +1,7 @@
 package com.example.murom;
 
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Toast;
@@ -37,6 +38,7 @@ public class MainActivity extends AppCompatActivity {
     Fragment storyFragment;
 
     String uid;
+    Schema.User profile;
     HashMap<String, ArrayList<Schema.Story>> storiesMap = new HashMap<>();
 
     @Override
@@ -45,66 +47,82 @@ public class MainActivity extends AppCompatActivity {
 
         // Setup env
         uid = Auth.getUser().getUid();
+        Database.getUser(uid, new Database.GetUserCallback() {
+            @Override
+            public void onGetUserSuccess(Schema.User user) {
+                profile = user;
+                Database.getStoriesByUID(uid, new Database.GetStoriesByUIDCallback() {
+                    @Override
+                    public void onGetStoriesSuccess(ArrayList<Schema.Story> stories) {
+                        storiesMap.put(uid, stories);
+                    }
 
-        // Setup fragments
-        fragmentManager = getSupportFragmentManager();
-        postFragment = new PostFragment();
-        searchFragment = new SearchFragment();
-        newsfeedFragment = new NewsfeedFragment(this::handleViewStory);
-        reelsFragment = new ReelsFragment();
-        profileFragment = new ProfileFragment();
+                    @Override
+                    public void onGetStoriesFailure() {
+                        Toast.makeText(MainActivity.this, "Failed to load stories", Toast.LENGTH_SHORT).show();
+                    }
+                });
 
-        // Setup bottom nav
-        ActivityMainBinding binding = ActivityMainBinding.inflate(getLayoutInflater());
-        setContentView(binding.getRoot());
+                // Setup fragments
+                fragmentManager = getSupportFragmentManager();
+                postFragment = new PostFragment();
+                searchFragment = new SearchFragment();
+                newsfeedFragment = new NewsfeedFragment(profile, storiesMap, MainActivity.this::handleViewStory);
+                reelsFragment = new ReelsFragment();
+                profileFragment = new ProfileFragment();
 
-        bottomMenu = binding.bottomNavigation;
+                // Setup bottom nav
+                ActivityMainBinding binding = ActivityMainBinding.inflate(getLayoutInflater());
+                setContentView(binding.getRoot());
 
-        fragmentContainer = findViewById(R.id.main_layout_fragment);
-        fullscreenFragmentContainer = findViewById(R.id.main_layout_fullscreen_fragment);
+                bottomMenu = binding.bottomNavigation;
 
-        home = findViewById(R.id.bottom_nav_home);
+                fragmentContainer = findViewById(R.id.main_layout_fragment);
+                fullscreenFragmentContainer = findViewById(R.id.main_layout_fullscreen_fragment);
 
-        bottomMenu = findViewById(R.id.bottom_navigation);
-        bottomMenu.setItemActiveIndicatorEnabled(false);
-        bottomMenu.setItemRippleColor(null);
-        bottomMenu.setOnItemSelectedListener(item -> {
-            int itemId = item.getItemId();
-            if (itemId == R.id.bottom_nav_post) {
-                replaceFragment(postFragment);
-            } else if (itemId == R.id.bottom_nav_search) {
-                replaceFragment(searchFragment);
-            } else if (itemId == R.id.bottom_nav_home_hidden) {
+                home = findViewById(R.id.bottom_nav_home);
+
+                bottomMenu = findViewById(R.id.bottom_navigation);
+                bottomMenu.setItemActiveIndicatorEnabled(false);
+                bottomMenu.setItemRippleColor(null);
+                bottomMenu.setOnItemSelectedListener(item -> {
+                    int itemId = item.getItemId();
+                    if (itemId == R.id.bottom_nav_post) {
+                        replaceFragment(postFragment);
+                    } else if (itemId == R.id.bottom_nav_search) {
+                        replaceFragment(searchFragment);
+                    } else if (itemId == R.id.bottom_nav_home_hidden) {
+                        replaceFragment(newsfeedFragment);
+                    } else if (itemId == R.id.bottom_nav_reels) {
+                        replaceFragment(reelsFragment);
+                    } else if (itemId == R.id.bottom_nav_profile) {
+                        replaceFragment(profileFragment);
+                    }
+                    return true;
+                });
+
+                binding.bottomNavHome.setOnClickListener(v -> {
+                    replaceFragment(newsfeedFragment);
+                    setHomeActive();
+                });
+
+                // Set default fragment to Newsfeed (Home icon)
                 replaceFragment(newsfeedFragment);
-            } else if (itemId == R.id.bottom_nav_reels) {
-                replaceFragment(reelsFragment);
-            } else if (itemId == R.id.bottom_nav_profile) {
-                replaceFragment(profileFragment);
-            }
-            return true;
-        });
-
-        binding.bottomNavHome.setOnClickListener(v -> {
-            replaceFragment(newsfeedFragment);
-            setHomeActive();
-        });
-
-        // Set default fragment to Newsfeed (Home icon)
-        replaceFragment(newsfeedFragment);
-        setHomeActive();
-
-        // Stories
-        Database.getStoriesByUID(this.uid, new Database.GetStoriesByUIDCallback() {
-            @Override
-            public void onGetStoriesSuccess(ArrayList<Schema.Story> stories) {
-                storiesMap.put(uid, stories);
+                setHomeActive();
             }
 
             @Override
-            public void onGetStoriesFailure() {
-                Toast.makeText(MainActivity.this, "Failed to load stories", Toast.LENGTH_SHORT).show();
+            public void onGetUserFailure() {
+                Toast.makeText(MainActivity.this, "Failed to load user profile", Toast.LENGTH_SHORT).show();
+                handleSignOut();
             }
         });
+    }
+
+    private void handleSignOut() {
+        Auth.signOut();
+        Intent i = new Intent(MainActivity.this, LoginActivity.class);
+        startActivity(i);
     }
 
     private void replaceFragment(Fragment fragment) {
@@ -148,12 +166,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void handleViewStory(String uid) {
-        ArrayList<Schema.Story> stories = storiesMap.get(uid);
-        if (stories != null) {
-            storyFragment = new StoryFragment(stories, () -> removeFullscreenFragment(storyFragment));
-            addFullscreenFragment(storyFragment);
-        } else {
-            Toast.makeText(MainActivity.this, "Failed to view story of " + uid, Toast.LENGTH_SHORT).show();
-        }
+        storyFragment = new StoryFragment(storiesMap.get(uid), profile, () -> removeFullscreenFragment(storyFragment));
+        addFullscreenFragment(storyFragment);
     }
 }

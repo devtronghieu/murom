@@ -1,24 +1,27 @@
 package com.example.murom.Firebase;
 
-import java.util.ArrayList;
+import java.util.HashMap;
 
 public class Schema {
     public static class User {
+        public String id;
         public String bio;
         public String email;
         public String passwordHash;
         public String profilePicture;
         public String username;
-        public ArrayList<String> viewedStories;
+        public HashMap<String, String> viewedStories;
 
         public User(
+                String id,
                 String bio,
                 String email,
                 String passwordHash,
                 String profilePicture,
                 String username,
-                ArrayList<String> viewedStories
+                HashMap<String, String> viewedStories
         ) {
+            this.id = id;
             this.bio = bio;
             this.email = email;
             this.passwordHash = passwordHash;
@@ -29,6 +32,7 @@ public class Schema {
     }
 
     public static class Story {
+        public String id;
         public String createdAt;
         public String uid;
         public String url;

@@ -7,6 +7,7 @@ import android.view.ViewGroup;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
+import android.widget.TextView;
 import android.widget.VideoView;
 
 import androidx.constraintlayout.widget.ConstraintLayout;
@@ -30,12 +31,15 @@ public class StoryFragment extends Fragment {
     ConstraintLayout touchSurface;
 
 
-    StoryFragmentCallback callback;
     ArrayList<Schema.Story> stories;
+    Schema.User profile;
+    StoryFragmentCallback callback;
+
     int currentStoryIndex = 0;
 
-    public StoryFragment(ArrayList<Schema.Story> stories, StoryFragmentCallback callback) {
+    public StoryFragment(ArrayList<Schema.Story> stories, Schema.User profile, StoryFragmentCallback callback) {
         this.stories = stories;
+        this.profile = profile;
         this.callback = callback;
     }
 
@@ -51,10 +55,15 @@ public class StoryFragment extends Fragment {
         ImageButton closeBtn = rootView.findViewById(R.id.story_fragment_close_button);
         closeBtn.setOnClickListener(v -> callback.onClose());
 
+        TextView username = rootView.findViewById(R.id.story_fragment_username);
+        ImageView avatar = rootView.findViewById(R.id.story_fragment_avatar);
         progressBar = rootView.findViewById(R.id.story_fragment_image_loading);
         imageView = rootView.findViewById(R.id.story_fragment_image);
         videoView = rootView.findViewById(R.id.story_fragment_video);
         touchSurface = rootView.findViewById(R.id.story_fragment_touch_surface);
+
+        username.setText(profile.username);
+        Glide.with(this).load(profile.profilePicture).into(avatar);
 
         touchSurface.setOnClickListener(v -> {
             if (currentStoryIndex < stories.size() - 1) {

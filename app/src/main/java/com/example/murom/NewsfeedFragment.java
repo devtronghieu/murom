@@ -26,6 +26,8 @@ import com.google.firebase.storage.StorageReference;
 
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Objects;
 import java.util.Random;
 
 public class NewsfeedFragment extends Fragment {
@@ -76,9 +78,14 @@ public class NewsfeedFragment extends Fragment {
         void onViewStory(String uid);
     }
 
+    Schema.User profile;
+    HashMap<String, ArrayList<Schema.Story>> storiesMap;
     NewsfeedFragmentCallback callback;
 
-    public NewsfeedFragment(NewsfeedFragmentCallback callback) {
+    public NewsfeedFragment(Schema.User profile, HashMap<String, ArrayList<Schema.Story>> storiesMap, NewsfeedFragmentCallback callback) {
+        this.profile = profile;
+        this.storiesMap = storiesMap;
+
         this.callback = callback;
     }
 
@@ -106,15 +113,23 @@ public class NewsfeedFragment extends Fragment {
                 storiesRecycler.setLayoutManager(new LinearLayoutManager(getContext(), RecyclerView.HORIZONTAL, false));
                 storiesRecycler.addItemDecoration(new SpacingItemDecoration(40, 0));
 
-                ArrayList<StoryBubbleAdapter.StoryBubbleModel> stories = new ArrayList<>();
-                stories.add(new StoryBubbleAdapter.StoryBubbleModel(
+                ArrayList<StoryBubbleAdapter.StoryBubbleModel> storyBubbles = new ArrayList<>();
+
+                ArrayList<Schema.Story> myStories = storiesMap.get(uid);
+
+                boolean isRead = true;
+                if (myStories != null && myStories.size() > 1) {
+                    isRead = Objects.equals(profile.viewedStories.get(profile.id), myStories.get(myStories.size() - 1).id);
+                }
+
+                storyBubbles.add(new StoryBubbleAdapter.StoryBubbleModel(
                         uid,
                         user.profilePicture,
                         "Your story",
-                        false
+                        isRead
                 ));
 
-                StoryBubbleAdapter storyBubbleAdapter = new StoryBubbleAdapter(stories, new StoryBubbleAdapter.StoryBubbleCallback() {
+                StoryBubbleAdapter storyBubbleAdapter = new StoryBubbleAdapter(storyBubbles, new StoryBubbleAdapter.StoryBubbleCallback() {
                     @Override
                     public void handleUploadStory() {
                         launcher.launch(new PickVisualMediaRequest.Builder()
