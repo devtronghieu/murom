@@ -16,4 +16,12 @@
         <item name="maxImageSize">30dp</item>
         <item name="shapeAppearance">@style/circular</item>
     </style>
+
+    <style name="post_image" parent="Base.CardView">
+        <item name="layout_constraintDimensionRatio">1:1</item>
+        <item name="android:layout_height">0dp</item>
+        <item name="android:layout_width">match_parent</item>
+        <item name="layout_constraintEnd_toEndOf">parent</item>
+        <item name="layout_constraintStart_toStartOf">parent</item>
+    </style>
 </resources>
