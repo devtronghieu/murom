@@ -1,7 +1,6 @@
 package com.example.murom.Recycler;
 
 import android.content.Context;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -17,12 +16,12 @@ import com.example.murom.R;
 
 import java.util.ArrayList;
 
-public class NewsfeedAdapter extends RecyclerView.Adapter<NewsfeedAdapter.ViewHolder> {
+public class PostAdapter extends RecyclerView.Adapter<PostAdapter.ViewHolder> {
     private Context context;
 
-    private final ArrayList<NewsfeedModel> localDataSet;
+    private final ArrayList<PostModel> localDataSet;
 
-    public static class NewsfeedModel {
+    public static class PostModel {
         private final String avatarUrl;
         private final String username;
         private final ArrayList<String> images;
@@ -30,7 +29,7 @@ public class NewsfeedAdapter extends RecyclerView.Adapter<NewsfeedAdapter.ViewHo
         private final ArrayList<String> lovedByUsers;
         private final boolean loved;
 
-        public NewsfeedModel(
+        public PostModel(
                 String avatarUrl,
                 String username,
                 ArrayList<String> images,
@@ -59,17 +58,17 @@ public class NewsfeedAdapter extends RecyclerView.Adapter<NewsfeedAdapter.ViewHo
         public ViewHolder(View view) {
             super(view);
 
-            avatar = view.findViewById(R.id.newsfeed_avatar);
-            username = view.findViewById(R.id.newsfeed_username);
-            image = view.findViewById(R.id.newsfeed_image);
-            loveBtn = view.findViewById(R.id.newsfeed_love_icon);
-            commentBtn = view.findViewById(R.id.newsfeed_comment_icon);
-            loveText = view.findViewById(R.id.newsfeed_love_text);
-            caption = view.findViewById(R.id.newsfeed_desc);
+            avatar = view.findViewById(R.id.post_avatar);
+            username = view.findViewById(R.id.post_username);
+            image = view.findViewById(R.id.post_image);
+            loveBtn = view.findViewById(R.id.post_love_icon);
+            commentBtn = view.findViewById(R.id.post_comment_icon);
+            loveText = view.findViewById(R.id.post_love_text);
+            caption = view.findViewById(R.id.post_desc);
         }
     }
 
-    public NewsfeedAdapter(ArrayList<NewsfeedAdapter.NewsfeedModel> dataSet) {
+    public PostAdapter(ArrayList<PostModel> dataSet) {
         localDataSet = dataSet;
     }
 
@@ -79,14 +78,14 @@ public class NewsfeedAdapter extends RecyclerView.Adapter<NewsfeedAdapter.ViewHo
         this.context = viewGroup.getContext();
 
         View view = LayoutInflater.from(this.context)
-                .inflate(R.layout.component_newsfeed, viewGroup, false);
+                .inflate(R.layout.component_post, viewGroup, false);
 
         return new ViewHolder(view);
     }
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder viewHolder, int position) {
-        NewsfeedModel data = localDataSet.get(position);
+        PostModel data = localDataSet.get(position);
 
         viewHolder.username.setText(data.username);
 
