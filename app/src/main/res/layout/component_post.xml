@@ -6,7 +6,7 @@
     android:layout_height="wrap_content">
 
     <LinearLayout
-        android:id="@+id/newsfeed_header_container"
+        android:id="@+id/post_header_container"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="center_vertical"
@@ -43,7 +43,7 @@
         android:contentDescription="@string/newsfeed_image" />
 
     <LinearLayout
-        android:id="@+id/newsfeed_bottom_container"
+        android:id="@+id/post_bottom_container"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"

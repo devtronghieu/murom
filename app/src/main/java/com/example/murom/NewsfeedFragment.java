@@ -19,7 +19,7 @@ import com.example.murom.Firebase.Auth;
 import com.example.murom.Firebase.Database;
 import com.example.murom.Firebase.Schema;
 import com.example.murom.Firebase.Storage;
-import com.example.murom.Recycler.NewsfeedAdapter;
+import com.example.murom.Recycler.PostAdapter;
 import com.example.murom.Recycler.SpacingItemDecoration;
 import com.example.murom.Recycler.StoryBubbleAdapter;
 import com.google.firebase.storage.StorageReference;
@@ -145,10 +145,10 @@ public class NewsfeedFragment extends Fragment {
                 storiesRecycler.setAdapter(storyBubbleAdapter);
 
                 // Newsfeeds Recycler
-                RecyclerView newsfeedsRecycler = rootView.findViewById(R.id.newsfeeds_recycler);
-                newsfeedsRecycler.setLayoutManager(new LinearLayoutManager(getContext(), RecyclerView.VERTICAL, false));
-                newsfeedsRecycler.addItemDecoration(new SpacingItemDecoration(0, 45));
-                ArrayList<NewsfeedAdapter.NewsfeedModel> newsfeeds = new ArrayList<>();
+                RecyclerView postRecycler = rootView.findViewById(R.id.post_recycler);
+                postRecycler.setLayoutManager(new LinearLayoutManager(getContext(), RecyclerView.VERTICAL, false));
+                postRecycler.addItemDecoration(new SpacingItemDecoration(0, 45));
+                ArrayList<PostAdapter.PostModel> newsfeeds = new ArrayList<>();
 
                 for (int i = 0; i < rand.nextInt(5) + 5; i++) {
                     ArrayList<String> images = new ArrayList<>();
@@ -159,7 +159,7 @@ public class NewsfeedFragment extends Fragment {
                         lovedByUsers.add("username" + j);
                     }
 
-                    newsfeeds.add(new NewsfeedAdapter.NewsfeedModel(
+                    newsfeeds.add(new PostAdapter.PostModel(
                             "https://picsum.photos/200",
                             "username" + i, images,
                             "Caption" + i,
@@ -167,8 +167,8 @@ public class NewsfeedFragment extends Fragment {
                             rand.nextBoolean()
                     ));
                 }
-                NewsfeedAdapter newsfeedAdapter = new NewsfeedAdapter(newsfeeds);
-                newsfeedsRecycler.setAdapter(newsfeedAdapter);
+                PostAdapter postAdapter = new PostAdapter(newsfeeds);
+                postRecycler.setAdapter(postAdapter);
             }
 
             @Override
