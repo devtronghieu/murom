@@ -49,4 +49,23 @@ public class Schema {
             return createdAt;
         }
     }
+
+    public static class Post {
+        public String id;
+        public String userId;
+        public String url;
+        public String type;
+        public String caption;
+        public String createdAt;
+
+        public Post(String id, String userId, String url, String type, String caption, String createdAt) {
+            this.id = id;
+            this.userId = userId;
+            this.url = url;
+            this.type = type;
+            this.caption = caption;
+            this.createdAt = createdAt;
+        }
+    }
+
 }
