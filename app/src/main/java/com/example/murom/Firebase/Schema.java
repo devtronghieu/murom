@@ -38,7 +38,8 @@ public class Schema {
         public String url;
         public String type;
 
-        public Story(String createdAt, String uid, String url, String type) {
+        public Story(String id, String createdAt, String uid, String url, String type) {
+            this.id = id;
             this.createdAt = createdAt;
             this.uid = uid;
             this.url = url;

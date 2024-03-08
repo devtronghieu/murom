@@ -66,22 +66,20 @@ public class Database {
 
     public static final CollectionReference storyCollection = db.collection("Story");
 
-    public static void addStory(Schema.Story doc) {
+    public static void addStory(Schema.Story story) {
         Map<String, Object> documentData = new HashMap<>();
-        documentData.put("created_at", doc.createdAt);
-        documentData.put("user_id", doc.uid);
-        documentData.put("url", doc.url);
-        documentData.put("type", doc.type);
+        documentData.put("created_at", story.createdAt);
+        documentData.put("user_id", story.uid);
+        documentData.put("url", story.url);
+        documentData.put("type", story.type);
 
         String storyID = UUID.randomUUID().toString();
 
         storyCollection
                 .document(storyID)
                 .set(documentData)
-                .addOnSuccessListener(documentReference -> {
-                    Log.d("-->", "Uploaded Story doc: " + storyID);
-                })
-                .addOnFailureListener(e -> Log.d("-->", "Failed to add Story doc: " + e));;
+                .addOnSuccessListener(documentReference -> Log.d("-->", "Uploaded Story doc: " + storyID))
+                .addOnFailureListener(e -> Log.d("-->", "Failed to add Story doc: " + e));
     }
 
     public interface GetStoriesByUIDCallback {
@@ -104,6 +102,7 @@ public class Database {
                             DocumentSnapshot doc = docs.get(i);
 
                             Schema.Story story = new Schema.Story(
+                                    "",
                                     "",
                                     "",
                                     "",

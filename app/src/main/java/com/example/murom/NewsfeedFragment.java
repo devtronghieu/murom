@@ -29,6 +29,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Objects;
 import java.util.Random;
+import java.util.UUID;
 
 public class NewsfeedFragment extends Fragment {
     Activity activity;
@@ -59,7 +60,7 @@ public class NewsfeedFragment extends Fragment {
                                 StorageReference storyRef = Storage.getRef(storagePath);
                                 storyRef.getDownloadUrl()
                                         .addOnSuccessListener(storyURI -> {
-                                            Schema.Story story = new Schema.Story(createdAt, uid, storyURI.toString(), type);
+                                            Schema.Story story = new Schema.Story(UUID.randomUUID().toString(), createdAt, uid, storyURI.toString(), type);
                                             Database.addStory(story);
                                             Toast.makeText(requireContext(), "Uploaded!", Toast.LENGTH_SHORT).show();
                                         })

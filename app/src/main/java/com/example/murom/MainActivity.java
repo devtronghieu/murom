@@ -14,6 +14,7 @@ import androidx.fragment.app.FragmentTransaction;
 import com.example.murom.Firebase.Auth;
 import com.example.murom.Firebase.Database;
 import com.example.murom.Firebase.Schema;
+import com.example.murom.State.AppState;
 import com.example.murom.databinding.ActivityMainBinding;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
@@ -51,6 +52,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onGetUserSuccess(Schema.User user) {
                 profile = user;
+                AppState.getInstance().profile = profile;
                 Database.getStoriesByUID(uid, new Database.GetStoriesByUIDCallback() {
                     @Override
                     public void onGetStoriesSuccess(ArrayList<Schema.Story> stories) {
@@ -166,7 +168,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void handleViewStory(String uid) {
-        storyFragment = new StoryFragment(storiesMap.get(uid), profile, () -> removeFullscreenFragment(storyFragment));
+        storyFragment = new StoryFragment(storiesMap.get(uid), () -> removeFullscreenFragment(storyFragment));
         addFullscreenFragment(storyFragment);
     }
 }

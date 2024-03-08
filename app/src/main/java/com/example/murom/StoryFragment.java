@@ -18,6 +18,7 @@ import com.bumptech.glide.Glide;
 import com.example.murom.Firebase.Auth;
 import com.example.murom.Firebase.Database;
 import com.example.murom.Firebase.Schema;
+import com.example.murom.State.AppState;
 
 import java.util.ArrayList;
 import java.util.Objects;
@@ -41,9 +42,9 @@ public class StoryFragment extends Fragment {
 
     int currentStoryIndex = 0;
 
-    public StoryFragment(ArrayList<Schema.Story> stories, Schema.User profile, StoryFragmentCallback callback) {
+    public StoryFragment(ArrayList<Schema.Story> stories, StoryFragmentCallback callback) {
         this.stories = stories;
-        this.profile = profile;
+        this.profile = AppState.getInstance().profile;
         this.callback = callback;
     }
 
