@@ -22,11 +22,11 @@ import com.example.murom.Firebase.Storage;
 import com.example.murom.Recycler.PostAdapter;
 import com.example.murom.Recycler.SpacingItemDecoration;
 import com.example.murom.Recycler.StoryBubbleAdapter;
+import com.example.murom.State.AppState;
 import com.google.firebase.storage.StorageReference;
 
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Objects;
 import java.util.Random;
 import java.util.UUID;
@@ -79,14 +79,9 @@ public class NewsfeedFragment extends Fragment {
         void onViewStory(String uid);
     }
 
-    Schema.User profile;
-    HashMap<String, ArrayList<Schema.Story>> storiesMap;
     NewsfeedFragmentCallback callback;
 
-    public NewsfeedFragment(Schema.User profile, HashMap<String, ArrayList<Schema.Story>> storiesMap, NewsfeedFragmentCallback callback) {
-        this.profile = profile;
-        this.storiesMap = storiesMap;
-
+    public NewsfeedFragment(NewsfeedFragmentCallback callback) {
         this.callback = callback;
     }
 
@@ -104,9 +99,9 @@ public class NewsfeedFragment extends Fragment {
 
         Random rand = new Random();
 
-        String uid = Auth.getUser().getUid();
+        AppState appState = AppState.getInstance();
 
-        Database.getUser(uid, new Database.GetUserCallback() {
+        Database.getUser(appState.profile.id, new Database.GetUserCallback() {
             @Override
             public void onGetUserSuccess(Schema.User user) {
                 // Stories Recycler
@@ -116,16 +111,17 @@ public class NewsfeedFragment extends Fragment {
 
                 ArrayList<StoryBubbleAdapter.StoryBubbleModel> storyBubbles = new ArrayList<>();
 
-                ArrayList<Schema.Story> myStories = storiesMap.get(uid);
+
+                ArrayList<Schema.Story> myStories = appState.storiesMap.get(appState.profile.id);
 
                 boolean isViewed = true;
                 if (myStories != null && myStories.size() >= 1) {
-                    isViewed = Objects.equals(profile.viewedStories.get(profile.id), myStories.get(myStories.size() - 1).id);
+                    isViewed = Objects.equals(appState.profile.viewedStories.get(appState.profile.id), myStories.get(myStories.size() - 1).id);
                 }
 
                 storyBubbles.add(new StoryBubbleAdapter.StoryBubbleModel(
-                        uid,
-                        user.profilePicture,
+                        appState.profile.id,
+                        appState.profile.profilePicture,
                         "Your story",
                         isViewed
                 ));

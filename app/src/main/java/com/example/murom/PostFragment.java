@@ -25,14 +25,15 @@ import android.widget.Toast;
 import android.widget.VideoView;
 
 import com.bumptech.glide.Glide;
-import com.example.murom.Firebase.Auth;
 import com.example.murom.Firebase.Database;
 import com.example.murom.Firebase.Schema;
 import com.example.murom.Firebase.Storage;
+import com.example.murom.State.AppState;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.firebase.storage.StorageReference;
 
 import java.time.Instant;
+import java.util.Objects;
 import java.util.UUID;
 
 public class PostFragment extends Fragment {
@@ -79,7 +80,7 @@ public class PostFragment extends Fragment {
                     Log.d("-->", "type: " + type);
                     postUri = uri;
 
-                    if (type == "image") {
+                    if (Objects.equals(type, "image")) {
                         postImage.setVisibility(View.VISIBLE);
                         postVideo.setVisibility(View.GONE);
                         Glide.with(this).load(uri).into(postImage);
@@ -92,9 +93,9 @@ public class PostFragment extends Fragment {
                 }
             });
 
-    public PostFragment(Schema.User profile) {
+    public PostFragment() {
         // Required empty public constructor
-        this.profile = profile;
+        this.profile = AppState.getInstance().profile;
     }
 
     @Override

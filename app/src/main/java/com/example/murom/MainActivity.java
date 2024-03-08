@@ -20,7 +20,6 @@ import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 
 public class MainActivity extends AppCompatActivity {
     FloatingActionButton home;
@@ -38,25 +37,27 @@ public class MainActivity extends AppCompatActivity {
     Fragment profileFragment;
     Fragment storyFragment;
 
-    String uid;
-    Schema.User profile;
-    HashMap<String, ArrayList<Schema.Story>> storiesMap = new HashMap<>();
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
         // Setup env
-        uid = Auth.getUser().getUid();
+        String uid = Auth.getUser().getUid();
+
         Database.getUser(uid, new Database.GetUserCallback() {
             @Override
             public void onGetUserSuccess(Schema.User user) {
-                profile = user;
-                AppState.getInstance().profile = profile;
+                // Setup appState
+                AppState appState = AppState.getInstance();
+
+                appState.profile = user;
+
                 Database.getStoriesByUID(uid, new Database.GetStoriesByUIDCallback() {
                     @Override
                     public void onGetStoriesSuccess(ArrayList<Schema.Story> stories) {
-                        storiesMap.put(uid, stories);
+                        appState.storiesMap.put(uid, stories);
                     }
 
                     @Override
@@ -67,9 +68,9 @@ public class MainActivity extends AppCompatActivity {
 
                 // Setup fragments
                 fragmentManager = getSupportFragmentManager();
-                postFragment = new PostFragment(profile);
+                postFragment = new PostFragment();
                 searchFragment = new SearchFragment();
-                newsfeedFragment = new NewsfeedFragment(profile, storiesMap, MainActivity.this::handleViewStory);
+                newsfeedFragment = new NewsfeedFragment(MainActivity.this::handleViewStory);
                 reelsFragment = new ReelsFragment();
                 profileFragment = new ProfileFragment();
 
@@ -168,7 +169,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void handleViewStory(String uid) {
-        storyFragment = new StoryFragment(storiesMap.get(uid), () -> removeFullscreenFragment(storyFragment));
+        storyFragment = new StoryFragment(AppState.getInstance().storiesMap.get(uid), () -> removeFullscreenFragment(storyFragment));
         addFullscreenFragment(storyFragment);
     }
 }
