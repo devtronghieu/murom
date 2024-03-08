@@ -15,6 +15,8 @@ import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.fragment.app.Fragment;
 
 import com.bumptech.glide.Glide;
+import com.example.murom.Firebase.Auth;
+import com.example.murom.Firebase.Database;
 import com.example.murom.Firebase.Schema;
 
 import java.util.ArrayList;
@@ -32,6 +34,7 @@ public class StoryFragment extends Fragment {
     ConstraintLayout touchSurface;
 
 
+    String viewerID;
     ArrayList<Schema.Story> stories;
     Schema.User profile;
     StoryFragmentCallback callback;
@@ -59,6 +62,8 @@ public class StoryFragment extends Fragment {
             return rootView;
         }
 
+        viewerID = Auth.getUser().getUid();
+
         ImageButton closeBtn = rootView.findViewById(R.id.story_fragment_close_button);
         closeBtn.setOnClickListener(v -> callback.onClose());
 
@@ -79,15 +84,21 @@ public class StoryFragment extends Fragment {
                 currentStoryIndex = 0;
             }
 
-            setStory(stories.get(currentStoryIndex));
+            viewCurrentStory();
         });
 
-        setStory(stories.get(currentStoryIndex));
+        viewCurrentStory();
 
         return rootView;
     }
 
-    void setStory(Schema.Story story) {
+    void viewCurrentStory() {
+        Schema.Story story = stories.get(currentStoryIndex);
+
+        if (currentStoryIndex == stories.size() - 1) {
+            Database.setViewedStory(viewerID, story.id, story.uid);
+        }
+
         imageView.setVisibility(View.GONE);
         videoView.setVisibility(View.GONE);
         progressBar.setVisibility(View.VISIBLE);

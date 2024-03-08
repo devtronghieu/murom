@@ -110,7 +110,7 @@ public class Database {
                                     ""
                             );
 
-                            story.id = doc.getString("id");
+                            story.id = doc.getId();
                             story.createdAt = doc.getString("created_at");
                             story.uid = uid;
                             story.url = doc.getString("url");
@@ -126,5 +126,18 @@ public class Database {
                         callback.onGetStoriesFailure();
                     }
                 });
+    }
+
+    public static void setViewedStory(String viewerID, String storyID, String storyUID) {
+        DocumentReference userRef = userCollection.document(viewerID);
+        Map<String, Object> updates = new HashMap<>();
+        updates.put("viewed_stories." + storyUID, storyID);
+        userRef.update(updates).addOnCompleteListener(task -> {
+            if (task.isSuccessful()) {
+                Log.d("-->", "Update viewed_story of " + storyID);
+            } else {
+                Log.d("-->", "Failed to update viewed_story of " + storyID);
+            }
+        });
     }
 }

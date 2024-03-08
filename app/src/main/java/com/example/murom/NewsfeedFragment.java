@@ -117,16 +117,16 @@ public class NewsfeedFragment extends Fragment {
 
                 ArrayList<Schema.Story> myStories = storiesMap.get(uid);
 
-                boolean isRead = true;
-                if (myStories != null && myStories.size() > 1) {
-                    isRead = Objects.equals(profile.viewedStories.get(profile.id), myStories.get(myStories.size() - 1).id);
+                boolean isViewed = true;
+                if (myStories != null && myStories.size() >= 1) {
+                    isViewed = Objects.equals(profile.viewedStories.get(profile.id), myStories.get(myStories.size() - 1).id);
                 }
 
                 storyBubbles.add(new StoryBubbleAdapter.StoryBubbleModel(
                         uid,
                         user.profilePicture,
                         "Your story",
-                        isRead
+                        isViewed
                 ));
 
                 StoryBubbleAdapter storyBubbleAdapter = new StoryBubbleAdapter(storyBubbles, new StoryBubbleAdapter.StoryBubbleCallback() {
