@@ -67,7 +67,7 @@ public class MainActivity extends AppCompatActivity {
 
                 // Setup fragments
                 fragmentManager = getSupportFragmentManager();
-                postFragment = new PostFragment();
+                postFragment = new PostFragment(profile);
                 searchFragment = new SearchFragment();
                 newsfeedFragment = new NewsfeedFragment(profile, storiesMap, MainActivity.this::handleViewStory);
                 reelsFragment = new ReelsFragment();

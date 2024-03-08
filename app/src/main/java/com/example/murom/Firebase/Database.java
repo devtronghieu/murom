@@ -66,6 +66,8 @@ public class Database {
 
     public static final CollectionReference storyCollection = db.collection("Story");
 
+    public static final CollectionReference postCollection = db.collection("Post");
+
     public static void addStory(Schema.Story story) {
         Map<String, Object> documentData = new HashMap<>();
         documentData.put("created_at", story.createdAt);
@@ -80,6 +82,23 @@ public class Database {
                 .set(documentData)
                 .addOnSuccessListener(documentReference -> Log.d("-->", "Uploaded Story doc: " + storyID))
                 .addOnFailureListener(e -> Log.d("-->", "Failed to add Story doc: " + e));
+    }
+
+    public static void addPost(Schema.Post doc) {
+        Map<String, Object> documentData = new HashMap<>();
+        documentData.put("created_at", doc.createdAt);
+        documentData.put("user_id", doc.userId);
+        documentData.put("url", doc.url);
+        documentData.put("type", doc.type);
+        documentData.put("caption", doc.caption);
+
+        postCollection
+                .document(doc.id)
+                .set(documentData)
+                .addOnSuccessListener(documentReference -> {
+                    Log.d("-->", "Uploaded post doc: " + doc.id);
+                })
+                .addOnFailureListener(e -> Log.d("-->", "Failed to add Story doc: " + e));;
     }
 
     public interface GetStoriesByUIDCallback {
