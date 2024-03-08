@@ -1,7 +1,11 @@
 package com.example.murom;
 
+import android.app.Activity;
 import android.os.Bundle;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.PickVisualMediaRequest;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -13,30 +17,32 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
 import android.widget.ImageButton;
+import android.widget.ImageView;
+import android.widget.TextView;
+import android.widget.Toast;
+import android.widget.VideoView;
 
-import com.example.murom.Recycler.PostImageAdapter;
+import com.bumptech.glide.Glide;
+import com.example.murom.Firebase.Auth;
+import com.example.murom.Firebase.Database;
+import com.example.murom.Firebase.Schema;
+import com.example.murom.Firebase.Storage;
 import com.google.android.material.textfield.TextInputEditText;
+import com.google.firebase.storage.StorageReference;
 
-import java.util.ArrayList;
-import java.util.Random;
+import java.time.Instant;
+import java.util.UUID;
 
-/**
- * A simple {@link Fragment} subclass.
- * Use the {@link PostFragment#newInstance} factory method to
- * create an instance of this fragment.
- */
 public class PostFragment extends Fragment {
 
-    // TODO: Rename parameter arguments, choose names that match
-    // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-    private static final String ARG_PARAM1 = "param1";
-    private static final String ARG_PARAM2 = "param2";
-
-    // TODO: Rename and change types of parameters
-    private String mParam1;
-    private String mParam2;
+    Schema.User profile;
+    Activity activity;
+    String postID = UUID.randomUUID().toString();
+    String caption;
+    String type;
+    ImageView postImage;
+    VideoView postVideo;
 
     public LinearLayoutManager imagesLayoutManager = new LinearLayoutManager(getContext(), RecyclerView.HORIZONTAL, false);
 
@@ -45,7 +51,6 @@ public class PostFragment extends Fragment {
     public ConstraintLayout cropContainer;
     public ConstraintLayout rotateContainer;
     public ConstraintLayout addContainer;
-
 
     // Initialize edit buttons
     public ImageButton flipButton;
@@ -57,40 +62,62 @@ public class PostFragment extends Fragment {
     public ConstraintLayout flipOptions;
     public ConstraintLayout cropOptions;
     public ConstraintLayout rotateOptions;
-    public ConstraintLayout addOptions;
     public ImageButton closeButton;
 
-    int currentImageIndex = 0;
+    public TextView addImageText;
 
-    public PostFragment() {
+    ActivityResultLauncher<PickVisualMediaRequest> launcher =
+            registerForActivityResult(new ActivityResultContracts.PickVisualMedia(), uri -> {
+                Log.d("-->", uri.toString());
+
+                if (uri == null) {
+                    Toast.makeText(requireContext(), "No image selected!", Toast.LENGTH_SHORT).show();
+                } else {
+                    String createdAt = Instant.now().toString();
+
+                    String storagePath = "post/" + postID;
+
+                    String mimeType = activity.getContentResolver().getType(uri);
+
+                    boolean isImage = mimeType != null && mimeType.startsWith("image/");
+
+                    if (isImage) {
+                        type = "image";
+                        Glide.with(this).load(uri).into(postImage);
+                    } else {
+                        type = "video";
+                        postVideo.setVideoPath(uri.toString());
+                        postVideo.start();
+                    }
+
+                    Storage.getRef(storagePath).putFile(uri)
+                            .addOnSuccessListener(taskSnapshot -> {
+                                StorageReference postRef = Storage.getRef(storagePath);
+                                postRef.getDownloadUrl()
+                                        .addOnSuccessListener(postURI -> {
+                                            Schema.Post post = new Schema.Post(postID, profile.id, postURI.toString(), type, caption, createdAt);
+                                            Database.addPost(post);
+                                            Toast.makeText(requireContext(), "Uploaded!", Toast.LENGTH_SHORT).show();
+                                        })
+                                        .addOnFailureListener(e -> {
+                                            Log.d("-->", "failed to get post: " + e);
+                                            Toast.makeText(requireContext(), "Failed to upload post!", Toast.LENGTH_SHORT).show();
+                                        });
+                            }).addOnFailureListener(e -> {
+                                Log.d("-->", "failed to get post: " + e);
+                                Toast.makeText(requireContext(), "Failed to upload post!", Toast.LENGTH_SHORT).show();
+                            });
+                }
+            });
+
+    public PostFragment(Schema.User profile) {
         // Required empty public constructor
-    }
-
-    /**
-     * Use this factory method to create a new instance of
-     * this fragment using the provided parameters.
-     *
-     * @param param1 Parameter 1.
-     * @param param2 Parameter 2.
-     * @return A new instance of fragment PostFragment.
-     */
-    // TODO: Rename and change types and number of parameters
-    public static PostFragment newInstance(String param1, String param2) {
-        PostFragment fragment = new PostFragment();
-        Bundle args = new Bundle();
-        args.putString(ARG_PARAM1, param1);
-        args.putString(ARG_PARAM2, param2);
-        fragment.setArguments(args);
-        return fragment;
+        this.profile = profile;
     }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        if (getArguments() != null) {
-            mParam1 = getArguments().getString(ARG_PARAM1);
-            mParam2 = getArguments().getString(ARG_PARAM2);
-        }
     }
 
     @Override
@@ -98,46 +125,13 @@ public class PostFragment extends Fragment {
                              Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_post, container, false);
 
-        Random rand = new Random();
+        activity = getActivity();
+        addImageText = rootView.findViewById(R.id.text_add_image);
 
-        RecyclerView postImagesRecycler = rootView.findViewById(R.id.post_images);
-        postImagesRecycler.setLayoutManager(imagesLayoutManager);
-        ArrayList<PostImageAdapter.PostImageModel> postImages = new ArrayList<>();
-
-        for (int i = 0; i < rand.nextInt(5) + 5; i++) {
-            ArrayList<String> images = new ArrayList<>();
-            images.add("https://picsum.photos/200");
-
-            postImages.add(new PostImageAdapter.PostImageModel("https://picsum.photos/200"));
-        }
-
-        PostImageAdapter postImageAdapter = new PostImageAdapter(postImages);
-        postImagesRecycler.setAdapter(postImageAdapter);
+        postImage = rootView.findViewById(R.id.post_images);
+        postVideo = rootView.findViewById(R.id.post_video);
 
         TextInputEditText captionInput = rootView.findViewById(R.id.caption_input);
-
-        // Set function for slide buttons
-        ImageButton slideBack = rootView.findViewById(R.id.slide_left);
-        ImageButton slideNext = rootView.findViewById(R.id.slide_right);
-
-        slideBack.setOnClickListener(v -> {
-            if (currentImageIndex < postImages.size() - 1) {
-                currentImageIndex--;
-            } else {
-                currentImageIndex = 0;
-            }
-
-            imagesLayoutManager.smoothScrollToPosition(postImagesRecycler, null,  currentImageIndex);
-        });
-        slideNext.setOnClickListener(v -> {
-            if (currentImageIndex < postImages.size() - 1) {
-                currentImageIndex++;
-            } else {
-                currentImageIndex = 0;
-            }
-
-            imagesLayoutManager.smoothScrollToPosition(postImagesRecycler, null,  currentImageIndex);
-        });
 
         // Set container for edit buttons
         flipContainer = rootView.findViewById(R.id.flip_button);
@@ -158,61 +152,87 @@ public class PostFragment extends Fragment {
         addButton = rootView.findViewById(R.id.add_icon);
 
         flipButton.setOnClickListener(v -> {
+            setEditOptionsNone();
             flipOptions.setVisibility(View.VISIBLE);
-            cropOptions.setVisibility(View.GONE);
-            rotateOptions.setVisibility(View.GONE);
             closeButton.setVisibility(View.VISIBLE);
 
-            flipContainer.setBackgroundColor(getResources().getColor(R.color.primary_100, null));
+            setEditButtonActive(flipContainer);
         });
 
         cropButton.setOnClickListener(v -> {
-            flipOptions.setVisibility(View.GONE);
+            setEditOptionsNone();
             cropOptions.setVisibility(View.VISIBLE);
-            rotateOptions.setVisibility(View.GONE);
             closeButton.setVisibility(View.VISIBLE);
 
-            cropContainer.setBackgroundColor(getResources().getColor(R.color.primary_100, null));
+            setEditButtonActive(cropContainer);
         });
 
         rotateButton.setOnClickListener(v -> {
-            flipOptions.setVisibility(View.GONE);
-            cropOptions.setVisibility(View.GONE);
+            setEditOptionsNone();
             rotateOptions.setVisibility(View.VISIBLE);
             closeButton.setVisibility(View.VISIBLE);
 
-            rotateContainer.setBackgroundColor(getResources().getColor(R.color.primary_100, null));
+            setEditButtonActive(rotateContainer);
+        });
+
+        addButton.setOnClickListener(v -> {
+            setEditOptionsNone();
+            setEditButtonActive(addContainer);
+            uploadPost();
         });
 
         closeButton.setOnClickListener(v -> {
-            flipOptions.setVisibility(View.GONE);
-            cropOptions.setVisibility(View.GONE);
-            rotateOptions.setVisibility(View.GONE);
-            closeButton.setVisibility(View.GONE);
-
+            setEditOptionsNone();
         });
 
 
         captionInput.addTextChangedListener(new TextWatcher() {
             @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-                String caption = String.valueOf(captionInput.getText());
-                Log.d("-->", "beforeTextChanged: " + s);
-            }
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
 
             @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) {
-                String caption = String.valueOf(captionInput.getText());
-                Log.d("-->", "onTextChanged: " + s);
-            }
+            public void onTextChanged(CharSequence s, int start, int before, int count) {}
 
             @Override
             public void afterTextChanged(Editable s) {
-                String caption = String.valueOf(captionInput.getText());
-                Log.d("-->", "afterTextChanged: " + s);
+                String captionString = String.valueOf(captionInput.getText());
+                caption = captionString;
             }
         });
 
 
-        return rootView;    }
+        return rootView;
+    }
+
+    private void setEditButtonActive(ConstraintLayout button) {
+        button.setBackgroundColor(getResources().getColor(R.color.primary_100, null));
+    }
+
+    private void setEditOptionsNone() {
+        flipContainer.setBackgroundColor(getResources().getColor(R.color.white, null));
+        cropContainer.setBackgroundColor(getResources().getColor(R.color.white, null));
+        rotateContainer.setBackgroundColor(getResources().getColor(R.color.white, null));
+        addContainer.setBackgroundColor(getResources().getColor(R.color.white, null));
+        closeButton.setVisibility(View.GONE);
+
+        flipOptions.setVisibility(View.GONE);
+        cropOptions.setVisibility(View.GONE);
+        rotateOptions.setVisibility(View.GONE);
+        closeButton.setVisibility(View.GONE);
+    }
+
+    private void uploadPost() {
+        if (type == "image") {
+            postImage.setVisibility(View.VISIBLE);
+            postVideo.setVisibility(View.GONE);
+        } else {
+            postImage.setVisibility(View.GONE);
+            postVideo.setVisibility(View.VISIBLE);
+        }
+
+        launcher.launch(new PickVisualMediaRequest.Builder().setMediaType(ActivityResultContracts.PickVisualMedia.ImageAndVideo.INSTANCE).build());
+
+        addImageText.setVisibility(View.GONE);
+    }
+
 }
