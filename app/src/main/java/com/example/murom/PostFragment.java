@@ -1,6 +1,7 @@
 package com.example.murom;
 
 import android.app.Activity;
+import android.net.Uri;
 import android.os.Bundle;
 
 import androidx.activity.result.ActivityResultLauncher;
@@ -41,6 +42,7 @@ public class PostFragment extends Fragment {
     String postID = UUID.randomUUID().toString();
     String caption;
     String type;
+    Uri postUri;
     ImageView postImage;
     VideoView postVideo;
 
@@ -65,48 +67,28 @@ public class PostFragment extends Fragment {
     public ImageButton closeButton;
 
     public TextView addImageText;
+    public ImageButton uploadButton;
 
     ActivityResultLauncher<PickVisualMediaRequest> launcher =
             registerForActivityResult(new ActivityResultContracts.PickVisualMedia(), uri -> {
-                Log.d("-->", uri.toString());
-
                 if (uri == null) {
                     Toast.makeText(requireContext(), "No image selected!", Toast.LENGTH_SHORT).show();
                 } else {
-                    String createdAt = Instant.now().toString();
-
-                    String storagePath = "post/" + postID;
-
                     String mimeType = activity.getContentResolver().getType(uri);
+                    type = mimeType != null && mimeType.startsWith("image/") ? "image" : "video";
+                    Log.d("-->", "type: " + type);
+                    postUri = uri;
 
-                    boolean isImage = mimeType != null && mimeType.startsWith("image/");
-
-                    if (isImage) {
-                        type = "image";
+                    if (type == "image") {
+                        postImage.setVisibility(View.VISIBLE);
+                        postVideo.setVisibility(View.GONE);
                         Glide.with(this).load(uri).into(postImage);
                     } else {
-                        type = "video";
+                        postImage.setVisibility(View.GONE);
+                        postVideo.setVisibility(View.VISIBLE);
                         postVideo.setVideoPath(uri.toString());
                         postVideo.start();
                     }
-
-                    Storage.getRef(storagePath).putFile(uri)
-                            .addOnSuccessListener(taskSnapshot -> {
-                                StorageReference postRef = Storage.getRef(storagePath);
-                                postRef.getDownloadUrl()
-                                        .addOnSuccessListener(postURI -> {
-                                            Schema.Post post = new Schema.Post(postID, profile.id, postURI.toString(), type, caption, createdAt);
-                                            Database.addPost(post);
-                                            Toast.makeText(requireContext(), "Uploaded!", Toast.LENGTH_SHORT).show();
-                                        })
-                                        .addOnFailureListener(e -> {
-                                            Log.d("-->", "failed to get post: " + e);
-                                            Toast.makeText(requireContext(), "Failed to upload post!", Toast.LENGTH_SHORT).show();
-                                        });
-                            }).addOnFailureListener(e -> {
-                                Log.d("-->", "failed to get post: " + e);
-                                Toast.makeText(requireContext(), "Failed to upload post!", Toast.LENGTH_SHORT).show();
-                            });
                 }
             });
 
@@ -127,6 +109,7 @@ public class PostFragment extends Fragment {
 
         activity = getActivity();
         addImageText = rootView.findViewById(R.id.text_add_image);
+        uploadButton = rootView.findViewById(R.id.upload_button);
 
         postImage = rootView.findViewById(R.id.post_images);
         postVideo = rootView.findViewById(R.id.post_video);
@@ -178,13 +161,14 @@ public class PostFragment extends Fragment {
         addButton.setOnClickListener(v -> {
             setEditOptionsNone();
             setEditButtonActive(addContainer);
-            uploadPost();
+            selectMediaResource();
         });
 
         closeButton.setOnClickListener(v -> {
             setEditOptionsNone();
         });
 
+        uploadButton.setOnClickListener(v -> uploadPost());
 
         captionInput.addTextChangedListener(new TextWatcher() {
             @Override
@@ -221,18 +205,33 @@ public class PostFragment extends Fragment {
         closeButton.setVisibility(View.GONE);
     }
 
-    private void uploadPost() {
-        if (type == "image") {
-            postImage.setVisibility(View.VISIBLE);
-            postVideo.setVisibility(View.GONE);
-        } else {
-            postImage.setVisibility(View.GONE);
-            postVideo.setVisibility(View.VISIBLE);
-        }
-
+    private void selectMediaResource() {
         launcher.launch(new PickVisualMediaRequest.Builder().setMediaType(ActivityResultContracts.PickVisualMedia.ImageAndVideo.INSTANCE).build());
-
         addImageText.setVisibility(View.GONE);
+        setEditOptionsNone();
+    }
+
+    private void uploadPost() {
+        String createdAt = Instant.now().toString();
+        String storagePath = "post/" + postID;
+
+        Storage.getRef(storagePath).putFile(postUri)
+                .addOnSuccessListener(taskSnapshot -> {
+                    StorageReference postRef = Storage.getRef(storagePath);
+                    postRef.getDownloadUrl()
+                            .addOnSuccessListener(postURI -> {
+                                Schema.Post post = new Schema.Post(postID, profile.id, postURI.toString(), type, caption, createdAt);
+                                Database.addPost(post);
+                                Toast.makeText(requireContext(), "Uploaded!", Toast.LENGTH_SHORT).show();
+                            })
+                            .addOnFailureListener(e -> {
+                                Log.d("-->", "failed to get post: " + e);
+                                Toast.makeText(requireContext(), "Failed to upload post!", Toast.LENGTH_SHORT).show();
+                            });
+                }).addOnFailureListener(e -> {
+                    Log.d("-->", "failed to get post: " + e);
+                    Toast.makeText(requireContext(), "Failed to upload post!", Toast.LENGTH_SHORT).show();
+                });
     }
 
 }

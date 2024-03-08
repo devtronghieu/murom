@@ -25,7 +25,7 @@
             app:layout_constraintTop_toTopOf="parent" />
 
         <ImageButton
-            android:id="@+id/upload"
+            android:id="@+id/upload_button"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:background="#00000000"
@@ -52,13 +52,15 @@
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        app:layout_constraintDimensionRatio="1:1">
 
         <ImageView
             android:id="@+id/post_images"
             android:visibility="visible"
             android:layout_width="match_parent"
             android:layout_height="0dp"
+            android:background="#00000000"
             app:layout_constraintDimensionRatio="1:1"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
@@ -69,6 +71,7 @@
             android:visibility="gone"
             android:layout_width="match_parent"
             android:layout_height="0dp"
+            android:background="#00000000"
             app:layout_constraintDimensionRatio="1:1"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
