@@ -3,10 +3,22 @@ package com.example.murom;
 import android.os.Bundle;
 
 import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.GridLayoutManager;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+
+import com.example.murom.Recycler.GridSpacingItemDecoration;
+import com.example.murom.Recycler.PostAdapter;
+import com.example.murom.Recycler.PostImageAdapter;
+import com.example.murom.Recycler.SpacingItemDecoration;
+import com.example.murom.State.AppState;
+
+import java.util.ArrayList;
+import java.util.Random;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -58,7 +70,23 @@ public class SearchFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
+        View rootView = inflater.inflate(R.layout.fragment_search, container, false);
+        Random rand = new Random();
+
         // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_search, container, false);
+
+        RecyclerView postImageRecycler = rootView.findViewById(R.id.post_recycler);
+        postImageRecycler.setLayoutManager(new GridLayoutManager(getContext(), 3));
+        postImageRecycler.addItemDecoration(new GridSpacingItemDecoration(3, 5, true));
+        ArrayList<PostImageAdapter.PostImageModel> search_result = new ArrayList<>();
+
+        for (int i = 0; i < rand.nextInt(5) + 5; i++) {
+            search_result.add(new PostImageAdapter.PostImageModel(
+                    "https://picsum.photos/200"
+            ));
+        }
+        PostImageAdapter postImageAdapter = new PostImageAdapter(search_result);
+        postImageRecycler.setAdapter(postImageAdapter);
+        return rootView;
     }
 }
