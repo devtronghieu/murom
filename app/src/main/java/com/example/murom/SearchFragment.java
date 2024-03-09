@@ -27,6 +27,7 @@ import com.example.murom.Recycler.GridSpacingItemDecoration;
 import com.example.murom.Recycler.PostAdapter;
 import com.example.murom.Recycler.PostImageAdapter;
 import com.example.murom.Recycler.SpacingItemDecoration;
+import com.example.murom.Recycler.UserAdapter;
 import com.example.murom.State.AppState;
 
 import java.text.MessageFormat;
@@ -89,15 +90,24 @@ public class SearchFragment extends Fragment {
         TextView keyword = rootView.findViewById(R.id.keyword);
         TextView postsCount = rootView.findViewById(R.id.posts_count);
         TextView popularPosts = rootView.findViewById(R.id.popular_posts);
-        RecyclerView postImageRecycler = rootView.findViewById(R.id.post_recycler);
+        RecyclerView resultRecycler = rootView.findViewById(R.id.result_recycler);
 
-        popularPosts.setVisibility(rootView.INVISIBLE);
+        resultRecycler.addItemDecoration(new GridSpacingItemDecoration(5));
         searchEditText.setOnEditorActionListener(new TextView.OnEditorActionListener() {
             @Override
             public boolean onEditorAction(TextView textView, int actionId, KeyEvent keyEvent) {
                 if (actionId == EditorInfo.IME_ACTION_DONE || actionId == EditorInfo.IME_ACTION_SEARCH) {
-                    search(searchEditText.getText().toString(), keyword, postsCount, postImageRecycler);
-                    popularPosts.setVisibility(rootView.VISIBLE);
+                    String query = searchEditText.getText().toString();
+                    if (query.startsWith("#")) {
+                        resultRecycler.setLayoutManager(new GridLayoutManager(getContext(), 3));
+                        searchKeyword(query, keyword, postsCount, resultRecycler);
+                        popularPosts.setText("Popular Posts");
+                    }
+                    else {
+                        resultRecycler.setLayoutManager(new GridLayoutManager(getContext(), 2));
+                        searchUsername(query, keyword, postsCount, resultRecycler);
+                        popularPosts.setText("Most Related Accounts");
+                    }
                     InputMethodManager in = (InputMethodManager) getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
                     assert in != null;
                     in.hideSoftInputFromWindow(searchEditText.getApplicationWindowToken(), InputMethodManager.HIDE_NOT_ALWAYS);
@@ -110,12 +120,11 @@ public class SearchFragment extends Fragment {
         return rootView;
     }
 
-    private void search(String search_keyword, TextView keyword, TextView postsCount, RecyclerView postImageRecycler) {
+    private void searchKeyword(String query, TextView keyword, TextView postsCount, RecyclerView postImageRecycler) {
         Random rand = new Random();
 
-        keyword.setText(String.format("#%s", search_keyword));
-        postImageRecycler.setLayoutManager(new GridLayoutManager(getContext(), 3));
-        postImageRecycler.addItemDecoration(new GridSpacingItemDecoration(3, 5, true));
+        keyword.setText(query);
+
         ArrayList<PostImageAdapter.PostImageModel> search_result = new ArrayList<>();
 
         for (int i = 0; i < rand.nextInt(5) + 5; i++) {
@@ -126,6 +135,22 @@ public class SearchFragment extends Fragment {
         PostImageAdapter postImageAdapter = new PostImageAdapter(search_result);
         postImageRecycler.setAdapter(postImageAdapter);
         postsCount.setText(MessageFormat.format("{0} posts", search_result.size()));
+    }
+
+    private void searchUsername(String query, TextView keyword, TextView postsCount, RecyclerView userRecycler) {
+        Random rand = new Random();
+
+        keyword.setText(query);
+        ArrayList<UserAdapter.UserModel> search_result = new ArrayList<>();
+
+        for (int i = 0; i < rand.nextInt(5) + 5; i++) {
+            search_result.add(new UserAdapter.UserModel(
+                    "https://picsum.photos/200", "account" + i, "profileUrl"
+            ));
+        }
+        UserAdapter userAdapter = new UserAdapter(search_result);
+        userRecycler.setAdapter(userAdapter);
+        postsCount.setText(MessageFormat.format("{0} accounts", search_result.size()));
     }
 
 }
