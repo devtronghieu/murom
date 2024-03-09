@@ -17,9 +17,9 @@ public class PostsProfileAdapter extends RecyclerView.Adapter<PostsProfileAdapte
     private Context context;
     private  final ArrayList<PostsProfileModel> localDataSet;
     public  static class PostsProfileModel{
-        private final ArrayList<String> images;
+        private final String images;
 
-        public PostsProfileModel(ArrayList<String> images){this.images = images;}
+        public PostsProfileModel(String images){this.images = images;}
     }
 
     public static class ViewHolder extends RecyclerView.ViewHolder{
@@ -40,14 +40,14 @@ public class PostsProfileAdapter extends RecyclerView.Adapter<PostsProfileAdapte
         this.context= viewGroup.getContext();
 
         View view = LayoutInflater.from(this.context)
-                .inflate(R.layout.component_post, viewGroup,false);
+                .inflate(R.layout.component_profile_post, viewGroup,false);
         return new ViewHolder(view);
     }
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder viewHolder, int position){
         PostsProfileModel data = localDataSet.get(position);
-        Glide.with(this.context).load(data.images.get(0)).into(viewHolder.posts);
+        Glide.with(this.context).load(data.images).into(viewHolder.posts);
 
     }
     @Override

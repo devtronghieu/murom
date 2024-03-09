@@ -69,7 +69,7 @@ public class MainActivity extends AppCompatActivity {
                 searchFragment = new SearchFragment();
                 newsfeedFragment = new NewsfeedFragment(profile, storiesMap, MainActivity.this::handleViewStory);
                 reelsFragment = new ReelsFragment();
-                profileFragment = new ProfileFragment();
+                profileFragment = new ProfileFragment(profile,storiesMap);
 
                 // Setup bottom nav
                 ActivityMainBinding binding = ActivityMainBinding.inflate(getLayoutInflater());

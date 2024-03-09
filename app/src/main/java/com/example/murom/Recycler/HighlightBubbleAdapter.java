@@ -19,12 +19,12 @@ import java.util.ArrayList;
 public class HighlightBubbleAdapter extends RecyclerView.Adapter<HighlightBubbleAdapter.ViewHolder> {
     private Context context;
     private final ArrayList<HighlightBubbleModel> localDataSet;
-    private final HighlightBubbleCallback callback;
+    //private final HighlightBubbleCallback callback;
 
     public interface HighlightBubbleCallback {
         void handleUploadHighlight();
 
-        void handleViewHighlight();
+        void handleViewHighlight(String uid);
     }
 
     public static class HighlightBubbleModel {
@@ -55,9 +55,8 @@ public class HighlightBubbleAdapter extends RecyclerView.Adapter<HighlightBubble
         }
     }
 
-    public HighlightBubbleAdapter(ArrayList<HighlightBubbleModel> dataSet, HighlightBubbleCallback callback) {
+    public HighlightBubbleAdapter(ArrayList<HighlightBubbleModel> dataSet) {
         localDataSet = dataSet;
-        this.callback = callback;
     }
 
     @NonNull
@@ -74,12 +73,12 @@ public class HighlightBubbleAdapter extends RecyclerView.Adapter<HighlightBubble
         HighlightBubbleModel data = localDataSet.get(position);
         viewHolder.highlightText.setText(data.text);
         Glide.with(this.context).load(data.imageUrl).into(viewHolder.highlightImage);
-        viewHolder.highlightImage.setOnClickListener(v -> callback.handleViewHighlight());
+        //viewHolder.highlightImage.setOnClickListener(v -> callback.handleViewHighlight());
 
-        if(position == 0){
-            viewHolder.uploadButton.setVisibility(View.VISIBLE);
-            viewHolder.uploadButton.setOnClickListener(v -> callback.handleViewHighlight());
-        }
+        //if(position == 0){
+            //viewHolder.uploadButton.setVisibility(View.VISIBLE);
+            //viewHolder.uploadButton.setOnClickListener(v -> callback.handleUploadHighlight());
+        //}
     }
 
     @Override

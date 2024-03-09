@@ -56,6 +56,7 @@
             android:layout_marginStart="76dp"
             android:text="Posts"
             app:layout_constraintStart_toEndOf="@+id/avatar"
+            app:layout_constraintTop_toBottomOf="@+id/num_post"
             tools:layout_editor_absoluteY="61dp" />
 
         <TextView
@@ -63,12 +64,12 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="52dp"
-            android:layout_marginBottom="16dp"
+            android:layout_marginTop="24dp"
             android:text="100"
             app:layout_constraintBottom_toTopOf="@+id/follower"
             app:layout_constraintStart_toEndOf="@+id/num_post"
             app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintVertical_bias="1.0" />
+            app:layout_constraintVertical_bias="0.111" />
 
         <TextView
             android:id="@+id/follower"
@@ -77,6 +78,7 @@
             android:layout_marginStart="20dp"
             android:text="Followers"
             app:layout_constraintStart_toEndOf="@+id/post"
+            app:layout_constraintTop_toBottomOf="@+id/num_follower"
             tools:layout_editor_absoluteY="61dp" />
 
         <TextView
@@ -96,6 +98,7 @@
             android:layout_marginStart="20dp"
             android:text="Following"
             app:layout_constraintStart_toEndOf="@+id/follower"
+            app:layout_constraintTop_toBottomOf="@+id/num_following"
             tools:layout_editor_absoluteY="61dp" />
 
         <TextView
@@ -144,7 +147,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="16dp"
-            android:text="Photos"
+            android:text="Posts"
             android:textSize="24dp"
             android:layout_marginTop="16dp"
             app:layout_constraintStart_toEndOf="@+id/imageView"
@@ -152,11 +155,12 @@
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/posts_recycler"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="10dp"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/imageView" />
+            app:layout_constraintTop_toBottomOf="@+id/imageView"
+            app:layout_constraintEnd_toEndOf="parent"/>
 
 
     </androidx.constraintlayout.widget.ConstraintLayout>
