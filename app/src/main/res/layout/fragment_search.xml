@@ -16,7 +16,7 @@
         android:padding="5dp"
         android:paddingStart="20dp"
         android:paddingEnd="10dp"
-        android:layout_margin="20dp"
+        android:layout_margin="10dp"
         android:background="@drawable/search_bar_bg">
 
         <ImageView
@@ -35,23 +35,20 @@
             android:imeOptions="actionSearch"
             android:inputType="text"
             android:background="@null" />
-
-
     </LinearLayout>
     <TextView
+        android:id="@+id/keyword"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_margin="5dp"
-        android:text="keyword"
         android:textSize="16dp"
         android:textStyle="bold"/>
     <TextView
+        android:id="@+id/posts_count"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_margin="5dp"
-        android:text="99999 posts"
         android:textSize="14dp"/>
     <TextView
+        android:id="@+id/popular_posts"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="left"

@@ -1,5 +1,9 @@
 package com.example.murom;
 
+import static androidx.core.content.ContextCompat.getSystemService;
+
+import android.app.Activity;
+import android.content.Context;
 import android.os.Bundle;
 
 import androidx.fragment.app.Fragment;
@@ -7,9 +11,17 @@ import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.text.Editable;
+import android.text.TextWatcher;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.EditorInfo;
+import android.view.inputmethod.InputMethodManager;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.TextView;
 
 import com.example.murom.Recycler.GridSpacingItemDecoration;
 import com.example.murom.Recycler.PostAdapter;
@@ -17,7 +29,9 @@ import com.example.murom.Recycler.PostImageAdapter;
 import com.example.murom.Recycler.SpacingItemDecoration;
 import com.example.murom.State.AppState;
 
+import java.text.MessageFormat;
 import java.util.ArrayList;
+import java.util.Objects;
 import java.util.Random;
 
 /**
@@ -71,11 +85,35 @@ public class SearchFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_search, container, false);
+        EditText searchEditText = rootView.findViewById(R.id.searchEditText);
+        TextView keyword = rootView.findViewById(R.id.keyword);
+        TextView postsCount = rootView.findViewById(R.id.posts_count);
+        TextView popularPosts = rootView.findViewById(R.id.popular_posts);
+        RecyclerView postImageRecycler = rootView.findViewById(R.id.post_recycler);
+
+        popularPosts.setVisibility(rootView.INVISIBLE);
+        searchEditText.setOnEditorActionListener(new TextView.OnEditorActionListener() {
+            @Override
+            public boolean onEditorAction(TextView textView, int actionId, KeyEvent keyEvent) {
+                if (actionId == EditorInfo.IME_ACTION_DONE || actionId == EditorInfo.IME_ACTION_SEARCH) {
+                    search(searchEditText.getText().toString(), keyword, postsCount, postImageRecycler);
+                    popularPosts.setVisibility(rootView.VISIBLE);
+                    InputMethodManager in = (InputMethodManager) getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
+                    assert in != null;
+                    in.hideSoftInputFromWindow(searchEditText.getApplicationWindowToken(), InputMethodManager.HIDE_NOT_ALWAYS);
+                    return true; // Consume the event
+                }
+                return false; // Let the system handle other actions
+            }
+
+        });
+        return rootView;
+    }
+
+    private void search(String search_keyword, TextView keyword, TextView postsCount, RecyclerView postImageRecycler) {
         Random rand = new Random();
 
-        // Inflate the layout for this fragment
-
-        RecyclerView postImageRecycler = rootView.findViewById(R.id.post_recycler);
+        keyword.setText(String.format("#%s", search_keyword));
         postImageRecycler.setLayoutManager(new GridLayoutManager(getContext(), 3));
         postImageRecycler.addItemDecoration(new GridSpacingItemDecoration(3, 5, true));
         ArrayList<PostImageAdapter.PostImageModel> search_result = new ArrayList<>();
@@ -87,6 +125,7 @@ public class SearchFragment extends Fragment {
         }
         PostImageAdapter postImageAdapter = new PostImageAdapter(search_result);
         postImageRecycler.setAdapter(postImageAdapter);
-        return rootView;
+        postsCount.setText(MessageFormat.format("{0} posts", search_result.size()));
     }
+
 }
