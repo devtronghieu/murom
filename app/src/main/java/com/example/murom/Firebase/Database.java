@@ -66,20 +66,37 @@ public class Database {
 
     public static final CollectionReference storyCollection = db.collection("Story");
 
-    public static void addStory(Schema.Story doc) {
+    public static final CollectionReference postCollection = db.collection("Post");
+
+    public static void addStory(Schema.Story story) {
         Map<String, Object> documentData = new HashMap<>();
-        documentData.put("created_at", doc.createdAt);
-        documentData.put("user_id", doc.uid);
-        documentData.put("url", doc.url);
-        documentData.put("type", doc.type);
+        documentData.put("created_at", story.createdAt);
+        documentData.put("user_id", story.uid);
+        documentData.put("url", story.url);
+        documentData.put("type", story.type);
 
         String storyID = UUID.randomUUID().toString();
 
         storyCollection
                 .document(storyID)
                 .set(documentData)
+                .addOnSuccessListener(documentReference -> Log.d("-->", "Uploaded Story doc: " + storyID))
+                .addOnFailureListener(e -> Log.d("-->", "Failed to add Story doc: " + e));
+    }
+
+    public static void addPost(Schema.Post doc) {
+        Map<String, Object> documentData = new HashMap<>();
+        documentData.put("created_at", doc.createdAt);
+        documentData.put("user_id", doc.userId);
+        documentData.put("url", doc.url);
+        documentData.put("type", doc.type);
+        documentData.put("caption", doc.caption);
+
+        postCollection
+                .document(doc.id)
+                .set(documentData)
                 .addOnSuccessListener(documentReference -> {
-                    Log.d("-->", "Uploaded Story doc: " + storyID);
+                    Log.d("-->", "Uploaded post doc: " + doc.id);
                 })
                 .addOnFailureListener(e -> Log.d("-->", "Failed to add Story doc: " + e));;
     }
@@ -107,10 +124,11 @@ public class Database {
                                     "",
                                     "",
                                     "",
+                                    "",
                                     ""
                             );
 
-                            story.id = doc.getString("id");
+                            story.id = doc.getId();
                             story.createdAt = doc.getString("created_at");
                             story.uid = uid;
                             story.url = doc.getString("url");
@@ -126,5 +144,18 @@ public class Database {
                         callback.onGetStoriesFailure();
                     }
                 });
+    }
+
+    public static void setViewedStory(String viewerID, String storyID, String storyUID) {
+        DocumentReference userRef = userCollection.document(viewerID);
+        Map<String, Object> updates = new HashMap<>();
+        updates.put("viewed_stories." + storyUID, storyID);
+        userRef.update(updates).addOnCompleteListener(task -> {
+            if (task.isSuccessful()) {
+                Log.d("-->", "Update viewed_story of " + storyID);
+            } else {
+                Log.d("-->", "Failed to update viewed_story of " + storyID);
+            }
+        });
     }
 }

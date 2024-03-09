@@ -32,13 +32,13 @@ public class StoryBubbleAdapter extends RecyclerView.Adapter<StoryBubbleAdapter.
         private final String uid;
         private final String imageUrl;
         private final String text;
-        private final boolean isRead;
+        private final boolean isViewed;
 
-        public StoryBubbleModel(String uid, String imageUrl, String text, boolean isRead) {
+        public StoryBubbleModel(String uid, String imageUrl, String text, boolean isViewed) {
             this.uid = uid;
             this.imageUrl = imageUrl;
             this.text = text;
-            this.isRead = isRead;
+            this.isViewed = isViewed;
         }
     }
 
@@ -90,7 +90,7 @@ public class StoryBubbleAdapter extends RecyclerView.Adapter<StoryBubbleAdapter.
             viewHolder.uploadButton.setOnClickListener(v -> callback.handleUploadStory());
         }
 
-        if (!data.isRead) {
+        if (!data.isViewed) {
             viewHolder.storyImageContainer.setBackgroundResource(R.drawable.gradient_border);
         }
     }

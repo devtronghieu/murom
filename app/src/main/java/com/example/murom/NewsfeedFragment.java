@@ -19,16 +19,17 @@ import com.example.murom.Firebase.Auth;
 import com.example.murom.Firebase.Database;
 import com.example.murom.Firebase.Schema;
 import com.example.murom.Firebase.Storage;
-import com.example.murom.Recycler.NewsfeedAdapter;
+import com.example.murom.Recycler.PostAdapter;
 import com.example.murom.Recycler.SpacingItemDecoration;
 import com.example.murom.Recycler.StoryBubbleAdapter;
+import com.example.murom.State.AppState;
 import com.google.firebase.storage.StorageReference;
 
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Objects;
 import java.util.Random;
+import java.util.UUID;
 
 public class NewsfeedFragment extends Fragment {
     Activity activity;
@@ -59,7 +60,7 @@ public class NewsfeedFragment extends Fragment {
                                 StorageReference storyRef = Storage.getRef(storagePath);
                                 storyRef.getDownloadUrl()
                                         .addOnSuccessListener(storyURI -> {
-                                            Schema.Story story = new Schema.Story(createdAt, uid, storyURI.toString(), type);
+                                            Schema.Story story = new Schema.Story(UUID.randomUUID().toString(), createdAt, uid, storyURI.toString(), type);
                                             Database.addStory(story);
                                             Toast.makeText(requireContext(), "Uploaded!", Toast.LENGTH_SHORT).show();
                                         })
@@ -78,14 +79,9 @@ public class NewsfeedFragment extends Fragment {
         void onViewStory(String uid);
     }
 
-    Schema.User profile;
-    HashMap<String, ArrayList<Schema.Story>> storiesMap;
     NewsfeedFragmentCallback callback;
 
-    public NewsfeedFragment(Schema.User profile, HashMap<String, ArrayList<Schema.Story>> storiesMap, NewsfeedFragmentCallback callback) {
-        this.profile = profile;
-        this.storiesMap = storiesMap;
-
+    public NewsfeedFragment(NewsfeedFragmentCallback callback) {
         this.callback = callback;
     }
 
@@ -103,9 +99,9 @@ public class NewsfeedFragment extends Fragment {
 
         Random rand = new Random();
 
-        String uid = Auth.getUser().getUid();
+        AppState appState = AppState.getInstance();
 
-        Database.getUser(uid, new Database.GetUserCallback() {
+        Database.getUser(appState.profile.id, new Database.GetUserCallback() {
             @Override
             public void onGetUserSuccess(Schema.User user) {
                 // Stories Recycler
@@ -115,18 +111,19 @@ public class NewsfeedFragment extends Fragment {
 
                 ArrayList<StoryBubbleAdapter.StoryBubbleModel> storyBubbles = new ArrayList<>();
 
-                ArrayList<Schema.Story> myStories = storiesMap.get(uid);
 
-                boolean isRead = true;
-                if (myStories != null && myStories.size() > 1) {
-                    isRead = Objects.equals(profile.viewedStories.get(profile.id), myStories.get(myStories.size() - 1).id);
+                ArrayList<Schema.Story> myStories = appState.storiesMap.get(appState.profile.id);
+
+                boolean isViewed = true;
+                if (myStories != null && myStories.size() >= 1) {
+                    isViewed = Objects.equals(appState.profile.viewedStories.get(appState.profile.id), myStories.get(myStories.size() - 1).id);
                 }
 
                 storyBubbles.add(new StoryBubbleAdapter.StoryBubbleModel(
-                        uid,
-                        user.profilePicture,
+                        appState.profile.id,
+                        appState.profile.profilePicture,
                         "Your story",
-                        isRead
+                        isViewed
                 ));
 
                 StoryBubbleAdapter storyBubbleAdapter = new StoryBubbleAdapter(storyBubbles, new StoryBubbleAdapter.StoryBubbleCallback() {
@@ -145,10 +142,10 @@ public class NewsfeedFragment extends Fragment {
                 storiesRecycler.setAdapter(storyBubbleAdapter);
 
                 // Newsfeeds Recycler
-                RecyclerView newsfeedsRecycler = rootView.findViewById(R.id.newsfeeds_recycler);
-                newsfeedsRecycler.setLayoutManager(new LinearLayoutManager(getContext(), RecyclerView.VERTICAL, false));
-                newsfeedsRecycler.addItemDecoration(new SpacingItemDecoration(0, 45));
-                ArrayList<NewsfeedAdapter.NewsfeedModel> newsfeeds = new ArrayList<>();
+                RecyclerView postRecycler = rootView.findViewById(R.id.post_recycler);
+                postRecycler.setLayoutManager(new LinearLayoutManager(getContext(), RecyclerView.VERTICAL, false));
+                postRecycler.addItemDecoration(new SpacingItemDecoration(0, 45));
+                ArrayList<PostAdapter.PostModel> newsfeeds = new ArrayList<>();
 
                 for (int i = 0; i < rand.nextInt(5) + 5; i++) {
                     ArrayList<String> images = new ArrayList<>();
@@ -159,7 +156,7 @@ public class NewsfeedFragment extends Fragment {
                         lovedByUsers.add("username" + j);
                     }
 
-                    newsfeeds.add(new NewsfeedAdapter.NewsfeedModel(
+                    newsfeeds.add(new PostAdapter.PostModel(
                             "https://picsum.photos/200",
                             "username" + i, images,
                             "Caption" + i,
@@ -167,8 +164,8 @@ public class NewsfeedFragment extends Fragment {
                             rand.nextBoolean()
                     ));
                 }
-                NewsfeedAdapter newsfeedAdapter = new NewsfeedAdapter(newsfeeds);
-                newsfeedsRecycler.setAdapter(newsfeedAdapter);
+                PostAdapter postAdapter = new PostAdapter(newsfeeds);
+                postRecycler.setAdapter(postAdapter);
             }
 
             @Override
