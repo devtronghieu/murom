@@ -1,38 +1,27 @@
 package com.example.murom;
 
-import static androidx.core.content.ContextCompat.getSystemService;
-
-import android.app.Activity;
 import android.content.Context;
 import android.os.Bundle;
 
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.GridLayoutManager;
-import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import android.text.Editable;
-import android.text.TextWatcher;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
-import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 
 import com.example.murom.Recycler.GridSpacingItemDecoration;
-import com.example.murom.Recycler.PostAdapter;
 import com.example.murom.Recycler.PostImageAdapter;
-import com.example.murom.Recycler.SpacingItemDecoration;
-import com.example.murom.Recycler.UserAdapter;
-import com.example.murom.State.AppState;
+import com.example.murom.Recycler.SearchUserAdapter;
 
 import java.text.MessageFormat;
 import java.util.ArrayList;
-import java.util.Objects;
 import java.util.Random;
 
 /**
@@ -141,15 +130,15 @@ public class SearchFragment extends Fragment {
         Random rand = new Random();
 
         keyword.setText(query);
-        ArrayList<UserAdapter.UserModel> search_result = new ArrayList<>();
+        ArrayList<SearchUserAdapter.UserModel> search_result = new ArrayList<>();
 
         for (int i = 0; i < rand.nextInt(5) + 5; i++) {
-            search_result.add(new UserAdapter.UserModel(
+            search_result.add(new SearchUserAdapter.UserModel(
                     "https://picsum.photos/200", "account" + i, "profileUrl"
             ));
         }
-        UserAdapter userAdapter = new UserAdapter(search_result);
-        userRecycler.setAdapter(userAdapter);
+        SearchUserAdapter searchUserAdapter = new SearchUserAdapter(search_result);
+        userRecycler.setAdapter(searchUserAdapter);
         postsCount.setText(MessageFormat.format("{0} accounts", search_result.size()));
     }
 

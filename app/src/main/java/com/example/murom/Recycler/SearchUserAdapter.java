@@ -4,7 +4,6 @@ import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -16,7 +15,7 @@ import com.example.murom.R;
 
 import java.util.ArrayList;
 
-public class UserAdapter extends RecyclerView.Adapter<UserAdapter.ViewHolder> {
+public class SearchUserAdapter extends RecyclerView.Adapter<SearchUserAdapter.ViewHolder> {
     private Context context;
 
     private final ArrayList<UserModel> localDataSet;
@@ -49,7 +48,7 @@ public class UserAdapter extends RecyclerView.Adapter<UserAdapter.ViewHolder> {
         }
     }
 
-    public UserAdapter(ArrayList<UserModel> dataSet) {
+    public SearchUserAdapter(ArrayList<UserModel> dataSet) {
         localDataSet = dataSet;
     }
 
