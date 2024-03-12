@@ -75,18 +75,18 @@ public class ProfileFragment extends Fragment {
 
         // Inflate the layout for this fragment
         View rootView = inflater.inflate(R.layout.fragment_profile, container, false);
-        ImageView avatar = rootView.findViewById(R.id.avatar);
-        TextView post = rootView.findViewById(R.id.post);
+        ImageView avatar = rootView.findViewById(R.id.profile_avatar);
+        TextView post = rootView.findViewById(R.id.profile_post);
         TextView post_num = rootView.findViewById(R.id.num_post);
-        TextView follower = rootView.findViewById(R.id.follower);
+        TextView follower = rootView.findViewById(R.id.profile_follower);
         TextView follower_num = rootView.findViewById(R.id.num_follower);
-        TextView following = rootView.findViewById(R.id.following);
+        TextView following = rootView.findViewById(R.id.profile_following);
         TextView following_num = rootView.findViewById(R.id.num_following);
-        TextView username = rootView.findViewById(R.id.username);
-        TextView bio = rootView.findViewById(R.id.bio);
-        Button editBtn = rootView.findViewById(R.id.edit_btn);
-        ImageView picture = rootView.findViewById(R.id.imageView);
-        TextView photo = rootView.findViewById(R.id.photo);
+        TextView username = rootView.findViewById(R.id.profile_username);
+        TextView bio = rootView.findViewById(R.id.profile_bio);
+        Button editBtn = rootView.findViewById(R.id.profile_edit_btn);
+        ImageView picture = rootView.findViewById(R.id.profile_imageView);
+        TextView photo = rootView.findViewById(R.id.profile_phototext);
 
 
 
@@ -130,7 +130,7 @@ public class ProfileFragment extends Fragment {
         highlightsRecycler.setAdapter(highlightBubbleAdapter);
 
 
-        RecyclerView postsRecycler = rootView.findViewById(R.id.posts_recycler);
+        RecyclerView postsRecycler = rootView.findViewById(R.id.profile_posts_recycler);
         postsRecycler.setLayoutManager(new GridLayoutManager(getContext(),3));
         ArrayList<PostsProfileAdapter.PostsProfileModel> posts = new ArrayList<>();
 
