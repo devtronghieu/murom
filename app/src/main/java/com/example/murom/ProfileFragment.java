@@ -1,6 +1,5 @@
 package com.example.murom;
 
-import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
@@ -23,7 +22,6 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.example.murom.Firebase.Auth;
-import com.example.murom.Firebase.Database;
 import com.example.murom.Firebase.Schema;
 import com.example.murom.Firebase.Storage;
 import com.example.murom.Recycler.HighlightBubbleAdapter;
@@ -56,13 +54,7 @@ public class ProfileFragment extends Fragment {
         void onViewHighlight(String uid);
     }
 
-    Schema.User profile;
-    HashMap<String, ArrayList<Schema.Story>> highlightsMap;
-    ProfileFragementCallback callback;
-
-    public ProfileFragment(Schema.User profile, HashMap<String, ArrayList<Schema.Story>> highlightsMap) {
-        this.profile = profile;
-        this.highlightsMap = highlightsMap;
+    public ProfileFragment() {
     }
 
 
@@ -116,7 +108,6 @@ public class ProfileFragment extends Fragment {
         highlightsRecycler.addItemDecoration(new SpacingItemDecoration(40, 0 ));
 
         ArrayList<HighlightBubbleAdapter.HighlightBubbleModel> highlights = new ArrayList<>();
-        ArrayList<Schema.Story> myHighlights = highlightsMap.get(uid);
 
         for (int i = 0 ; i < rand.nextInt(5)+5; i++){
             highlights.add(new HighlightBubbleAdapter.HighlightBubbleModel(uid,"https://picsum.photos/200", "hehe" + i));
