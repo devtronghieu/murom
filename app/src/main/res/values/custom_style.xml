@@ -24,4 +24,11 @@
         <item name="layout_constraintEnd_toEndOf">parent</item>
         <item name="layout_constraintStart_toStartOf">parent</item>
     </style>
+    <style name="caption_medium">
+        <item name="android:textColor">@color/black</item>
+        <item name="android:textSize">15dp</item>
+        <item name="android:fontFamily">Poppins</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
 </resources>
