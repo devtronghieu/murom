@@ -42,9 +42,8 @@ public class SearchUserAdapter extends RecyclerView.Adapter<SearchUserAdapter.Vi
 
         public ViewHolder(View view) {
             super(view);
-
-            avatar = view.findViewById(R.id.user_avatar);
-            username = view.findViewById(R.id.user_username);
+            avatar = view.findViewById(R.id.component_user_display_avatar);
+            username = view.findViewById(R.id.component_user_display_username);
         }
     }
 

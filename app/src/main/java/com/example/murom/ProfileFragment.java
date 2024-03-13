@@ -1,6 +1,5 @@
 package com.example.murom;
 
-import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
@@ -9,6 +8,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultCallback;
@@ -16,17 +16,24 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.PickVisualMediaRequest;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.GridLayoutManager;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.example.murom.Firebase.Auth;
+import com.example.murom.Firebase.Schema;
 import com.example.murom.Firebase.Storage;
+import com.example.murom.Recycler.HighlightBubbleAdapter;
+import com.example.murom.Recycler.PostsProfileAdapter;
+import com.example.murom.Recycler.SpacingItemDecoration;
 import com.google.firebase.storage.StorageReference;
 
-/**
- * A simple {@link Fragment} subclass.
- * Use the {@link ProfileFragment#newInstance} factory method to
- * create an instance of this fragment.
- */
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Random;
+
+
 public class ProfileFragment extends Fragment {
     ImageView pickedImageView;
     ActivityResultLauncher<PickVisualMediaRequest> launcher =
@@ -42,58 +49,47 @@ public class ProfileFragment extends Fragment {
                 }
             });
 
-    // TODO: Rename parameter arguments, choose names that match
-    // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-    private static final String ARG_PARAM1 = "param1";
-    private static final String ARG_PARAM2 = "param2";
-
-    // TODO: Rename and change types of parameters
-    private String mParam1;
-    private String mParam2;
+    public interface ProfileFragementCallback{
+        void onEditProfile(String uid);
+        void onViewHighlight(String uid);
+    }
 
     public ProfileFragment() {
-        // Required empty public constructor
     }
 
-    /**
-     * Use this factory method to create a new instance of
-     * this fragment using the provided parameters.
-     *
-     * @param param1 Parameter 1.
-     * @param param2 Parameter 2.
-     * @return A new instance of fragment ProfileFragment.
-     */
-    // TODO: Rename and change types and number of parameters
-    public static ProfileFragment newInstance(String param1, String param2) {
-        ProfileFragment fragment = new ProfileFragment();
-        Bundle args = new Bundle();
-        args.putString(ARG_PARAM1, param1);
-        args.putString(ARG_PARAM2, param2);
-        fragment.setArguments(args);
-        return fragment;
-    }
+
+
+
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        if (getArguments() != null) {
-            mParam1 = getArguments().getString(ARG_PARAM1);
-            mParam2 = getArguments().getString(ARG_PARAM2);
-        }
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
+        Random rand = new Random();
+        String uid = Auth.getUser().getUid();
+
+
         // Inflate the layout for this fragment
         View rootView = inflater.inflate(R.layout.fragment_profile, container, false);
+        ImageView avatar = rootView.findViewById(R.id.profile_avatar);
+        TextView post = rootView.findViewById(R.id.profile_post);
+        TextView post_num = rootView.findViewById(R.id.num_post);
+        TextView follower = rootView.findViewById(R.id.profile_follower);
+        TextView follower_num = rootView.findViewById(R.id.num_follower);
+        TextView following = rootView.findViewById(R.id.profile_following);
+        TextView following_num = rootView.findViewById(R.id.num_following);
+        TextView username = rootView.findViewById(R.id.profile_username);
+        TextView bio = rootView.findViewById(R.id.profile_bio);
+        Button editBtn = rootView.findViewById(R.id.profile_edit_btn);
+        ImageView picture = rootView.findViewById(R.id.profile_imageView);
+        TextView photo = rootView.findViewById(R.id.profile_phototext);
 
-        ImageView avatar = rootView.findViewById(R.id.avatar);
-        Button uploadAvatarBtn = rootView.findViewById(R.id.upload_avatar_btn);
-        uploadAvatarBtn.setOnClickListener(view -> setupImagePicker(avatar));
 
-        Button logoutBtn = rootView.findViewById(R.id.logout_btn);
-        logoutBtn.setOnClickListener(this::handleSignOut);
+
 
         StorageReference avatarRef = Storage.getRef("avatar/" + Auth.getUser().getEmail());
         avatarRef.getDownloadUrl()
@@ -107,17 +103,46 @@ public class ProfileFragment extends Fragment {
                     Log.d("-->", "failed to get avatar: " + e);
                 });
 
+        RecyclerView highlightsRecycler = rootView.findViewById(R.id.highlights_recycler);
+        highlightsRecycler.setLayoutManager(new LinearLayoutManager(getContext(),RecyclerView.HORIZONTAL, false));
+        highlightsRecycler.addItemDecoration(new SpacingItemDecoration(40, 0 ));
+
+        ArrayList<HighlightBubbleAdapter.HighlightBubbleModel> highlights = new ArrayList<>();
+
+        for (int i = 0 ; i < rand.nextInt(5)+5; i++){
+            highlights.add(new HighlightBubbleAdapter.HighlightBubbleModel(uid,"https://picsum.photos/200", "hehe" + i));
+        }
+
+        HighlightBubbleAdapter highlightBubbleAdapter = new HighlightBubbleAdapter(highlights);
+        /*HighlightBubbleAdapter highlightBubbleAdapter = new HighlightBubbleAdapter(highlights, new HighlightBubbleAdapter.HighlightBubbleCallback() {
+            @Override
+            public void handleUploadHighlight() {
+                launcher.launch(new PickVisualMediaRequest.Builder()
+                        .setMediaType(ActivityResultContracts.PickVisualMedia.ImageAndVideo.INSTANCE)
+                        .build());
+            }
+
+            @Override
+            public void handleViewHighlight(String uid) {
+                callback.onViewHighlight(uid);
+            }
+        });*/
+        highlightsRecycler.setAdapter(highlightBubbleAdapter);
+
+
+        RecyclerView postsRecycler = rootView.findViewById(R.id.profile_posts_recycler);
+        postsRecycler.setLayoutManager(new GridLayoutManager(getContext(),3));
+        ArrayList<PostsProfileAdapter.PostsProfileModel> posts = new ArrayList<>();
+
+        for (int i = 0; i < rand.nextInt(5)+ 5; i++) {
+            posts.add(new PostsProfileAdapter.PostsProfileModel(
+                    "https://picsum.photos/200"));
+        }
+        PostsProfileAdapter postsProfileAdapter = new PostsProfileAdapter(posts);
+        postsRecycler.setAdapter(postsProfileAdapter);
+
         return rootView;
     }
 
-    private void setupImagePicker(ImageView imageView) {
-        this.pickedImageView = imageView;
-        launcher.launch(new PickVisualMediaRequest.Builder().setMediaType(ActivityResultContracts.PickVisualMedia.ImageOnly.INSTANCE).build());
-    }
 
-    private void handleSignOut(View view) {
-        Auth.signOut();
-        Intent i = new Intent(requireContext(), LoginActivity.class);
-        startActivity(i);
-    }
 }
