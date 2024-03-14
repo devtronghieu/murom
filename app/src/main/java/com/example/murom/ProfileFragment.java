@@ -50,12 +50,11 @@ public class ProfileFragment extends Fragment {
             });
 
     public interface ProfileFragementCallback{
-        void onEditProfile(String uid);
-        void onViewHighlight(String uid);
+        void onEditProfile();
     }
 
-    public ProfileFragment() {
-    }
+    ProfileFragementCallback callback;
+    public ProfileFragment(ProfileFragementCallback callback) {this.callback = callback;}
 
 
 
@@ -75,6 +74,7 @@ public class ProfileFragment extends Fragment {
 
         // Inflate the layout for this fragment
         View rootView = inflater.inflate(R.layout.fragment_profile, container, false);
+
         ImageView avatar = rootView.findViewById(R.id.profile_avatar);
         TextView post = rootView.findViewById(R.id.profile_post);
         TextView post_num = rootView.findViewById(R.id.num_post);
@@ -85,6 +85,8 @@ public class ProfileFragment extends Fragment {
         TextView username = rootView.findViewById(R.id.profile_username);
         TextView bio = rootView.findViewById(R.id.profile_bio);
         Button editBtn = rootView.findViewById(R.id.profile_edit_btn);
+        editBtn.setOnClickListener(v -> callback.onEditProfile());
+
         ImageView picture = rootView.findViewById(R.id.profile_imageView);
         TextView photo = rootView.findViewById(R.id.profile_phototext);
 

@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context=".SearchFragment"
+    android:background="@color/white">
+
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:padding="5dp"
+        android:paddingEnd="10dp">
+
+        <ImageButton
+            android:id="@+id/back_btn"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@color/transparent"
+            android:src="@drawable/ic_back"
+            android:layout_marginTop="3dp"
+            />
+
+        <TextView
+            android:id="@+id/edit_profile_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="15dp"
+            android:layout_weight="1"
+            android:textSize="20dp"
+            android:text="Edit your profile" />
+
+    </LinearLayout>
+
+    <com.google.android.material.imageview.ShapeableImageView
+        android:id="@+id/edit_profile_avatar"
+        android:layout_width="80dp"
+        android:layout_height="80dp"
+        android:layout_gravity="center"
+        android:background="@color/primary_500"
+        app:shapeAppearanceOverlay="@style/circular"
+        app:srcCompat="@drawable/baseline_person_24"
+        android:layout_marginTop="20dp"/>
+
+    <Button
+        android:id="@+id/change_avatar_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Change your avatar"
+        android:layout_gravity="center"
+        android:textColor="@color/black"
+        android:background="#00000000"/>
+
+    <TextView
+        android:id="@+id/edit_profile_username_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Username"
+        android:layout_marginLeft="10dp"
+        android:textSize="15sp"/>
+
+    <LinearLayout
+        android:layout_width="380dp"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:padding="10dp"
+        android:layout_marginTop="10dp"
+        android:layout_marginLeft="10dp"
+        android:background="@drawable/search_bar_bg">
+
+
+        <EditText
+            android:id="@+id/edit_profile_username"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:hint="Your username"
+            android:elevation="1dp"
+            android:inputType="text"
+            android:background="@null" />
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/edit_profile_description_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Description"
+        android:layout_marginLeft="10dp"
+        android:layout_marginTop="10dp"
+        android:textSize="15sp"/>
+
+    <LinearLayout
+        android:layout_width="380dp"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:padding="10dp"
+        android:layout_marginTop="10dp"
+        android:layout_marginLeft="10dp"
+        android:background="@drawable/search_bar_bg">
+
+
+        <EditText
+            android:id="@+id/edit_profile_description"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:hint="Your description"
+            android:elevation="1dp"
+            android:inputType="text"
+            android:background="@null" />
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/edit_profile_privacy_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Privacy"
+        android:layout_marginLeft="10dp"
+        android:layout_marginTop="50dp"
+        android:textSize="15sp"/>
+
+    <LinearLayout
+        android:layout_width="380dp"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:padding="10dp"
+        android:layout_marginTop="10dp"
+        android:layout_marginLeft="10dp"
+        android:background="@drawable/search_bar_bg">
+
+        <Spinner
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:spinnerMode="dropdown"
+            android:id="@+id/edit_profile_privacy"/>
+
+    </LinearLayout>
+
+    <Button
+        android:id="@+id/log_out_btn"
+        android:layout_width="300dp"
+        android:layout_height="wrap_content"
+        android:text="Log out"
+        android:layout_gravity="center"
+        android:layout_marginTop="150dp"
+        android:backgroundTint="@color/primary_500"
+        android:textColor="@color/black"
+
+        />
+
+</LinearLayout>
