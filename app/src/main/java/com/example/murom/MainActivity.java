@@ -36,7 +36,7 @@ public class MainActivity extends AppCompatActivity {
     Fragment reelsFragment;
     Fragment profileFragment;
     Fragment storyFragment;
-
+    Fragment editProfileFragment;
 
 
     @Override
@@ -72,7 +72,7 @@ public class MainActivity extends AppCompatActivity {
                 searchFragment = new SearchFragment();
                 newsfeedFragment = new NewsfeedFragment(MainActivity.this::handleViewStory);
                 reelsFragment = new ReelsFragment();
-                profileFragment = new ProfileFragment();
+                profileFragment = new ProfileFragment(MainActivity.this::handleEditProfile);
 
                 // Setup bottom nav
                 ActivityMainBinding binding = ActivityMainBinding.inflate(getLayoutInflater());
@@ -171,5 +171,10 @@ public class MainActivity extends AppCompatActivity {
     private void handleViewStory(String uid) {
         storyFragment = new StoryFragment(AppState.getInstance().storiesMap.get(uid), () -> removeFullscreenFragment(storyFragment));
         addFullscreenFragment(storyFragment);
+    }
+
+    private void handleEditProfile(){
+        editProfileFragment = new EditProfileFragment(() -> removeFullscreenFragment(editProfileFragment));
+        addFullscreenFragment(editProfileFragment);
     }
 }
