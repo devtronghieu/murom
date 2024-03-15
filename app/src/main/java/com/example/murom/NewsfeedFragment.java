@@ -23,10 +23,11 @@ import com.example.murom.Recycler.PostAdapter;
 import com.example.murom.Recycler.SpacingItemDecoration;
 import com.example.murom.Recycler.StoryBubbleAdapter;
 import com.example.murom.State.AppState;
+import com.google.firebase.Timestamp;
 import com.google.firebase.storage.StorageReference;
 
-import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.Objects;
 import java.util.Random;
 import java.util.UUID;
@@ -39,7 +40,8 @@ public class NewsfeedFragment extends Fragment {
                 if (uri == null) {
                     Toast.makeText(requireContext(), "No image selected!", Toast.LENGTH_SHORT).show();
                 } else {
-                    String createdAt = Instant.now().toString();
+                    Date currentDate = new Date();
+                    Timestamp createdAt = new Timestamp(currentDate);
                     String uid = Auth.getUser().getUid();
 
                     String storagePath = "story/" + uid + "/" + createdAt;

@@ -2,14 +2,16 @@ package com.example.murom.Firebase;
 
 import android.util.Log;
 
+import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QuerySnapshot;
 
 import java.util.ArrayList;
-import java.util.Comparator;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -107,8 +109,13 @@ public class Database {
     }
 
     public static void getStoriesByUID(String uid, GetStoriesByUIDCallback callback) {
+        Date yesterday = new Date(System.currentTimeMillis() - (24 * 60 * 60 * 1000));
+        Timestamp yesterdayTimestamp = new Timestamp(yesterday);
+
         storyCollection
                 .whereEqualTo("user_id", uid)
+                .whereGreaterThanOrEqualTo("created_at", yesterdayTimestamp)
+                .orderBy("created_at", Query.Direction.ASCENDING)
                 .get()
                 .addOnCompleteListener(task -> {
                     if (task.isSuccessful()) {
@@ -122,14 +129,14 @@ public class Database {
 
                             Schema.Story story = new Schema.Story(
                                     "",
-                                    "",
+                                    Timestamp.now(),
                                     "",
                                     "",
                                     ""
                             );
 
                             story.id = doc.getId();
-                            story.createdAt = doc.getString("created_at");
+                            story.createdAt = doc.getTimestamp("created_at");
                             story.uid = uid;
                             story.url = doc.getString("url");
                             story.type = doc.getString("type");
@@ -137,10 +144,18 @@ public class Database {
                             stories.add(story);
                         }
 
-                        stories.sort(Comparator.comparing(Schema.Story::getCreatedAt));
+                        for (int i = 0; i < stories.size(); i++) {
+                            Log.d("-->", stories.get(i).createdAt.toString());
+                        }
 
                         callback.onGetStoriesSuccess(stories);
                     } else {
+                        Exception exception = task.getException();
+                        if (exception != null) {
+                            Log.e("-->", "Failed to get stories:", exception);
+                        } else {
+                            Log.e("-->", "Failed to get stories: Unknown reason");
+                        }
                         callback.onGetStoriesFailure();
                     }
                 });

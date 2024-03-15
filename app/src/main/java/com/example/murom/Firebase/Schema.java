@@ -1,5 +1,7 @@
 package com.example.murom.Firebase;
 
+import com.google.firebase.Timestamp;
+
 import java.util.HashMap;
 
 public class Schema {
@@ -33,21 +35,17 @@ public class Schema {
 
     public static class Story {
         public String id;
-        public String createdAt;
+        public Timestamp createdAt;
         public String uid;
         public String url;
         public String type;
 
-        public Story(String id, String createdAt, String uid, String url, String type) {
+        public Story(String id, Timestamp createdAt, String uid, String url, String type) {
             this.id = id;
             this.createdAt = createdAt;
             this.uid = uid;
             this.url = url;
             this.type = type;
-        }
-
-        public String getCreatedAt() {
-            return createdAt;
         }
     }
 
