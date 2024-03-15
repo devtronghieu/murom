@@ -144,10 +144,6 @@ public class Database {
                             stories.add(story);
                         }
 
-                        for (int i = 0; i < stories.size(); i++) {
-                            Log.d("-->", stories.get(i).createdAt.toString());
-                        }
-
                         callback.onGetStoriesSuccess(stories);
                     } else {
                         Exception exception = task.getException();

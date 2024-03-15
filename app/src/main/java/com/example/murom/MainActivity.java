@@ -51,13 +51,21 @@ public class MainActivity extends AppCompatActivity {
             public void onGetUserSuccess(Schema.User user) {
                 // Setup appState
                 AppState appState = AppState.getInstance();
-
                 appState.profile = user;
 
                 Database.getStoriesByUID(uid, new Database.GetStoriesByUIDCallback() {
                     @Override
                     public void onGetStoriesSuccess(ArrayList<Schema.Story> stories) {
                         appState.storiesMap.put(uid, stories);
+                        setupFragments();
+                        setupBottomNavigation();
+                        launchNewsFeedFragmentOnStartup();
+
+//                        ProgressBar loadingBlock = findViewById(R.id.main_loading);
+//                        Log.d("-->", "loading block: " + loadingBlock);
+//                        if (loadingBlock != null) {
+//                            loadingBlock.setVisibility(View.GONE);
+//                        }
                     }
 
                     @Override
@@ -65,53 +73,6 @@ public class MainActivity extends AppCompatActivity {
                         Toast.makeText(MainActivity.this, "Failed to load stories", Toast.LENGTH_SHORT).show();
                     }
                 });
-
-                // Setup fragments
-                fragmentManager = getSupportFragmentManager();
-                postFragment = new PostFragment();
-                searchFragment = new SearchFragment();
-                newsfeedFragment = new NewsfeedFragment(MainActivity.this::handleViewStory);
-                reelsFragment = new ReelsFragment();
-                profileFragment = new ProfileFragment(MainActivity.this::handleEditProfile);
-
-                // Setup bottom nav
-                ActivityMainBinding binding = ActivityMainBinding.inflate(getLayoutInflater());
-                setContentView(binding.getRoot());
-
-                bottomMenu = binding.bottomNavigation;
-
-                fragmentContainer = findViewById(R.id.main_layout_fragment);
-                fullscreenFragmentContainer = findViewById(R.id.main_layout_fullscreen_fragment);
-
-                home = findViewById(R.id.bottom_nav_home);
-
-                bottomMenu = findViewById(R.id.bottom_navigation);
-                bottomMenu.setItemActiveIndicatorEnabled(false);
-                bottomMenu.setItemRippleColor(null);
-                bottomMenu.setOnItemSelectedListener(item -> {
-                    int itemId = item.getItemId();
-                    if (itemId == R.id.bottom_nav_post) {
-                        replaceFragment(postFragment);
-                    } else if (itemId == R.id.bottom_nav_search) {
-                        replaceFragment(searchFragment);
-                    } else if (itemId == R.id.bottom_nav_home_hidden) {
-                        replaceFragment(newsfeedFragment);
-                    } else if (itemId == R.id.bottom_nav_reels) {
-                        replaceFragment(reelsFragment);
-                    } else if (itemId == R.id.bottom_nav_profile) {
-                        replaceFragment(profileFragment);
-                    }
-                    return true;
-                });
-
-                binding.bottomNavHome.setOnClickListener(v -> {
-                    replaceFragment(newsfeedFragment);
-                    setHomeActive();
-                });
-
-                // Set default fragment to Newsfeed (Home icon)
-                replaceFragment(newsfeedFragment);
-                setHomeActive();
             }
 
             @Override
@@ -120,6 +81,56 @@ public class MainActivity extends AppCompatActivity {
                 handleSignOut();
             }
         });
+    }
+
+    private void setupFragments() {
+        fragmentManager = getSupportFragmentManager();
+        postFragment = new PostFragment();
+        searchFragment = new SearchFragment();
+        newsfeedFragment = new NewsfeedFragment(MainActivity.this::handleViewStory);
+        reelsFragment = new ReelsFragment();
+        profileFragment = new ProfileFragment(MainActivity.this::handleEditProfile);
+    }
+
+    private void setupBottomNavigation() {
+        ActivityMainBinding binding = ActivityMainBinding.inflate(getLayoutInflater());
+        setContentView(binding.getRoot());
+
+        bottomMenu = binding.bottomNavigation;
+
+        fragmentContainer = findViewById(R.id.main_layout_fragment);
+        fullscreenFragmentContainer = findViewById(R.id.main_layout_fullscreen_fragment);
+
+        home = findViewById(R.id.bottom_nav_home);
+
+        bottomMenu = findViewById(R.id.bottom_navigation);
+        bottomMenu.setItemActiveIndicatorEnabled(false);
+        bottomMenu.setItemRippleColor(null);
+        bottomMenu.setOnItemSelectedListener(item -> {
+            int itemId = item.getItemId();
+            if (itemId == R.id.bottom_nav_post) {
+                replaceFragment(postFragment);
+            } else if (itemId == R.id.bottom_nav_search) {
+                replaceFragment(searchFragment);
+            } else if (itemId == R.id.bottom_nav_home_hidden) {
+                replaceFragment(newsfeedFragment);
+            } else if (itemId == R.id.bottom_nav_reels) {
+                replaceFragment(reelsFragment);
+            } else if (itemId == R.id.bottom_nav_profile) {
+                replaceFragment(profileFragment);
+            }
+            return true;
+        });
+
+        binding.bottomNavHome.setOnClickListener(v -> {
+            replaceFragment(newsfeedFragment);
+            setHomeActive();
+        });
+    }
+
+    private void launchNewsFeedFragmentOnStartup() {
+        replaceFragment(newsfeedFragment);
+        setHomeActive();
     }
 
     private void handleSignOut() {

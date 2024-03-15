@@ -99,82 +99,73 @@ public class NewsfeedFragment extends Fragment {
 
         activity = getActivity();
 
-        Random rand = new Random();
-
         AppState appState = AppState.getInstance();
 
-        Database.getUser(appState.profile.id, new Database.GetUserCallback() {
+        RecyclerView storiesRecycler = rootView.findViewById(R.id.stories_recycler);
+        storiesRecycler.setLayoutManager(new LinearLayoutManager(getContext(), RecyclerView.HORIZONTAL, false));
+        storiesRecycler.addItemDecoration(new SpacingItemDecoration(40, 0));
+
+        ArrayList<StoryBubbleAdapter.StoryBubbleModel> storyBubbles = new ArrayList<>();
+
+
+        ArrayList<Schema.Story> myStories = appState.storiesMap.get(appState.profile.id);
+
+        boolean isViewed = true;
+        if (myStories != null && myStories.size() >= 1) {
+            isViewed = Objects.equals(appState.profile.viewedStories.get(appState.profile.id), myStories.get(myStories.size() - 1).id);
+        }
+
+        storyBubbles.add(new StoryBubbleAdapter.StoryBubbleModel(
+                appState.profile.id,
+                appState.profile.profilePicture,
+                "Your story",
+                isViewed
+        ));
+
+        StoryBubbleAdapter storyBubbleAdapter = new StoryBubbleAdapter(storyBubbles, new StoryBubbleAdapter.StoryBubbleCallback() {
             @Override
-            public void onGetUserSuccess(Schema.User user) {
-                // Stories Recycler
-                RecyclerView storiesRecycler = rootView.findViewById(R.id.stories_recycler);
-                storiesRecycler.setLayoutManager(new LinearLayoutManager(getContext(), RecyclerView.HORIZONTAL, false));
-                storiesRecycler.addItemDecoration(new SpacingItemDecoration(40, 0));
-
-                ArrayList<StoryBubbleAdapter.StoryBubbleModel> storyBubbles = new ArrayList<>();
-
-
-                ArrayList<Schema.Story> myStories = appState.storiesMap.get(appState.profile.id);
-
-                boolean isViewed = true;
-                if (myStories != null && myStories.size() >= 1) {
-                    isViewed = Objects.equals(appState.profile.viewedStories.get(appState.profile.id), myStories.get(myStories.size() - 1).id);
-                }
-
-                storyBubbles.add(new StoryBubbleAdapter.StoryBubbleModel(
-                        appState.profile.id,
-                        appState.profile.profilePicture,
-                        "Your story",
-                        isViewed
-                ));
-
-                StoryBubbleAdapter storyBubbleAdapter = new StoryBubbleAdapter(storyBubbles, new StoryBubbleAdapter.StoryBubbleCallback() {
-                    @Override
-                    public void handleUploadStory() {
-                        launcher.launch(new PickVisualMediaRequest.Builder()
-                                .setMediaType(ActivityResultContracts.PickVisualMedia.ImageAndVideo.INSTANCE)
-                                .build());
-                    }
-
-                    @Override
-                    public void handleViewStories(String uid) {
-                        callback.onViewStory(uid);
-                    }
-                });
-                storiesRecycler.setAdapter(storyBubbleAdapter);
-
-                // Newsfeeds Recycler
-                RecyclerView postRecycler = rootView.findViewById(R.id.post_recycler);
-                postRecycler.setLayoutManager(new LinearLayoutManager(getContext(), RecyclerView.VERTICAL, false));
-                postRecycler.addItemDecoration(new SpacingItemDecoration(0, 45));
-                ArrayList<PostAdapter.PostModel> newsfeeds = new ArrayList<>();
-
-                for (int i = 0; i < rand.nextInt(5) + 5; i++) {
-                    ArrayList<String> images = new ArrayList<>();
-                    images.add("https://picsum.photos/200");
-
-                    ArrayList<String> lovedByUsers = new ArrayList<>();
-                    for (int j = 0; j < rand.nextInt(5); j++) {
-                        lovedByUsers.add("username" + j);
-                    }
-
-                    newsfeeds.add(new PostAdapter.PostModel(
-                            "https://picsum.photos/200",
-                            "username" + i, images,
-                            "Caption" + i,
-                            lovedByUsers,
-                            rand.nextBoolean()
-                    ));
-                }
-                PostAdapter postAdapter = new PostAdapter(newsfeeds);
-                postRecycler.setAdapter(postAdapter);
+            public void handleUploadStory() {
+                launcher.launch(new PickVisualMediaRequest.Builder()
+                        .setMediaType(ActivityResultContracts.PickVisualMedia.ImageAndVideo.INSTANCE)
+                        .build());
             }
 
             @Override
-            public void onGetUserFailure() {
-                Toast.makeText(requireContext(), "Failed to load data!", Toast.LENGTH_SHORT).show();
+            public void handleViewStories(String uid) {
+                callback.onViewStory(uid);
             }
         });
+        storiesRecycler.setAdapter(storyBubbleAdapter);
+
+        // Newsfeeds Recycler
+
+        RecyclerView postRecycler = rootView.findViewById(R.id.post_recycler);
+        postRecycler.setLayoutManager(new LinearLayoutManager(getContext(), RecyclerView.VERTICAL, false));
+        postRecycler.addItemDecoration(new SpacingItemDecoration(0, 45));
+        ArrayList<PostAdapter.PostModel> newsfeeds = new ArrayList<>();
+
+        // Generate dummy posts
+        Random rand = new Random();
+        for (int i = 0; i < rand.nextInt(5) + 5; i++) {
+            ArrayList<String> images = new ArrayList<>();
+            images.add("https://picsum.photos/200");
+
+            ArrayList<String> lovedByUsers = new ArrayList<>();
+            for (int j = 0; j < rand.nextInt(5); j++) {
+                lovedByUsers.add("username" + j);
+            }
+
+            newsfeeds.add(new PostAdapter.PostModel(
+                    "https://picsum.photos/200",
+                    "username" + i, images,
+                    "Caption" + i,
+                    lovedByUsers,
+                    rand.nextBoolean()
+            ));
+        }
+
+        PostAdapter postAdapter = new PostAdapter(newsfeeds);
+        postRecycler.setAdapter(postAdapter);
 
         return rootView;
     }
