@@ -1,6 +1,7 @@
 package com.example.murom;
 
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -15,13 +16,15 @@ import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.fragment.app.Fragment;
 
 import com.bumptech.glide.Glide;
-import com.example.murom.Firebase.Auth;
 import com.example.murom.Firebase.Database;
 import com.example.murom.Firebase.Schema;
-import com.example.murom.State.AppState;
+import com.example.murom.State.ProfileState;
+import com.example.murom.State.StoryState;
 
 import java.util.ArrayList;
 import java.util.Objects;
+
+import io.reactivex.rxjava3.disposables.Disposable;
 
 
 public class StoryFragment extends Fragment {
@@ -29,22 +32,19 @@ public class StoryFragment extends Fragment {
         void onClose();
     }
 
+    Disposable storyOwnerDisposable;
+
     ProgressBar progressBar;
     ImageView imageView;
     VideoView videoView;
     ConstraintLayout touchSurface;
 
-
-    String viewerID;
     ArrayList<Schema.Story> stories;
-    Schema.User profile;
     StoryFragmentCallback callback;
 
     int currentStoryIndex = 0;
 
-    public StoryFragment(ArrayList<Schema.Story> stories, StoryFragmentCallback callback) {
-        this.stories = stories;
-        this.profile = AppState.getInstance().profile;
+    public StoryFragment(StoryFragmentCallback callback) {
         this.callback = callback;
     }
 
@@ -57,17 +57,6 @@ public class StoryFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_story, container, false);
 
-        if (stories.size() == 0) {
-            Toast.makeText(requireContext(), "No stories found!", Toast.LENGTH_SHORT).show();
-            callback.onClose();
-            return rootView;
-        }
-
-        viewerID = Auth.getUser().getUid();
-
-        ImageButton closeBtn = rootView.findViewById(R.id.story_fragment_close_button);
-        closeBtn.setOnClickListener(v -> callback.onClose());
-
         TextView username = rootView.findViewById(R.id.story_fragment_username);
         ImageView avatar = rootView.findViewById(R.id.story_fragment_avatar);
         progressBar = rootView.findViewById(R.id.story_fragment_image_loading);
@@ -75,29 +64,60 @@ public class StoryFragment extends Fragment {
         videoView = rootView.findViewById(R.id.story_fragment_video);
         touchSurface = rootView.findViewById(R.id.story_fragment_touch_surface);
 
-        username.setText(profile.username);
-        Glide.with(this).load(profile.profilePicture).into(avatar);
+        ImageButton closeBtn = rootView.findViewById(R.id.story_fragment_close_button);
+        closeBtn.setOnClickListener(v -> callback.onClose());
 
-        touchSurface.setOnClickListener(v -> {
-            if (currentStoryIndex < stories.size() - 1) {
-                currentStoryIndex++;
-            } else {
-                currentStoryIndex = 0;
+        StoryState storyState = StoryState.getInstance();
+
+        storyOwnerDisposable = storyState.getObservableStoryOwner().subscribe(profile -> {
+            stories = storyState.storiesMap.get(profile.id);
+            Log.d("-->", "stories: " + profile.id);
+
+            if (stories == null || stories.size() == 0) {
+                Toast.makeText(requireContext(), "No stories found!", Toast.LENGTH_SHORT).show();
+                return;
             }
+
+            username.setText(profile.username);
+            Glide.with(this).load(profile.profilePicture).into(avatar);
+
+            touchSurface.setOnClickListener(v -> {
+                if (currentStoryIndex < stories.size() - 1) {
+                    currentStoryIndex++;
+                } else {
+                    currentStoryIndex = 0;
+                }
+
+                viewCurrentStory();
+            });
 
             viewCurrentStory();
         });
 
-        viewCurrentStory();
-
         return rootView;
+    }
+
+    @Override
+    public void onDestroyView() {
+        if (!storyOwnerDisposable.isDisposed()) {
+            storyOwnerDisposable.dispose();
+        }
+
+        super.onDestroyView();
     }
 
     void viewCurrentStory() {
         Schema.Story story = stories.get(currentStoryIndex);
 
         if (currentStoryIndex == stories.size() - 1) {
-            Database.setViewedStory(viewerID, story.id, story.uid);
+            ProfileState profileState = ProfileState.getInstance();
+
+            Database.setViewedStory(profileState.profile.id, story.id, story.uid);
+
+            Schema.User newProfile = profileState.profile;
+            newProfile.viewedStories.put(newProfile.id, story.id);
+
+            ProfileState.getInstance().updateObservableProfile(newProfile);
         }
 
         imageView.setVisibility(View.GONE);

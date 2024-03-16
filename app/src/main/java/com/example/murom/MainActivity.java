@@ -3,7 +3,9 @@ package com.example.murom;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
+import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -14,18 +16,25 @@ import androidx.fragment.app.FragmentTransaction;
 import com.example.murom.Firebase.Auth;
 import com.example.murom.Firebase.Database;
 import com.example.murom.Firebase.Schema;
-import com.example.murom.State.AppState;
+import com.example.murom.State.ProfileState;
+import com.example.murom.State.StoryState;
 import com.example.murom.databinding.ActivityMainBinding;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+
+import io.reactivex.rxjava3.disposables.Disposable;
 
 public class MainActivity extends AppCompatActivity {
     FloatingActionButton home;
     View fragmentContainer;
     View fullscreenFragmentContainer;
     BottomNavigationView bottomMenu;
+
+    // AppState
+    Disposable profileDisposable;
 
     // Fragments
     FragmentManager fragmentManager;
@@ -45,27 +54,26 @@ public class MainActivity extends AppCompatActivity {
 
         // Setup env
         String uid = Auth.getUser().getUid();
+        ProfileState profileState = ProfileState.getInstance();
+        profileDisposable = profileState.getObservableProfile().subscribe(profile -> {
+            Log.d("-->", "Observable profile: "  + profile.username);
+        });
+
+        setupFragments();
+        setupBottomNavigation();
+        launchNewsFeedFragmentOnStartup();
 
         Database.getUser(uid, new Database.GetUserCallback() {
             @Override
             public void onGetUserSuccess(Schema.User user) {
-                // Setup appState
-                AppState appState = AppState.getInstance();
-                appState.profile = user;
+                profileState.updateObservableProfile(user);
 
                 Database.getStoriesByUID(uid, new Database.GetStoriesByUIDCallback() {
                     @Override
                     public void onGetStoriesSuccess(ArrayList<Schema.Story> stories) {
-                        appState.storiesMap.put(uid, stories);
-                        setupFragments();
-                        setupBottomNavigation();
-                        launchNewsFeedFragmentOnStartup();
-
-//                        ProgressBar loadingBlock = findViewById(R.id.main_loading);
-//                        Log.d("-->", "loading block: " + loadingBlock);
-//                        if (loadingBlock != null) {
-//                            loadingBlock.setVisibility(View.GONE);
-//                        }
+                        HashMap<String, ArrayList<Schema.Story>> storiesMap = new HashMap<>();
+                        storiesMap.put(uid, stories);
+                        StoryState.getInstance().updateObservableStoriesMap(storiesMap);
                     }
 
                     @Override
@@ -81,6 +89,15 @@ public class MainActivity extends AppCompatActivity {
                 handleSignOut();
             }
         });
+    }
+
+    @Override
+    protected void onDestroy() {
+        if (!profileDisposable.isDisposed()) {
+            profileDisposable.dispose();
+        }
+
+        super.onDestroy();
     }
 
     private void setupFragments() {
@@ -131,6 +148,8 @@ public class MainActivity extends AppCompatActivity {
     private void launchNewsFeedFragmentOnStartup() {
         replaceFragment(newsfeedFragment);
         setHomeActive();
+        ProgressBar loadingBlock = findViewById(R.id.main_loading);
+        loadingBlock.setVisibility(View.GONE);
     }
 
     private void handleSignOut() {
@@ -180,7 +199,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void handleViewStory(String uid) {
-        storyFragment = new StoryFragment(AppState.getInstance().storiesMap.get(uid), () -> removeFullscreenFragment(storyFragment));
+        StoryState.getInstance().updateObservableStoryOwner(uid);
+        storyFragment = new StoryFragment(() -> removeFullscreenFragment(storyFragment));
         addFullscreenFragment(storyFragment);
     }
 

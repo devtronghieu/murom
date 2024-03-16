@@ -3,15 +3,6 @@ package com.example.murom;
 import android.app.Activity;
 import android.net.Uri;
 import android.os.Bundle;
-
-import androidx.activity.result.ActivityResultLauncher;
-import androidx.activity.result.PickVisualMediaRequest;
-import androidx.activity.result.contract.ActivityResultContracts;
-import androidx.constraintlayout.widget.ConstraintLayout;
-import androidx.fragment.app.Fragment;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
-
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
@@ -24,11 +15,19 @@ import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.VideoView;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.PickVisualMediaRequest;
+import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
 import com.bumptech.glide.Glide;
 import com.example.murom.Firebase.Database;
 import com.example.murom.Firebase.Schema;
 import com.example.murom.Firebase.Storage;
-import com.example.murom.State.AppState;
+import com.example.murom.State.ProfileState;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.firebase.storage.StorageReference;
 
@@ -36,7 +35,11 @@ import java.time.Instant;
 import java.util.Objects;
 import java.util.UUID;
 
+import io.reactivex.rxjava3.disposables.Disposable;
+
 public class PostFragment extends Fragment {
+    // AppState
+    Disposable profileDisposable;
 
     Schema.User profile;
     Activity activity;
@@ -95,12 +98,23 @@ public class PostFragment extends Fragment {
 
     public PostFragment() {
         // Required empty public constructor
-        this.profile = AppState.getInstance().profile;
+        profileDisposable = ProfileState.getInstance().getObservableProfile().subscribe(profile -> {
+            this.profile = profile;
+        });
     }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+    }
+
+    @Override
+    public void onDestroyView() {
+        if (!profileDisposable.isDisposed()) {
+            profileDisposable.dispose();
+        }
+
+        super.onDestroyView();
     }
 
     @Override

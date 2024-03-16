@@ -24,8 +24,10 @@ public class Database {
 
     public interface GetUserCallback {
         void onGetUserSuccess(Schema.User user);
+
         void onGetUserFailure();
     }
+
 
     public static void getUser(String uid, GetUserCallback callback) {
         DocumentReference docRef = userCollection.document(uid);

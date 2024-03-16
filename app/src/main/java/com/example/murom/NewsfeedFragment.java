@@ -22,18 +22,34 @@ import com.example.murom.Firebase.Storage;
 import com.example.murom.Recycler.PostAdapter;
 import com.example.murom.Recycler.SpacingItemDecoration;
 import com.example.murom.Recycler.StoryBubbleAdapter;
-import com.example.murom.State.AppState;
+import com.example.murom.State.ProfileState;
+import com.example.murom.State.StoryState;
 import com.google.firebase.Timestamp;
 import com.google.firebase.storage.StorageReference;
 
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Objects;
 import java.util.Random;
 import java.util.UUID;
 
+import io.reactivex.rxjava3.disposables.Disposable;
+
 public class NewsfeedFragment extends Fragment {
     Activity activity;
+
+    // AppState
+    Disposable profileDisposable;
+    Disposable storiesMapDisposable;
+
+    // Components
+    RecyclerView storiesRecycler;
+    RecyclerView postRecycler;
+
+    // Component states
+    ArrayList<StoryBubbleAdapter.StoryBubbleModel> storyBubbles = new ArrayList<>();
+    ArrayList<PostAdapter.PostModel> newsfeeds = new ArrayList<>();
 
     ActivityResultLauncher<PickVisualMediaRequest> launcher =
             registerForActivityResult(new ActivityResultContracts.PickVisualMedia(), uri -> {
@@ -64,6 +80,16 @@ public class NewsfeedFragment extends Fragment {
                                         .addOnSuccessListener(storyURI -> {
                                             Schema.Story story = new Schema.Story(UUID.randomUUID().toString(), createdAt, uid, storyURI.toString(), type);
                                             Database.addStory(story);
+
+                                            StoryState storyState = StoryState.getInstance();
+                                            HashMap<String, ArrayList<Schema.Story>> newStoriesMap = storyState.storiesMap;
+                                            ArrayList<Schema.Story> myStories = storyState.storiesMap.get(uid);
+                                            if (myStories == null) {
+                                                myStories = new ArrayList<>();
+                                            }
+                                            myStories.add(story);
+                                            storyState.updateObservableStoriesMap(newStoriesMap);
+
                                             Toast.makeText(requireContext(), "Uploaded!", Toast.LENGTH_SHORT).show();
                                         })
                                         .addOnFailureListener(e -> {
@@ -97,52 +123,23 @@ public class NewsfeedFragment extends Fragment {
                              Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_newsfeed, container, false);
 
-        activity = getActivity();
-
-        AppState appState = AppState.getInstance();
-
-        RecyclerView storiesRecycler = rootView.findViewById(R.id.stories_recycler);
+        storiesRecycler = rootView.findViewById(R.id.stories_recycler);
         storiesRecycler.setLayoutManager(new LinearLayoutManager(getContext(), RecyclerView.HORIZONTAL, false));
         storiesRecycler.addItemDecoration(new SpacingItemDecoration(40, 0));
 
-        ArrayList<StoryBubbleAdapter.StoryBubbleModel> storyBubbles = new ArrayList<>();
-
-
-        ArrayList<Schema.Story> myStories = appState.storiesMap.get(appState.profile.id);
-
-        boolean isViewed = true;
-        if (myStories != null && myStories.size() >= 1) {
-            isViewed = Objects.equals(appState.profile.viewedStories.get(appState.profile.id), myStories.get(myStories.size() - 1).id);
-        }
-
-        storyBubbles.add(new StoryBubbleAdapter.StoryBubbleModel(
-                appState.profile.id,
-                appState.profile.profilePicture,
-                "Your story",
-                isViewed
-        ));
-
-        StoryBubbleAdapter storyBubbleAdapter = new StoryBubbleAdapter(storyBubbles, new StoryBubbleAdapter.StoryBubbleCallback() {
-            @Override
-            public void handleUploadStory() {
-                launcher.launch(new PickVisualMediaRequest.Builder()
-                        .setMediaType(ActivityResultContracts.PickVisualMedia.ImageAndVideo.INSTANCE)
-                        .build());
-            }
-
-            @Override
-            public void handleViewStories(String uid) {
-                callback.onViewStory(uid);
-            }
-        });
-        storiesRecycler.setAdapter(storyBubbleAdapter);
-
-        // Newsfeeds Recycler
-
-        RecyclerView postRecycler = rootView.findViewById(R.id.post_recycler);
+        postRecycler = rootView.findViewById(R.id.post_recycler);
         postRecycler.setLayoutManager(new LinearLayoutManager(getContext(), RecyclerView.VERTICAL, false));
         postRecycler.addItemDecoration(new SpacingItemDecoration(0, 45));
-        ArrayList<PostAdapter.PostModel> newsfeeds = new ArrayList<>();
+
+        activity = getActivity();
+
+        profileDisposable = ProfileState.getInstance().getObservableProfile().subscribe(profile -> {
+            handleWatchStoriesToRender(profile, StoryState.getInstance().storiesMap);
+        });
+
+        storiesMapDisposable = StoryState.getInstance().getObservableStoriesMap().subscribe(storiesMap -> {
+            handleWatchStoriesToRender(ProfileState.getInstance().profile, storiesMap);
+        });
 
         // Generate dummy posts
         Random rand = new Random();
@@ -163,10 +160,67 @@ public class NewsfeedFragment extends Fragment {
                     rand.nextBoolean()
             ));
         }
-
-        PostAdapter postAdapter = new PostAdapter(newsfeeds);
-        postRecycler.setAdapter(postAdapter);
+        setNewsfeeds(newsfeeds);
 
         return rootView;
+    }
+
+    @Override
+    public void onDestroyView() {
+        if (!profileDisposable.isDisposed()) {
+            profileDisposable.dispose();
+        }
+
+        if (!storiesMapDisposable.isDisposed()) {
+            storiesMapDisposable.dispose();
+        }
+
+        super.onDestroyView();
+    }
+
+    void handleWatchStoriesToRender(Schema.User profile, HashMap<String, ArrayList<Schema.Story>> storiesMap) {
+        if (Objects.equals(profile.id, "")) return;
+
+        ArrayList<Schema.Story> myStories = storiesMap.get(profile.id);
+
+        boolean isViewed = true;
+        if (myStories != null && myStories.size() >= 1) {
+            isViewed = Objects.equals(profile.viewedStories.get(profile.id), myStories.get(myStories.size() - 1).id);
+        }
+
+        StoryBubbleAdapter.StoryBubbleModel myStoriesBubble = new StoryBubbleAdapter.StoryBubbleModel(
+                profile.id,
+                profile.profilePicture,
+                "Your story",
+                isViewed
+        );
+
+        if (storyBubbles.size() == 0) {
+            storyBubbles.add(myStoriesBubble);
+        } else {
+            storyBubbles.set(0, myStoriesBubble);
+        }
+
+        // TODO: fetch friends' stories
+
+        StoryBubbleAdapter storyBubbleAdapter = new StoryBubbleAdapter(storyBubbles, new StoryBubbleAdapter.StoryBubbleCallback() {
+            @Override
+            public void handleUploadStory() {
+                launcher.launch(new PickVisualMediaRequest.Builder()
+                        .setMediaType(ActivityResultContracts.PickVisualMedia.ImageAndVideo.INSTANCE)
+                        .build());
+            }
+            @Override
+            public void handleViewStories(String uid) {
+                callback.onViewStory(uid);
+            }
+        });
+
+        storiesRecycler.setAdapter(storyBubbleAdapter);
+    }
+
+    void setNewsfeeds(ArrayList<PostAdapter.PostModel> newsfeeds) {
+        PostAdapter postAdapter = new PostAdapter(newsfeeds);
+        postRecycler.setAdapter(postAdapter);
     }
 }
