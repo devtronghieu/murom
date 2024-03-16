@@ -71,7 +71,6 @@ public class StoryFragment extends Fragment {
 
         storyOwnerDisposable = storyState.getObservableStoryOwner().subscribe(profile -> {
             stories = storyState.storiesMap.get(profile.id);
-            Log.d("-->", "stories: " + profile.id);
 
             if (stories == null || stories.size() == 0) {
                 Toast.makeText(requireContext(), "No stories found!", Toast.LENGTH_SHORT).show();

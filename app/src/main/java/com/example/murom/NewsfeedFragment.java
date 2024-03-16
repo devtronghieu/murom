@@ -142,24 +142,27 @@ public class NewsfeedFragment extends Fragment {
         });
 
         // Generate dummy posts
-        Random rand = new Random();
-        for (int i = 0; i < rand.nextInt(5) + 5; i++) {
-            ArrayList<String> images = new ArrayList<>();
-            images.add("https://picsum.photos/200");
+        if (newsfeeds.size() == 0) {
+            Random rand = new Random();
+            for (int i = 0; i < rand.nextInt(5) + 5; i++) {
+                ArrayList<String> images = new ArrayList<>();
+                images.add("https://picsum.photos/200");
 
-            ArrayList<String> lovedByUsers = new ArrayList<>();
-            for (int j = 0; j < rand.nextInt(5); j++) {
-                lovedByUsers.add("username" + j);
+                ArrayList<String> lovedByUsers = new ArrayList<>();
+                for (int j = 0; j < rand.nextInt(5); j++) {
+                    lovedByUsers.add("username" + j);
+                }
+
+                newsfeeds.add(new PostAdapter.PostModel(
+                        "https://picsum.photos/200",
+                        "username" + i, images,
+                        "Caption" + i,
+                        lovedByUsers,
+                        rand.nextBoolean()
+                ));
             }
-
-            newsfeeds.add(new PostAdapter.PostModel(
-                    "https://picsum.photos/200",
-                    "username" + i, images,
-                    "Caption" + i,
-                    lovedByUsers,
-                    rand.nextBoolean()
-            ));
         }
+
         setNewsfeeds(newsfeeds);
 
         return rootView;

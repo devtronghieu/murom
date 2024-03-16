@@ -3,7 +3,6 @@ package com.example.murom;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 import android.widget.ProgressBar;
 import android.widget.Toast;
@@ -25,16 +24,11 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-import io.reactivex.rxjava3.disposables.Disposable;
-
 public class MainActivity extends AppCompatActivity {
     FloatingActionButton home;
     View fragmentContainer;
     View fullscreenFragmentContainer;
     BottomNavigationView bottomMenu;
-
-    // AppState
-    Disposable profileDisposable;
 
     // Fragments
     FragmentManager fragmentManager;
@@ -55,9 +49,6 @@ public class MainActivity extends AppCompatActivity {
         // Setup env
         String uid = Auth.getUser().getUid();
         ProfileState profileState = ProfileState.getInstance();
-        profileDisposable = profileState.getObservableProfile().subscribe(profile -> {
-            Log.d("-->", "Observable profile: "  + profile.username);
-        });
 
         setupFragments();
         setupBottomNavigation();
@@ -89,15 +80,6 @@ public class MainActivity extends AppCompatActivity {
                 handleSignOut();
             }
         });
-    }
-
-    @Override
-    protected void onDestroy() {
-        if (!profileDisposable.isDisposed()) {
-            profileDisposable.dispose();
-        }
-
-        super.onDestroy();
     }
 
     private void setupFragments() {

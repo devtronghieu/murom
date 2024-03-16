@@ -9,7 +9,6 @@ import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.subjects.BehaviorSubject;
 
 public class StoryState {
-    // Stories Map
     public HashMap<String, ArrayList<Schema.Story>> storiesMap = new HashMap<>();
     private final BehaviorSubject<HashMap<String, ArrayList<Schema.Story>>> observableStoriesMap = BehaviorSubject.createDefault(storiesMap);
     public void updateObservableStoriesMap(HashMap<String, ArrayList<Schema.Story>> storiesMap) {

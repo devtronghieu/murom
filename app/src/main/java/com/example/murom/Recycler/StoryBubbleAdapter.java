@@ -92,6 +92,8 @@ public class StoryBubbleAdapter extends RecyclerView.Adapter<StoryBubbleAdapter.
 
         if (!data.isViewed) {
             viewHolder.storyImageContainer.setBackgroundResource(R.drawable.gradient_border);
+        } else {
+            viewHolder.storyImageContainer.setBackgroundResource(R.drawable.circle_gray);
         }
     }
 
