@@ -1,6 +1,10 @@
 package com.example.murom;
 
 import android.app.Activity;
+import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.text.Editable;
@@ -29,6 +33,7 @@ import com.example.murom.Firebase.Schema;
 import com.example.murom.Firebase.Storage;
 import com.example.murom.State.PostState;
 import com.example.murom.State.ProfileState;
+import com.example.murom.Utils.BitmapUtils;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.firebase.Timestamp;
 import com.google.firebase.storage.StorageReference;
@@ -50,8 +55,11 @@ public class PostFragment extends Fragment {
     String caption;
     String type;
     Uri postUri;
+    boolean isEdited;
     ImageView postImage;
     VideoView postVideo;
+
+    Context context;
 
     public LinearLayoutManager imagesLayoutManager = new LinearLayoutManager(getContext(), RecyclerView.HORIZONTAL, false);
 
@@ -63,8 +71,12 @@ public class PostFragment extends Fragment {
 
     // Initialize edit buttons
     public ImageButton flipButton;
+    public ImageButton flipHorizontallyButton;
+    public ImageButton flipVerticallyButton;
     public ImageButton cropButton;
     public ImageButton rotateButton;
+    public ImageButton rotateLeftButton;
+    public ImageButton rotateRightButton;
     public ImageButton addButton;
 
     // Initialize edit options
@@ -79,12 +91,12 @@ public class PostFragment extends Fragment {
     ActivityResultLauncher<PickVisualMediaRequest> launcher =
             registerForActivityResult(new ActivityResultContracts.PickVisualMedia(), uri -> {
                 if (uri == null) {
-                    Toast.makeText(requireContext(), "No image selected!", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(context, "No image/video selected!", Toast.LENGTH_SHORT).show();
                 } else {
                     String mimeType = activity.getContentResolver().getType(uri);
                     type = mimeType != null && mimeType.startsWith("image/") ? "image" : "video";
-                    Log.d("-->", "type: " + type);
                     postUri = uri;
+                    isEdited = false;
 
                     if (Objects.equals(type, "image")) {
                         postImage.setVisibility(View.VISIBLE);
@@ -124,6 +136,7 @@ public class PostFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_post, container, false);
+        context = requireContext();
 
         activity = getActivity();
         addImageText = rootView.findViewById(R.id.text_add_image);
@@ -148,23 +161,55 @@ public class PostFragment extends Fragment {
 
         // Set function for edit buttons
         flipButton = rootView.findViewById(R.id.flip_icon);
+        flipHorizontallyButton = rootView.findViewById(R.id.flip_horizontally_button);
+        flipVerticallyButton = rootView.findViewById(R.id.flip_vertically_button);
         cropButton = rootView.findViewById(R.id.crop_icon);
         rotateButton = rootView.findViewById(R.id.rotate_icon);
+        rotateLeftButton = rootView.findViewById(R.id.rotate_left_button);
+        rotateRightButton = rootView.findViewById(R.id.rotate_right_button);
         addButton = rootView.findViewById(R.id.add_icon);
 
         flipButton.setOnClickListener(v -> {
             setEditOptionsNone();
             flipOptions.setVisibility(View.VISIBLE);
             closeButton.setVisibility(View.VISIBLE);
-
             setEditButtonActive(flipContainer);
+        });
+
+        flipHorizontallyButton.setOnClickListener(v -> {
+            Drawable drawable = postImage.getDrawable();
+            if (drawable instanceof BitmapDrawable) {
+                BitmapDrawable bitmapDrawable = (BitmapDrawable) drawable;
+                Bitmap bitmap = bitmapDrawable.getBitmap();
+                Bitmap flippedBitmap = BitmapUtils.flipHorizontally(bitmap);
+                postImage.setImageBitmap(flippedBitmap);
+                removeFileIfItIsEdited();
+                postUri = BitmapUtils.bitmapToUri(context, flippedBitmap);
+                isEdited = true;
+            } else {
+                Toast.makeText(context, "Failed to flip horizontally", Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        flipVerticallyButton.setOnClickListener(v -> {
+            Drawable drawable = postImage.getDrawable();
+            if (drawable instanceof BitmapDrawable) {
+                BitmapDrawable bitmapDrawable = (BitmapDrawable) drawable;
+                Bitmap bitmap = bitmapDrawable.getBitmap();
+                Bitmap flippedBitmap = BitmapUtils.flipVertically(bitmap);
+                postImage.setImageBitmap(flippedBitmap);
+                removeFileIfItIsEdited();
+                postUri = BitmapUtils.bitmapToUri(context, flippedBitmap);
+                isEdited = true;
+            } else {
+                Toast.makeText(context, "Failed to flip vertically", Toast.LENGTH_SHORT).show();
+            }
         });
 
         cropButton.setOnClickListener(v -> {
             setEditOptionsNone();
             cropOptions.setVisibility(View.VISIBLE);
             closeButton.setVisibility(View.VISIBLE);
-
             setEditButtonActive(cropContainer);
         });
 
@@ -172,8 +217,37 @@ public class PostFragment extends Fragment {
             setEditOptionsNone();
             rotateOptions.setVisibility(View.VISIBLE);
             closeButton.setVisibility(View.VISIBLE);
-
             setEditButtonActive(rotateContainer);
+        });
+
+        rotateLeftButton.setOnClickListener(v -> {
+            Drawable drawable = postImage.getDrawable();
+            if (drawable instanceof BitmapDrawable) {
+                BitmapDrawable bitmapDrawable = (BitmapDrawable) drawable;
+                Bitmap bitmap = bitmapDrawable.getBitmap();
+                Bitmap rotatedBitmap = BitmapUtils.rotate(bitmap, 90);
+                postImage.setImageBitmap(rotatedBitmap);
+                removeFileIfItIsEdited();
+                postUri = BitmapUtils.bitmapToUri(context, rotatedBitmap);
+                isEdited = true;
+            } else {
+                Toast.makeText(context, "Failed to flip rotate left", Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        rotateRightButton.setOnClickListener(v -> {
+            Drawable drawable = postImage.getDrawable();
+            if (drawable instanceof BitmapDrawable) {
+                BitmapDrawable bitmapDrawable = (BitmapDrawable) drawable;
+                Bitmap bitmap = bitmapDrawable.getBitmap();
+                Bitmap rotatedBitmap = BitmapUtils.rotate(bitmap, -90);
+                postImage.setImageBitmap(rotatedBitmap);
+                removeFileIfItIsEdited();
+                postUri = BitmapUtils.bitmapToUri(context, rotatedBitmap);
+                isEdited = true;
+            } else {
+                Toast.makeText(context, "Failed to rotate right", Toast.LENGTH_SHORT).show();
+            }
         });
 
         addButton.setOnClickListener(v -> {
@@ -197,8 +271,7 @@ public class PostFragment extends Fragment {
 
             @Override
             public void afterTextChanged(Editable s) {
-                String captionString = String.valueOf(captionInput.getText());
-                caption = captionString;
+                caption = String.valueOf(captionInput.getText());
             }
         });
 
@@ -247,16 +320,32 @@ public class PostFragment extends Fragment {
                                 myPosts.add(0, post);
                                 postState.updateObservableMyPosts(myPosts);
 
-                                Toast.makeText(requireContext(), "Uploaded!", Toast.LENGTH_SHORT).show();
+                                removeFileIfItIsEdited();
+
+                                Toast.makeText(context, "Uploaded!", Toast.LENGTH_SHORT).show();
                             })
                             .addOnFailureListener(e -> {
+                                removeFileIfItIsEdited();
                                 Log.d("-->", "failed to get post: " + e);
-                                Toast.makeText(requireContext(), "Failed to upload post!", Toast.LENGTH_SHORT).show();
+                                Toast.makeText(context, "Failed to upload post!", Toast.LENGTH_SHORT).show();
                             });
                 }).addOnFailureListener(e -> {
+                    removeFileIfItIsEdited();
                     Log.d("-->", "failed to get post: " + e);
-                    Toast.makeText(requireContext(), "Failed to upload post!", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(context, "Failed to upload post!", Toast.LENGTH_SHORT).show();
                 });
     }
 
+    void removeFileIfItIsEdited() {
+        if (isEdited) {
+            try {
+                int rowsDeleted = context.getContentResolver().delete(postUri, null, null);
+                if (rowsDeleted == 0) {
+                    Toast.makeText(context, "Failed to delete edited file", Toast.LENGTH_SHORT).show();
+                }
+            } catch (SecurityException e) {
+                Toast.makeText(context, "SecurityException: Lack of permissions to delete " + postUri, Toast.LENGTH_SHORT).show();
+            }
+        }
+    }
 }

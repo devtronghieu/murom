@@ -88,9 +88,6 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.ViewHolder> {
     public void onBindViewHolder(@NonNull ViewHolder viewHolder, int position) {
         PostModel data = localDataSet.get(position);
 
-        Log.d("-->", "username: " + data.username);
-        Log.d("-->", "caption: " + data.caption);
-
         viewHolder.username.setText(data.username);
 
         Glide.with(this.context).load(data.avatarUrl).into(viewHolder.avatar);

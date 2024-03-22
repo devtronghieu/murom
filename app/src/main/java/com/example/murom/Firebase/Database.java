@@ -185,8 +185,6 @@ public class Database {
                 .orderBy("created_at", Query.Direction.DESCENDING)
                 .get()
                 .addOnCompleteListener(task -> {
-                    Log.d("-->", "Get task successfully");
-
                     if (task.isSuccessful()) {
                         ArrayList<Schema.Post> posts = new ArrayList<>();
 

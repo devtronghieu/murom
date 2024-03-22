@@ -20,4 +20,6 @@
     <string name="story_image">story_image</string>
     <string name="profile_post_item">Profile Post Item</string>
     <string name="profile_posts_grid_view_title">Posts</string>
+    <string name="flip_vertically">Flip Vertically</string>
+    <string name="flip_horizontally">Flip Horizontally</string>
 </resources>
