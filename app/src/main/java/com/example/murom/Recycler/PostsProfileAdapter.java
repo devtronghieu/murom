@@ -1,12 +1,13 @@
 package com.example.murom.Recycler;
 
-import androidx.annotation.NonNull;
-import androidx.recyclerview.widget.RecyclerView;
 import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
+
+import androidx.annotation.NonNull;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.example.murom.R;
@@ -17,16 +18,16 @@ public class PostsProfileAdapter extends RecyclerView.Adapter<PostsProfileAdapte
     private Context context;
     private  final ArrayList<PostsProfileModel> localDataSet;
     public  static class PostsProfileModel{
-        private final String images;
+        private final String imageUrl;
 
-        public PostsProfileModel(String images){this.images = images;}
+        public PostsProfileModel(String imageUrl){ this.imageUrl = imageUrl; }
     }
 
     public static class ViewHolder extends RecyclerView.ViewHolder{
-        private final ImageButton posts;
+        private final ImageButton postImageButton;
         public ViewHolder(View view){
             super(view);
-            posts = view.findViewById(R.id.post_btn);
+            postImageButton = view.findViewById(R.id.post_btn);
         }
     }
 
@@ -47,9 +48,12 @@ public class PostsProfileAdapter extends RecyclerView.Adapter<PostsProfileAdapte
     @Override
     public void onBindViewHolder(@NonNull ViewHolder viewHolder, int position){
         PostsProfileModel data = localDataSet.get(position);
-        Glide.with(this.context).load(data.images).into(viewHolder.posts);
-
+        Glide.with(this.context)
+                .load(data.imageUrl)
+                .override(viewHolder.postImageButton.getWidth(), viewHolder.postImageButton.getHeight())
+                .fitCenter()
+                .into(viewHolder.postImageButton);
     }
     @Override
-    public int getItemCount(){return localDataSet.size();}
+    public int getItemCount(){ return localDataSet.size(); }
 }

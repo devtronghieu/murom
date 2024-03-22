@@ -39,7 +39,7 @@
         android:layout_height="0dp"
         android:background="@color/primary_500"
         style="@style/post_image"
-        app:layout_constraintTop_toBottomOf="@+id/newsfeed_header_container"
+        app:layout_constraintTop_toBottomOf="@+id/post_header_container"
         android:contentDescription="@string/newsfeed_image" />
 
     <LinearLayout

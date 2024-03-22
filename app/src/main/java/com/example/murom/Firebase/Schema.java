@@ -55,9 +55,9 @@ public class Schema {
         public String url;
         public String type;
         public String caption;
-        public String createdAt;
+        public Timestamp createdAt;
 
-        public Post(String id, String userId, String url, String type, String caption, String createdAt) {
+        public Post(String id, String userId, String url, String type, String caption, Timestamp createdAt) {
             this.id = id;
             this.userId = userId;
             this.url = url;

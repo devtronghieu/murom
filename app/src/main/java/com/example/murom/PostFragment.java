@@ -27,11 +27,14 @@ import com.bumptech.glide.Glide;
 import com.example.murom.Firebase.Database;
 import com.example.murom.Firebase.Schema;
 import com.example.murom.Firebase.Storage;
+import com.example.murom.State.PostState;
 import com.example.murom.State.ProfileState;
 import com.google.android.material.textfield.TextInputEditText;
+import com.google.firebase.Timestamp;
 import com.google.firebase.storage.StorageReference;
 
-import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Date;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -227,7 +230,8 @@ public class PostFragment extends Fragment {
     }
 
     private void uploadPost() {
-        String createdAt = Instant.now().toString();
+        Date currentDate = new Date();
+        Timestamp createdAt = new Timestamp(currentDate);
         String storagePath = "post/" + postID;
 
         Storage.getRef(storagePath).putFile(postUri)
@@ -237,6 +241,12 @@ public class PostFragment extends Fragment {
                             .addOnSuccessListener(postURI -> {
                                 Schema.Post post = new Schema.Post(postID, profile.id, postURI.toString(), type, caption, createdAt);
                                 Database.addPost(post);
+
+                                PostState postState = PostState.getInstance();
+                                ArrayList<Schema.Post> myPosts = postState.myPosts;
+                                myPosts.add(0, post);
+                                postState.updateObservableMyPosts(myPosts);
+
                                 Toast.makeText(requireContext(), "Uploaded!", Toast.LENGTH_SHORT).show();
                             })
                             .addOnFailureListener(e -> {

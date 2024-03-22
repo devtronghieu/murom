@@ -27,14 +27,17 @@ import com.example.murom.Firebase.Storage;
 import com.example.murom.Recycler.HighlightBubbleAdapter;
 import com.example.murom.Recycler.PostsProfileAdapter;
 import com.example.murom.Recycler.SpacingItemDecoration;
+import com.example.murom.State.PostState;
 import com.google.firebase.storage.StorageReference;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Random;
+
+import io.reactivex.rxjava3.disposables.Disposable;
 
 
 public class ProfileFragment extends Fragment {
+    RecyclerView postsRecycler;
     ImageView pickedImageView;
     ActivityResultLauncher<PickVisualMediaRequest> launcher =
             registerForActivityResult(new ActivityResultContracts.PickVisualMedia(), new ActivityResultCallback<Uri>() {
@@ -49,16 +52,14 @@ public class ProfileFragment extends Fragment {
                 }
             });
 
-    public interface ProfileFragementCallback{
+    Disposable myPostsDisposable;
+
+    public interface ProfileFragmentCallback {
         void onEditProfile();
     }
 
-    ProfileFragementCallback callback;
-    public ProfileFragment(ProfileFragementCallback callback) {this.callback = callback;}
-
-
-
-
+    ProfileFragmentCallback callback;
+    public ProfileFragment(ProfileFragmentCallback callback) {this.callback = callback;}
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -132,19 +133,22 @@ public class ProfileFragment extends Fragment {
         highlightsRecycler.setAdapter(highlightBubbleAdapter);
 
 
-        RecyclerView postsRecycler = rootView.findViewById(R.id.profile_posts_recycler);
-        postsRecycler.setLayoutManager(new GridLayoutManager(getContext(),3));
-        ArrayList<PostsProfileAdapter.PostsProfileModel> posts = new ArrayList<>();
-
-        for (int i = 0; i < rand.nextInt(5)+ 5; i++) {
-            posts.add(new PostsProfileAdapter.PostsProfileModel(
-                    "https://picsum.photos/200"));
-        }
-        PostsProfileAdapter postsProfileAdapter = new PostsProfileAdapter(posts);
-        postsRecycler.setAdapter(postsProfileAdapter);
+        // My Posts
+        postsRecycler = rootView.findViewById(R.id.profile_posts_recycler);
+        postsRecycler.setLayoutManager(new GridLayoutManager(requireContext(),3));
+        myPostsDisposable = PostState.getInstance().getObservableMyPosts().subscribe(this::renderMyPosts);
 
         return rootView;
     }
 
+    void renderMyPosts(ArrayList<Schema.Post> myPosts) {
+        ArrayList<PostsProfileAdapter.PostsProfileModel> postsProfileModel = new ArrayList<>();
 
+        myPosts.forEach(post -> {
+            postsProfileModel.add(new PostsProfileAdapter.PostsProfileModel(post.url));
+        });
+
+        PostsProfileAdapter postsProfileAdapter = new PostsProfileAdapter(postsProfileModel);
+        postsRecycler.setAdapter(postsProfileAdapter);
+    }
 }

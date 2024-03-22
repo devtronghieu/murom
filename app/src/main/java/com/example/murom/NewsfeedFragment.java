@@ -14,6 +14,7 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.example.murom.Firebase.Auth;
 import com.example.murom.Firebase.Database;
@@ -22,6 +23,7 @@ import com.example.murom.Firebase.Storage;
 import com.example.murom.Recycler.PostAdapter;
 import com.example.murom.Recycler.SpacingItemDecoration;
 import com.example.murom.Recycler.StoryBubbleAdapter;
+import com.example.murom.State.PostState;
 import com.example.murom.State.ProfileState;
 import com.example.murom.State.StoryState;
 import com.google.firebase.Timestamp;
@@ -31,7 +33,6 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Objects;
-import java.util.Random;
 import java.util.UUID;
 
 import io.reactivex.rxjava3.disposables.Disposable;
@@ -42,14 +43,15 @@ public class NewsfeedFragment extends Fragment {
     // AppState
     Disposable profileDisposable;
     Disposable storiesMapDisposable;
+    Disposable socialPostsDisposable;
 
     // Components
     RecyclerView storiesRecycler;
     RecyclerView postRecycler;
+    SwipeRefreshLayout swipeRefreshLayout;
 
     // Component states
     ArrayList<StoryBubbleAdapter.StoryBubbleModel> storyBubbles = new ArrayList<>();
-    ArrayList<PostAdapter.PostModel> newsfeeds = new ArrayList<>();
 
     ActivityResultLauncher<PickVisualMediaRequest> launcher =
             registerForActivityResult(new ActivityResultContracts.PickVisualMedia(), uri -> {
@@ -123,15 +125,12 @@ public class NewsfeedFragment extends Fragment {
                              Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_newsfeed, container, false);
 
+        activity = getActivity();
+
+        // Stories
         storiesRecycler = rootView.findViewById(R.id.stories_recycler);
         storiesRecycler.setLayoutManager(new LinearLayoutManager(getContext(), RecyclerView.HORIZONTAL, false));
         storiesRecycler.addItemDecoration(new SpacingItemDecoration(40, 0));
-
-        postRecycler = rootView.findViewById(R.id.post_recycler);
-        postRecycler.setLayoutManager(new LinearLayoutManager(getContext(), RecyclerView.VERTICAL, false));
-        postRecycler.addItemDecoration(new SpacingItemDecoration(0, 45));
-
-        activity = getActivity();
 
         profileDisposable = ProfileState.getInstance().getObservableProfile().subscribe(profile -> {
             handleWatchStoriesToRender(profile, StoryState.getInstance().storiesMap);
@@ -141,29 +140,49 @@ public class NewsfeedFragment extends Fragment {
             handleWatchStoriesToRender(ProfileState.getInstance().profile, storiesMap);
         });
 
-        // Generate dummy posts
-        if (newsfeeds.size() == 0) {
-            Random rand = new Random();
-            for (int i = 0; i < rand.nextInt(5) + 5; i++) {
-                ArrayList<String> images = new ArrayList<>();
-                images.add("https://picsum.photos/200");
+        // Social Posts
+        postRecycler = rootView.findViewById(R.id.post_recycler);
+        postRecycler.setLayoutManager(new LinearLayoutManager(getContext(), RecyclerView.VERTICAL, false));
+        postRecycler.addItemDecoration(new SpacingItemDecoration(0, 45));
 
-                ArrayList<String> lovedByUsers = new ArrayList<>();
-                for (int j = 0; j < rand.nextInt(5); j++) {
-                    lovedByUsers.add("username" + j);
-                }
+        PostState postState = PostState.getInstance();
+        socialPostsDisposable = postState.getObservableSocialPosts().subscribe(this::setNewsfeeds);
 
-                newsfeeds.add(new PostAdapter.PostModel(
-                        "https://picsum.photos/200",
-                        "username" + i, images,
-                        "Caption" + i,
-                        lovedByUsers,
-                        rand.nextBoolean()
-                ));
+        // Swipe to refresh the posts
+        swipeRefreshLayout = rootView.findViewById(R.id.post_swipe_refresh);
+        swipeRefreshLayout.setOnRefreshListener(() -> {
+            PostState.getInstance().constructObservableSocialPosts();
+            swipeRefreshLayout.setRefreshing(false);
+        });
+
+        // Data fetching
+        String uid = ProfileState.getInstance().profile.id;
+        Database.getStoriesByUID(uid, new Database.GetStoriesByUIDCallback() {
+            @Override
+            public void onGetStoriesSuccess(ArrayList<Schema.Story> stories) {
+                HashMap<String, ArrayList<Schema.Story>> storiesMap = new HashMap<>();
+                storiesMap.put(uid, stories);
+                StoryState.getInstance().updateObservableStoriesMap(storiesMap);
             }
-        }
 
-        setNewsfeeds(newsfeeds);
+            @Override
+            public void onGetStoriesFailure() {
+                Toast.makeText(requireContext(), "Failed to load stories", Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        Database.getPostsByUID(uid, new Database.GetPostsByUIDCallback() {
+            @Override
+            public void onGetPostsSuccess(ArrayList<Schema.Post> posts) {
+                PostState.getInstance().updateObservableMyPosts(posts);
+                PostState.getInstance().constructObservableSocialPosts();
+            }
+
+            @Override
+            public void onGetPostsFailure() {
+                Toast.makeText(requireContext(), "Failed to load your posts", Toast.LENGTH_SHORT).show();
+            }
+        });
 
         return rootView;
     }
@@ -176,6 +195,10 @@ public class NewsfeedFragment extends Fragment {
 
         if (!storiesMapDisposable.isDisposed()) {
             storiesMapDisposable.dispose();
+        }
+
+        if (!socialPostsDisposable.isDisposed()) {
+            socialPostsDisposable.dispose();
         }
 
         super.onDestroyView();

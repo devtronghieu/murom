@@ -18,4 +18,6 @@
     <string name="default_post_desc">Default post desc</string>
     <string name="close_button">close button</string>
     <string name="story_image">story_image</string>
+    <string name="profile_post_item">Profile Post Item</string>
+    <string name="profile_posts_grid_view_title">Posts</string>
 </resources>

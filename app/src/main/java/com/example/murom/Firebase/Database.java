@@ -70,8 +70,6 @@ public class Database {
 
     public static final CollectionReference storyCollection = db.collection("Story");
 
-    public static final CollectionReference postCollection = db.collection("Post");
-
     public static void addStory(Schema.Story story) {
         Map<String, Object> documentData = new HashMap<>();
         documentData.put("created_at", story.createdAt);
@@ -86,23 +84,6 @@ public class Database {
                 .set(documentData)
                 .addOnSuccessListener(documentReference -> Log.d("-->", "Uploaded Story doc: " + storyID))
                 .addOnFailureListener(e -> Log.d("-->", "Failed to add Story doc: " + e));
-    }
-
-    public static void addPost(Schema.Post doc) {
-        Map<String, Object> documentData = new HashMap<>();
-        documentData.put("created_at", doc.createdAt);
-        documentData.put("user_id", doc.userId);
-        documentData.put("url", doc.url);
-        documentData.put("type", doc.type);
-        documentData.put("caption", doc.caption);
-
-        postCollection
-                .document(doc.id)
-                .set(documentData)
-                .addOnSuccessListener(documentReference -> {
-                    Log.d("-->", "Uploaded post doc: " + doc.id);
-                })
-                .addOnFailureListener(e -> Log.d("-->", "Failed to add Story doc: " + e));;
     }
 
     public interface GetStoriesByUIDCallback {
@@ -170,5 +151,80 @@ public class Database {
                 Log.d("-->", "Failed to update viewed_story of " + storyID);
             }
         });
+    }
+
+
+    // Post Collection
+    public static final CollectionReference postCollection = db.collection("Post");
+
+    public static void addPost(Schema.Post doc) {
+        Map<String, Object> documentData = new HashMap<>();
+        documentData.put("created_at", doc.createdAt);
+        documentData.put("user_id", doc.userId);
+        documentData.put("url", doc.url);
+        documentData.put("type", doc.type);
+        documentData.put("caption", doc.caption);
+
+        postCollection
+                .document(doc.id)
+                .set(documentData)
+                .addOnSuccessListener(documentReference -> {
+                    Log.d("-->", "Uploaded post doc: " + doc.id);
+                })
+                .addOnFailureListener(e -> Log.d("-->", "Failed to add Story doc: " + e));;
+    }
+
+    public interface GetPostsByUIDCallback {
+        void onGetPostsSuccess(ArrayList<Schema.Post> posts);
+        void onGetPostsFailure();
+    }
+
+    public static void getPostsByUID(String uid, GetPostsByUIDCallback callback) {
+        postCollection
+                .whereEqualTo("user_id", uid)
+                .orderBy("created_at", Query.Direction.DESCENDING)
+                .get()
+                .addOnCompleteListener(task -> {
+                    Log.d("-->", "Get task successfully");
+
+                    if (task.isSuccessful()) {
+                        ArrayList<Schema.Post> posts = new ArrayList<>();
+
+                        QuerySnapshot snap = task.getResult();
+                        List<DocumentSnapshot> docs = snap.getDocuments();
+
+                        for (int i = 0; i < docs.size(); i++) {
+                            DocumentSnapshot doc = docs.get(i);
+
+                            Schema.Post post = new Schema.Post(
+                                    "",
+                                    "",
+                                    "",
+                                    "",
+                                    "",
+                                    Timestamp.now()
+                            );
+
+                            post.id = doc.getId();
+                            post.createdAt = doc.getTimestamp("created_at");
+                            post.userId = doc.getString("user_id");
+                            post.url = doc.getString("url");
+                            post.type = doc.getString("type");
+                            post.caption = doc.getString("caption");
+
+                            posts.add(post);
+                        }
+
+                        callback.onGetPostsSuccess(posts);
+                    } else {
+                        Exception exception = task.getException();
+                        if (exception != null) {
+                            Log.e("-->", "Failed to get posts:", exception);
+                        } else {
+                            Log.e("-->", "Failed to get posts: Unknown reason");
+                        }
+                        callback.onGetPostsFailure();
+                    }
+                });
     }
 }

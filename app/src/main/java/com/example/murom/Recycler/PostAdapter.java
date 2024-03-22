@@ -1,6 +1,7 @@
 package com.example.murom.Recycler;
 
 import android.content.Context;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -86,6 +87,9 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.ViewHolder> {
     @Override
     public void onBindViewHolder(@NonNull ViewHolder viewHolder, int position) {
         PostModel data = localDataSet.get(position);
+
+        Log.d("-->", "username: " + data.username);
+        Log.d("-->", "caption: " + data.caption);
 
         viewHolder.username.setText(data.username);
 

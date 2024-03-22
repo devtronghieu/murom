@@ -21,9 +21,6 @@ import com.example.murom.databinding.ActivityMainBinding;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-
 public class MainActivity extends AppCompatActivity {
     FloatingActionButton home;
     View fragmentContainer;
@@ -52,26 +49,12 @@ public class MainActivity extends AppCompatActivity {
 
         setupFragments();
         setupBottomNavigation();
-        launchNewsFeedFragmentOnStartup();
 
         Database.getUser(uid, new Database.GetUserCallback() {
             @Override
             public void onGetUserSuccess(Schema.User user) {
                 profileState.updateObservableProfile(user);
-
-                Database.getStoriesByUID(uid, new Database.GetStoriesByUIDCallback() {
-                    @Override
-                    public void onGetStoriesSuccess(ArrayList<Schema.Story> stories) {
-                        HashMap<String, ArrayList<Schema.Story>> storiesMap = new HashMap<>();
-                        storiesMap.put(uid, stories);
-                        StoryState.getInstance().updateObservableStoriesMap(storiesMap);
-                    }
-
-                    @Override
-                    public void onGetStoriesFailure() {
-                        Toast.makeText(MainActivity.this, "Failed to load stories", Toast.LENGTH_SHORT).show();
-                    }
-                });
+                launchNewsFeedFragmentOnStartup();
             }
 
             @Override
