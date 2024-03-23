@@ -62,6 +62,7 @@ public class PostFragment extends Fragment {
 
     // Initialize edit buttons containers
     public ConstraintLayout flipContainer;
+    public ConstraintLayout cropContainer;
     public ConstraintLayout rotateContainer;
     public ConstraintLayout addContainer;
 
@@ -95,7 +96,6 @@ public class PostFragment extends Fragment {
                     if (Objects.equals(type, "image")) {
                         postImage.setVisibility(View.VISIBLE);
                         postVideo.setVisibility(View.GONE);
-//                        Glide.with(this).load(uri).into(postImage);
                         postImage.setImageUriAsync(uri);
                     } else {
                         postImage.setVisibility(View.GONE);
@@ -144,6 +144,7 @@ public class PostFragment extends Fragment {
 
         // Set container for edit buttons
         flipContainer = rootView.findViewById(R.id.flip_button);
+        cropContainer = rootView.findViewById(R.id.crop_button);
         rotateContainer = rootView.findViewById(R.id.rotate_button);
         addContainer = rootView.findViewById(R.id.add_button);
 
