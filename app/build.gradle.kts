@@ -51,6 +51,7 @@ dependencies {
     implementation("com.google.firebase:firebase-firestore-ktx")
     implementation("com.google.firebase:firebase-storage:20.3.0")
     implementation("io.reactivex.rxjava3:rxjava:3.1.8")
+    implementation("com.vanniktech:android-image-cropper:4.5.0")
     implementation("androidx.swiperefreshlayout:swiperefreshlayout:1.1.0")
 
     testImplementation("junit:junit:4.13.2")

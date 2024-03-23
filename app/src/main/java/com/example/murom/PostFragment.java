@@ -3,8 +3,6 @@ package com.example.murom;
 import android.app.Activity;
 import android.content.Context;
 import android.graphics.Bitmap;
-import android.graphics.drawable.BitmapDrawable;
-import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.text.Editable;
@@ -14,7 +12,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
-import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.VideoView;
@@ -27,7 +24,7 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.bumptech.glide.Glide;
+import com.canhub.cropper.CropImageView;
 import com.example.murom.Firebase.Database;
 import com.example.murom.Firebase.Schema;
 import com.example.murom.Firebase.Storage;
@@ -56,7 +53,7 @@ public class PostFragment extends Fragment {
     String type;
     Uri postUri;
     boolean isEdited;
-    ImageView postImage;
+    CropImageView postImage;
     VideoView postVideo;
 
     Context context;
@@ -65,7 +62,6 @@ public class PostFragment extends Fragment {
 
     // Initialize edit buttons containers
     public ConstraintLayout flipContainer;
-    public ConstraintLayout cropContainer;
     public ConstraintLayout rotateContainer;
     public ConstraintLayout addContainer;
 
@@ -73,7 +69,6 @@ public class PostFragment extends Fragment {
     public ImageButton flipButton;
     public ImageButton flipHorizontallyButton;
     public ImageButton flipVerticallyButton;
-    public ImageButton cropButton;
     public ImageButton rotateButton;
     public ImageButton rotateLeftButton;
     public ImageButton rotateRightButton;
@@ -81,7 +76,6 @@ public class PostFragment extends Fragment {
 
     // Initialize edit options
     public ConstraintLayout flipOptions;
-    public ConstraintLayout cropOptions;
     public ConstraintLayout rotateOptions;
     public ImageButton closeButton;
 
@@ -101,7 +95,8 @@ public class PostFragment extends Fragment {
                     if (Objects.equals(type, "image")) {
                         postImage.setVisibility(View.VISIBLE);
                         postVideo.setVisibility(View.GONE);
-                        Glide.with(this).load(uri).into(postImage);
+//                        Glide.with(this).load(uri).into(postImage);
+                        postImage.setImageUriAsync(uri);
                     } else {
                         postImage.setVisibility(View.GONE);
                         postVideo.setVisibility(View.VISIBLE);
@@ -149,13 +144,11 @@ public class PostFragment extends Fragment {
 
         // Set container for edit buttons
         flipContainer = rootView.findViewById(R.id.flip_button);
-        cropContainer = rootView.findViewById(R.id.crop_button);
         rotateContainer = rootView.findViewById(R.id.rotate_button);
         addContainer = rootView.findViewById(R.id.add_button);
 
         // Set layout for edit options
         flipOptions = rootView.findViewById(R.id.flip_options);
-        cropOptions = rootView.findViewById(R.id.crop_options);
         rotateOptions = rootView.findViewById(R.id.rotate_options);
         closeButton = rootView.findViewById(R.id.close_edit_options_button);
 
@@ -163,7 +156,6 @@ public class PostFragment extends Fragment {
         flipButton = rootView.findViewById(R.id.flip_icon);
         flipHorizontallyButton = rootView.findViewById(R.id.flip_horizontally_button);
         flipVerticallyButton = rootView.findViewById(R.id.flip_vertically_button);
-        cropButton = rootView.findViewById(R.id.crop_icon);
         rotateButton = rootView.findViewById(R.id.rotate_icon);
         rotateLeftButton = rootView.findViewById(R.id.rotate_left_button);
         rotateRightButton = rootView.findViewById(R.id.rotate_right_button);
@@ -176,42 +168,8 @@ public class PostFragment extends Fragment {
             setEditButtonActive(flipContainer);
         });
 
-        flipHorizontallyButton.setOnClickListener(v -> {
-            Drawable drawable = postImage.getDrawable();
-            if (drawable instanceof BitmapDrawable) {
-                BitmapDrawable bitmapDrawable = (BitmapDrawable) drawable;
-                Bitmap bitmap = bitmapDrawable.getBitmap();
-                Bitmap flippedBitmap = BitmapUtils.flipHorizontally(bitmap);
-                postImage.setImageBitmap(flippedBitmap);
-                removeFileIfItIsEdited();
-                postUri = BitmapUtils.bitmapToUri(context, flippedBitmap);
-                isEdited = true;
-            } else {
-                Toast.makeText(context, "Failed to flip horizontally", Toast.LENGTH_SHORT).show();
-            }
-        });
-
-        flipVerticallyButton.setOnClickListener(v -> {
-            Drawable drawable = postImage.getDrawable();
-            if (drawable instanceof BitmapDrawable) {
-                BitmapDrawable bitmapDrawable = (BitmapDrawable) drawable;
-                Bitmap bitmap = bitmapDrawable.getBitmap();
-                Bitmap flippedBitmap = BitmapUtils.flipVertically(bitmap);
-                postImage.setImageBitmap(flippedBitmap);
-                removeFileIfItIsEdited();
-                postUri = BitmapUtils.bitmapToUri(context, flippedBitmap);
-                isEdited = true;
-            } else {
-                Toast.makeText(context, "Failed to flip vertically", Toast.LENGTH_SHORT).show();
-            }
-        });
-
-        cropButton.setOnClickListener(v -> {
-            setEditOptionsNone();
-            cropOptions.setVisibility(View.VISIBLE);
-            closeButton.setVisibility(View.VISIBLE);
-            setEditButtonActive(cropContainer);
-        });
+        flipHorizontallyButton.setOnClickListener(v -> postImage.flipImageHorizontally());
+        flipVerticallyButton.setOnClickListener(v -> postImage.flipImageVertically());
 
         rotateButton.setOnClickListener(v -> {
             setEditOptionsNone();
@@ -220,35 +178,8 @@ public class PostFragment extends Fragment {
             setEditButtonActive(rotateContainer);
         });
 
-        rotateLeftButton.setOnClickListener(v -> {
-            Drawable drawable = postImage.getDrawable();
-            if (drawable instanceof BitmapDrawable) {
-                BitmapDrawable bitmapDrawable = (BitmapDrawable) drawable;
-                Bitmap bitmap = bitmapDrawable.getBitmap();
-                Bitmap rotatedBitmap = BitmapUtils.rotate(bitmap, 90);
-                postImage.setImageBitmap(rotatedBitmap);
-                removeFileIfItIsEdited();
-                postUri = BitmapUtils.bitmapToUri(context, rotatedBitmap);
-                isEdited = true;
-            } else {
-                Toast.makeText(context, "Failed to flip rotate left", Toast.LENGTH_SHORT).show();
-            }
-        });
-
-        rotateRightButton.setOnClickListener(v -> {
-            Drawable drawable = postImage.getDrawable();
-            if (drawable instanceof BitmapDrawable) {
-                BitmapDrawable bitmapDrawable = (BitmapDrawable) drawable;
-                Bitmap bitmap = bitmapDrawable.getBitmap();
-                Bitmap rotatedBitmap = BitmapUtils.rotate(bitmap, -90);
-                postImage.setImageBitmap(rotatedBitmap);
-                removeFileIfItIsEdited();
-                postUri = BitmapUtils.bitmapToUri(context, rotatedBitmap);
-                isEdited = true;
-            } else {
-                Toast.makeText(context, "Failed to rotate right", Toast.LENGTH_SHORT).show();
-            }
-        });
+        rotateLeftButton.setOnClickListener(v -> postImage.rotateImage(90));
+        rotateRightButton.setOnClickListener(v -> postImage.rotateImage(-90));
 
         addButton.setOnClickListener(v -> {
             setEditOptionsNone();
@@ -285,13 +216,11 @@ public class PostFragment extends Fragment {
 
     private void setEditOptionsNone() {
         flipContainer.setBackgroundColor(getResources().getColor(R.color.white, null));
-        cropContainer.setBackgroundColor(getResources().getColor(R.color.white, null));
         rotateContainer.setBackgroundColor(getResources().getColor(R.color.white, null));
         addContainer.setBackgroundColor(getResources().getColor(R.color.white, null));
         closeButton.setVisibility(View.GONE);
 
         flipOptions.setVisibility(View.GONE);
-        cropOptions.setVisibility(View.GONE);
         rotateOptions.setVisibility(View.GONE);
         closeButton.setVisibility(View.GONE);
     }
@@ -306,6 +235,14 @@ public class PostFragment extends Fragment {
         Date currentDate = new Date();
         Timestamp createdAt = new Timestamp(currentDate);
         String storagePath = "post/" + postID;
+
+        if (Objects.equals(type, "image")) {
+            Bitmap bitmap = postImage.getCroppedImage();
+            if (bitmap != null) {
+                postUri = BitmapUtils.bitmapToUri(context, bitmap);
+                isEdited = true;
+            }
+        }
 
         Storage.getRef(storagePath).putFile(postUri)
                 .addOnSuccessListener(taskSnapshot -> {
