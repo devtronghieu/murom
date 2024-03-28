@@ -23,4 +23,6 @@
     <string name="flip_vertically">Flip Vertically</string>
     <string name="flip_horizontally">Flip Horizontally</string>
     <string name="add_a_new_post">Add a new post</string>
+    <string name="edit_story">Edit story</string>
+    <string name="delete_this_story">Delete this story</string>
 </resources>

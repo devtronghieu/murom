@@ -1,10 +1,10 @@
 package com.example.murom;
 
 import android.os.Bundle;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
@@ -38,9 +38,13 @@ public class StoryFragment extends Fragment {
     ImageView imageView;
     VideoView videoView;
     ConstraintLayout touchSurface;
+    ImageButton editButton;
+    Button deleteButton;
 
     ArrayList<Schema.Story> stories;
     StoryFragmentCallback callback;
+
+    boolean isDeleteButtonShowing = false;
 
     int currentStoryIndex = 0;
 
@@ -63,9 +67,20 @@ public class StoryFragment extends Fragment {
         imageView = rootView.findViewById(R.id.story_fragment_image);
         videoView = rootView.findViewById(R.id.story_fragment_video);
         touchSurface = rootView.findViewById(R.id.story_fragment_touch_surface);
+        editButton = rootView.findViewById(R.id.story_fragment_edit_button);
+        deleteButton = rootView.findViewById(R.id.story_fragment_delete_button);
 
         ImageButton closeBtn = rootView.findViewById(R.id.story_fragment_close_button);
         closeBtn.setOnClickListener(v -> callback.onClose());
+        editButton.setOnClickListener(v -> {
+            if (isDeleteButtonShowing) {
+                isDeleteButtonShowing = false;
+                deleteButton.setVisibility(View.GONE);
+            } else {
+                isDeleteButtonShowing = true;
+                deleteButton.setVisibility(View.VISIBLE);
+            }
+        });
 
         StoryState storyState = StoryState.getInstance();
 
@@ -75,6 +90,10 @@ public class StoryFragment extends Fragment {
             if (stories == null || stories.size() == 0) {
                 Toast.makeText(requireContext(), "No stories found!", Toast.LENGTH_SHORT).show();
                 return;
+            }
+
+            if (Objects.equals(profile.id, ProfileState.getInstance().profile.id)) {
+                editButton.setVisibility(View.VISIBLE);
             }
 
             username.setText(profile.username);
