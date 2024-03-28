@@ -19,7 +19,7 @@ import java.util.ArrayList;
 public class StoryBubbleAdapter extends RecyclerView.Adapter<StoryBubbleAdapter.ViewHolder> {
     private Context context;
 
-    private final ArrayList<StoryBubbleModel> localDataSet;
+    private final ArrayList<StoryBubbleModel> storyBubbles;
 
     private final StoryBubbleCallback callback;
 
@@ -32,12 +32,14 @@ public class StoryBubbleAdapter extends RecyclerView.Adapter<StoryBubbleAdapter.
         private final String uid;
         private final String imageUrl;
         private final String text;
+        private final int storySize;
         private final boolean isViewed;
 
-        public StoryBubbleModel(String uid, String imageUrl, String text, boolean isViewed) {
+        public StoryBubbleModel(String uid, String imageUrl, String text, int storySize, boolean isViewed) {
             this.uid = uid;
             this.imageUrl = imageUrl;
             this.text = text;
+            this.storySize = storySize;
             this.isViewed = isViewed;
         }
     }
@@ -60,7 +62,7 @@ public class StoryBubbleAdapter extends RecyclerView.Adapter<StoryBubbleAdapter.
 
 
     public StoryBubbleAdapter(ArrayList<StoryBubbleModel> dataSet, StoryBubbleCallback callback) {
-        localDataSet = dataSet;
+        storyBubbles = dataSet;
         this.callback = callback;
     }
 
@@ -77,7 +79,7 @@ public class StoryBubbleAdapter extends RecyclerView.Adapter<StoryBubbleAdapter.
 
     @Override
     public void onBindViewHolder(ViewHolder viewHolder, final int position) {
-        StoryBubbleModel data = localDataSet.get(position);
+        StoryBubbleModel data = storyBubbles.get(position);
 
         viewHolder.storyText.setText(data.text);
 
@@ -90,7 +92,10 @@ public class StoryBubbleAdapter extends RecyclerView.Adapter<StoryBubbleAdapter.
             viewHolder.uploadButton.setOnClickListener(v -> callback.handleUploadStory());
         }
 
-        if (!data.isViewed) {
+        if (data.storySize == 0) {
+            viewHolder.storyImageContainer.setBackgroundResource(R.drawable.circle_transparent);
+            viewHolder.storyImage.setOnClickListener(null);
+        } else if (!data.isViewed) {
             viewHolder.storyImageContainer.setBackgroundResource(R.drawable.gradient_border);
         } else {
             viewHolder.storyImageContainer.setBackgroundResource(R.drawable.circle_gray);
@@ -99,6 +104,6 @@ public class StoryBubbleAdapter extends RecyclerView.Adapter<StoryBubbleAdapter.
 
     @Override
     public int getItemCount() {
-        return localDataSet.size();
+        return storyBubbles.size();
     }
 }
