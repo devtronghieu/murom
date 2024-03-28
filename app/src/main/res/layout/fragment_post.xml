@@ -9,15 +9,16 @@
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        android:paddingTop="12dp"
+        android:paddingBottom="4dp"
+        android:paddingHorizontal="16dp">
 
         <TextView
             android:id="@+id/textView"
             style="@style/fragment_title"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:paddingHorizontal="8dp"
-            android:paddingVertical="8dp"
             android:text="Post"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="0.0"
@@ -28,13 +29,15 @@
             android:id="@+id/upload_button"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:padding="2dp"
             android:background="#00000000"
             android:src="@drawable/murom_ic_arrow_up_square"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="0.993"
             app:layout_constraintStart_toEndOf="@+id/textView"
-            app:layout_constraintTop_toTopOf="parent" />
+            app:layout_constraintTop_toTopOf="parent"
+            android:contentDescription="Add post" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
@@ -43,7 +46,8 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:padding="8dp"
-        android:layout_margin="8dp"
+        android:layout_marginHorizontal="16dp"
+        android:layout_marginVertical="8dp"
         android:hint="Type something here..."
         android:inputType="textMultiLine"
         android:lines="2"
@@ -80,11 +84,11 @@
             app:layout_constraintTop_toTopOf="parent" />
 
         <TextView
-            android:id="@+id/text_add_image"
+            android:id="@+id/text_add_post"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:visibility="visible"
-            android:text="Add an image"
+            android:text="@string/add_a_new_post"
             app:layout_constraintBottom_toBottomOf="@+id/post_images"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
@@ -111,6 +115,16 @@
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
+
+        <ProgressBar
+            android:id="@+id/post_fragment_add_post_loading"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:visibility="gone"
+            app:layout_constraintBottom_toBottomOf="@+id/post_images"
+            app:layout_constraintEnd_toEndOf="@+id/post_images"
+            app:layout_constraintStart_toStartOf="@+id/post_images"
+            app:layout_constraintTop_toTopOf="@+id/post_images" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
@@ -293,7 +307,8 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="@drawable/edit_buttons_background"
-        android:padding="8dp">
+        android:paddingVertical="8dp"
+        android:paddingHorizontal="16dp">
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:id="@+id/rotate_button"
@@ -419,6 +434,4 @@
 
         </androidx.constraintlayout.widget.ConstraintLayout>
     </androidx.constraintlayout.widget.ConstraintLayout>
-
-
 </LinearLayout>
