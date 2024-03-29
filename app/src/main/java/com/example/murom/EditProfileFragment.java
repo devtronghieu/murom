@@ -38,7 +38,7 @@ import java.util.HashMap;
 public class EditProfileFragment extends Fragment {
 
     ProfileState profileState = ProfileState.getInstance();
-    String currentUserUid = Auth.getUser().getUid();
+    String currentUserUid = profileState.profile.id;
     Spinner privacy;
     ImageView pickedImageView;
     ActivityResultLauncher<PickVisualMediaRequest> launcher =
