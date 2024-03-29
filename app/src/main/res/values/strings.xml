@@ -25,4 +25,5 @@
     <string name="add_a_new_post">Add a new post</string>
     <string name="edit_story">Edit story</string>
     <string name="delete_this_story">Delete this story</string>
+    <string name="deleting">Deleting...</string>
 </resources>

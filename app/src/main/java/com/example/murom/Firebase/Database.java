@@ -15,7 +15,6 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 
 public class Database {
     private static final FirebaseFirestore db = FirebaseFirestore.getInstance();
@@ -77,12 +76,10 @@ public class Database {
         documentData.put("url", story.url);
         documentData.put("type", story.type);
 
-        String storyID = UUID.randomUUID().toString();
-
         storyCollection
-                .document(storyID)
+                .document(story.id)
                 .set(documentData)
-                .addOnSuccessListener(documentReference -> Log.d("-->", "Uploaded Story doc: " + storyID))
+                .addOnSuccessListener(documentReference -> Log.d("-->", "Uploaded Story doc: " + story.id))
                 .addOnFailureListener(e -> Log.d("-->", "Failed to add Story doc: " + e));
     }
 
@@ -137,6 +134,23 @@ public class Database {
                         }
                         callback.onGetStoriesFailure();
                     }
+                });
+    }
+
+    public interface DeleteStoryCallback {
+        void onDeleteStorySuccess(String storyID);
+        void onDeleteStoryFailure();
+    }
+    public static void deleteStory(String storyID, DeleteStoryCallback callback) {
+        DocumentReference docRef = storyCollection.document(storyID);
+        docRef.delete()
+                .addOnSuccessListener(runnable -> {
+                    Log.d("-->", "Deleted story: " + storyID);
+                    callback.onDeleteStorySuccess(storyID);
+                })
+                .addOnFailureListener(e -> {
+                    Log.e("-->", "Failed to get stories:", e);
+                    callback.onDeleteStoryFailure();
                 });
     }
 
