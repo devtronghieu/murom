@@ -115,6 +115,7 @@ public class ProfileFragment extends Fragment {
         username.setText(userName);
         bio.setText(userBio);
 
+
         RecyclerView highlightsRecycler = rootView.findViewById(R.id.highlights_recycler);
         highlightsRecycler.setLayoutManager(new LinearLayoutManager(getContext(),RecyclerView.HORIZONTAL, false));
         highlightsRecycler.addItemDecoration(new SpacingItemDecoration(40, 0 ));
