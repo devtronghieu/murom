@@ -1,5 +1,7 @@
 package com.example.murom;
 
+import static com.example.murom.Firebase.PasswordHashing.hashPassword;
+
 import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.LinearGradient;
@@ -35,7 +37,12 @@ import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 
+import java.security.SecureRandom;
 import java.util.Objects;
+
+import javax.crypto.Cipher;
+import javax.crypto.SecretKey;
+import javax.crypto.spec.SecretKeySpec;
 
 public class LoginActivity extends AppCompatActivity {
     private SignInClient oneTapClient;
@@ -118,7 +125,8 @@ public class LoginActivity extends AppCompatActivity {
                     Toast.makeText(LoginActivity.this, "Enter password", Toast.LENGTH_SHORT).show();
                     return;
                 }
-                mAuth.signInWithEmailAndPassword(email, password)
+                String hashedPassword = hashPassword(password);
+                mAuth.signInWithEmailAndPassword(email, hashedPassword)
                         .addOnCompleteListener(new OnCompleteListener<AuthResult>() {
                             @Override
                             public void onComplete(@NonNull Task<AuthResult> task) {

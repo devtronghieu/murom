@@ -1,5 +1,7 @@
 package com.example.murom;
 
+import static com.example.murom.Firebase.PasswordHashing.hashPassword;
+
 import android.content.Intent;
 import android.graphics.LinearGradient;
 import android.graphics.Shader;
@@ -34,9 +36,15 @@ import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.SetOptions;
 
+import java.security.Key;
+import java.security.SecureRandom;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+
+import javax.crypto.Cipher;
+import javax.crypto.SecretKey;
+import javax.crypto.spec.SecretKeySpec;
 
 public class RegisterActivity extends AppCompatActivity {
     EditText editTextEmail, editTextUsername;
@@ -95,6 +103,7 @@ public class RegisterActivity extends AppCompatActivity {
                     Toast.makeText(RegisterActivity.this, "Passwords do not match", Toast.LENGTH_SHORT).show();
                     return;
                 }
+                String hashedPassword = hashPassword(password);
                 //check exist username
                 db.collection("User")
                         .whereEqualTo("username", username)
@@ -105,7 +114,7 @@ public class RegisterActivity extends AppCompatActivity {
                                     return;
                                 }
                                 else {
-                                    register(email,password,username);
+                                    register(email,hashedPassword,username);
                                 }
                             } else {
                                 Toast.makeText(RegisterActivity.this, "Error checking username: " + task.getException().getMessage(), Toast.LENGTH_SHORT).show();
@@ -171,4 +180,5 @@ public class RegisterActivity extends AppCompatActivity {
     private boolean isValidPassword(String password) {
         return password.length() >= 6;
     }
+
 }
