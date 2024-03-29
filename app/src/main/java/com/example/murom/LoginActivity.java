@@ -23,6 +23,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 
 import com.example.murom.Firebase.Auth;
+import com.example.murom.Firebase.Database;
 import com.google.android.gms.auth.api.identity.BeginSignInRequest;
 import com.google.android.gms.auth.api.identity.Identity;
 import com.google.android.gms.auth.api.identity.SignInClient;
@@ -30,15 +31,21 @@ import com.google.android.gms.auth.api.identity.SignInCredential;
 import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
+import com.google.android.gms.tasks.Tasks;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.QuerySnapshot;
 
 import java.security.SecureRandom;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.ExecutionException;
 
 import javax.crypto.Cipher;
 import javax.crypto.SecretKey;
@@ -84,7 +91,7 @@ public class LoginActivity extends AppCompatActivity {
                             public void onSignInSuccess(FirebaseUser user) {
                                 Log.d("-->", "Welcome " + user.getEmail());
                                 Log.d("-->", "Your UID: " + user.getUid());
-                                navigateToMain();
+                                checkUserDatabase(user.getUid(), user.getEmail());
                             }
 
                             @Override
@@ -195,4 +202,81 @@ public class LoginActivity extends AppCompatActivity {
                     Log.d("-->", "Increase count failed: " + e);
                 });
     }
+    private void checkUserDatabase(String userId, String userEmail) {
+        DocumentReference userDocRef = db.collection("User").document(userId);
+        userDocRef.get().addOnSuccessListener(documentSnapshot -> {
+            if (!documentSnapshot.exists()) {
+                createNewUserDocument(userId, userEmail);
+            }
+            else {
+                navigateToMain();
+            }
+        }).addOnFailureListener(e -> {
+            Log.d("-->", "Error reading user data: " + e.getMessage());
+        });
+    }
+
+    // Create user document
+    private void createNewUserDocument(String userId, String userEmail) {
+        String username = userEmail.split("@")[0];
+        getUniqueUsername(username, new UniqueUsernameCallback() {
+            @Override
+            public void onUniqueUsernameFound(String uniqueUsername) {
+                DocumentReference userDocRef = db.collection("User").document(userId);
+                Map<String, String> userDefaultInfo = new HashMap<>();
+                userDefaultInfo.put("id", userId);
+                userDefaultInfo.put("email", userEmail);
+                userDefaultInfo.put("password", "");
+                userDefaultInfo.put("username", uniqueUsername);
+                userDocRef.set(userDefaultInfo)
+                        .addOnSuccessListener(aVoid -> {
+                            Log.d("-->", "Document successfully created!");
+                            navigateToMain();
+                        })
+                        .addOnFailureListener(e -> {
+                            Log.d("-->", "Failed to create new user document: " + e.getMessage());
+                        });
+            }
+        });
+    }
+
+    public void getUniqueUsername(String username, UniqueUsernameCallback callback) {
+        checkUsernameAvailability(username, 1, callback);
+    }
+
+    private void checkUsernameAvailability(String username, int counter, UniqueUsernameCallback callback) {
+        String newUsername = username + counter;
+        isUsernameExists(newUsername, exists -> {
+            if (!exists) {
+                // Username is available, invoke the callback with the unique username
+                callback.onUniqueUsernameFound(newUsername);
+            } else {
+                // Username is not available, recursively check the next username
+                checkUsernameAvailability(username, counter + 1, callback);
+            }
+        });
+    }
+
+    public interface UniqueUsernameCallback {
+        void onUniqueUsernameFound(String uniqueUsername);
+    }
+
+    public interface UsernameCheckListener {
+        void onUsernameChecked(boolean exists);
+    }
+    public void isUsernameExists(String username, UsernameCheckListener listener) {
+        db.collection("User")
+                .whereEqualTo("username", username)
+                .get()
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        boolean exists = !task.getResult().isEmpty();
+                        listener.onUsernameChecked(exists);
+                    } else {
+                        Log.d("-->", "Error checking username: " + task.getException().getMessage());
+                        listener.onUsernameChecked(false);
+                    }
+                });
+    }
+
 }
