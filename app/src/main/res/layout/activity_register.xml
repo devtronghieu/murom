@@ -21,24 +21,24 @@
         android:layout_height="wrap_content"
         android:orientation="vertical"
         android:layout_margin="30dp"
-        app:layout_constraintTop_toTopOf="@id/app_name"
-        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/app_name"
+        app:layout_constraintBottom_toTopOf="@id/register_to_login"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
         <TextView
-            android:id="@+id/register_username_label"
+            android:id="@+id/register_email_label"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Username"
+            android:text="Email"
             style="@style/caption_medium"
             android:layout_marginBottom="10dp"/>
         <EditText
-            android:id="@+id/register_username"
+            android:id="@+id/register_email"
             android:layout_width="match_parent"
             android:layout_height="40dp"
-            android:hint="Your username"
+            android:hint="Enter your email"
             android:elevation="1dp"
-            android:inputType="text"
+            android:inputType="textEmailAddress"
             android:paddingStart="20dp"
             style="@style/caption_regular"
             android:background="@drawable/search_bar_bg"
@@ -54,7 +54,7 @@
             android:id="@+id/register_password_layout"
             android:layout_width="match_parent"
             android:layout_height="40dp"
-            android:layout_marginBottom="30dp"
+            android:layout_marginBottom="10dp"
             app:passwordToggleEnabled="true"
             style="@style/caption_regular"
             android:background="@drawable/search_bar_bg"
@@ -69,6 +69,50 @@
                 android:paddingStart="20dp"
                 android:inputType="textPassword" />
         </com.google.android.material.textfield.TextInputLayout>
+        <TextView
+            android:id="@+id/register_confirm_password_label"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Confirm Password"
+            style="@style/caption_medium"
+            android:layout_marginBottom="10dp"/>
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/register_confirm_password_layout"
+            android:layout_width="match_parent"
+            android:layout_height="40dp"
+            android:layout_marginBottom="10dp"
+            app:passwordToggleEnabled="true"
+            style="@style/caption_regular"
+            android:background="@drawable/search_bar_bg"
+            app:hintEnabled="false">
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/register_confirm_password"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:padding="0dp"
+                android:background="@drawable/search_bar_bg"
+                android:hint="Enter your password again"
+                android:paddingStart="20dp"
+                android:inputType="textPassword" />
+        </com.google.android.material.textfield.TextInputLayout>
+        <TextView
+            android:id="@+id/register_username_label"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Username"
+            style="@style/caption_medium"
+            android:layout_marginBottom="10dp"/>
+        <EditText
+            android:id="@+id/register_username"
+            android:layout_width="match_parent"
+            android:layout_height="40dp"
+            android:hint="Enter your username"
+            android:elevation="1dp"
+            android:inputType="text"
+            android:paddingStart="20dp"
+            style="@style/caption_regular"
+            android:background="@drawable/search_bar_bg"
+            android:layout_marginBottom="10dp"/>
         <Button
             android:id="@+id/register_btn"
             android:layout_margin="10dp"

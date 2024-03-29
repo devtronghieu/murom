@@ -39,8 +39,8 @@ import java.util.Map;
 import java.util.Objects;
 
 public class RegisterActivity extends AppCompatActivity {
-    EditText editTextEmail;
-    TextInputEditText editTextPassword;
+    EditText editTextEmail, editTextUsername;
+    TextInputEditText editTextPassword, editTextConfirmPassword;
     Button registerBtn, toLoginBtn;
     FirebaseAuth mAuth;
     FirebaseFirestore db = FirebaseFirestore.getInstance();
@@ -49,17 +49,21 @@ public class RegisterActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_register);
         mAuth = FirebaseAuth.getInstance();
-        editTextEmail = findViewById(R.id.register_username);
+        editTextEmail = findViewById(R.id.register_email);
         editTextPassword = findViewById(R.id.register_password);
+        editTextConfirmPassword = findViewById(R.id.register_confirm_password);
+        editTextUsername = findViewById(R.id.register_username);
         registerBtn = findViewById(R.id.register_btn);
         toLoginBtn = findViewById(R.id.register_to_login_btn);
         registerBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                String email, password;
+                String email, password, confirmpassword, username;
                 email = editTextEmail.getText().toString();
                 password = editTextPassword.getText().toString();
-                Map<String, String> authInfo = new HashMap<>();
+                confirmpassword = editTextConfirmPassword.getText().toString();
+                username = editTextUsername.getText().toString();
+                //check null
                 if (TextUtils.isEmpty(email)) {
                     Toast.makeText(RegisterActivity.this, "Enter email", Toast.LENGTH_SHORT).show();
                     return;
@@ -68,43 +72,44 @@ public class RegisterActivity extends AppCompatActivity {
                     Toast.makeText(RegisterActivity.this, "Enter password", Toast.LENGTH_SHORT).show();
                     return;
                 }
-                mAuth.createUserWithEmailAndPassword(email, password)
-                        .addOnCompleteListener(new OnCompleteListener<AuthResult>() {
-                            @Override
-                            public void onComplete(@NonNull Task<AuthResult> task) {
-                                if (task.isSuccessful()) {
-                                    Log.d("-->", "createUserWithEmail:success");
-
-                                    FirebaseUser user = mAuth.getCurrentUser();
-                                    if (user != null) {
-                                        DocumentReference userDocRef = db.collection("User")
-                                                .document(user.getUid());
-                                        authInfo.put("id", user.getUid());
-                                        authInfo.put("email", email);
-                                        authInfo.put("password", password);
-                                        userDocRef.set(authInfo)
-                                                .addOnSuccessListener(new OnSuccessListener<Void>() {
-                                                    @Override
-                                                    public void onSuccess(Void aVoid) {
-                                                        Log.d("-->", "User data added to Firestore!");
-                                                        Intent i = new Intent(RegisterActivity.this, LoginActivity.class);
-                                                        startActivity(i);
-                                                        finish();
-                                                    }
-                                                })
-                                                .addOnFailureListener(new OnFailureListener() {
-                                                    @Override
-                                                    public void onFailure(@NonNull Exception e) {
-                                                        Log.w("-->", "Error adding user data to Firestore", e);
-                                                    }
-                                                });
-                                    }
-                                } else {
-                                    // If sign in fails, display a message to the user.
-                                    Log.w("-->", "createUserWithEmail:failure", task.getException());
-                                    Toast.makeText(RegisterActivity.this, "Authentication failed.",
-                                            Toast.LENGTH_SHORT).show();
+                if (TextUtils.isEmpty(confirmpassword)) {
+                    Toast.makeText(RegisterActivity.this, "Enter confirm password", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                if (TextUtils.isEmpty(username)) {
+                    Toast.makeText(RegisterActivity.this, "Enter username", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                // Check if email is valid
+                if (!isValidEmail(email)) {
+                    Toast.makeText(RegisterActivity.this, "Enter a valid email address", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                // Check if password valid
+                if (!isValidPassword(password)) {
+                    Toast.makeText(RegisterActivity.this, "Password must be at least 6 characters", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                //check confirm password
+                if (!password.equals(confirmpassword)) {
+                    Toast.makeText(RegisterActivity.this, "Passwords do not match", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                //check exist username
+                db.collection("User")
+                        .whereEqualTo("username", username)
+                        .get().addOnCompleteListener(task -> {
+                            if (task.isSuccessful()) {
+                                if (!task.getResult().isEmpty()) {
+                                    Toast.makeText(RegisterActivity.this, "Username already exists", Toast.LENGTH_SHORT).show();
+                                    return;
                                 }
+                                else {
+                                    register(email,password,username);
+                                }
+                            } else {
+                                Toast.makeText(RegisterActivity.this, "Error checking username: " + task.getException().getMessage(), Toast.LENGTH_SHORT).show();
+                                return;
                             }
                         });
             }
@@ -116,5 +121,54 @@ public class RegisterActivity extends AppCompatActivity {
                 startActivity(i);
             }
         });
+    }
+
+    private void register(String email, String password, String username){
+        Map<String, String> authInfo = new HashMap<>();
+        mAuth.createUserWithEmailAndPassword(email, password)
+                .addOnCompleteListener(new OnCompleteListener<AuthResult>() {
+                    @Override
+                    public void onComplete(@NonNull Task<AuthResult> task) {
+                        if (task.isSuccessful()) {
+                            Log.d("-->", "createUserWithEmail:success");
+
+                            FirebaseUser user = mAuth.getCurrentUser();
+                            if (user != null) {
+                                DocumentReference userDocRef = db.collection("User")
+                                        .document(user.getUid());
+                                authInfo.put("id", user.getUid());
+                                authInfo.put("email", email);
+                                authInfo.put("password", password);
+                                authInfo.put("username", username);
+                                userDocRef.set(authInfo)
+                                        .addOnSuccessListener(new OnSuccessListener<Void>() {
+                                            @Override
+                                            public void onSuccess(Void aVoid) {
+                                                Log.d("-->", "User data added to Firestore!");
+                                                Intent i = new Intent(RegisterActivity.this, LoginActivity.class);
+                                                startActivity(i);
+                                                finish();
+                                            }
+                                        })
+                                        .addOnFailureListener(new OnFailureListener() {
+                                            @Override
+                                            public void onFailure(@NonNull Exception e) {
+                                                Log.w("-->", "Error adding user data to Firestore", e);
+                                            }
+                                        });
+                            }
+                        } else {
+                            Log.w("-->", "createUserWithEmail:failure", task.getException());
+                            Toast.makeText(RegisterActivity.this, "Authentication failed.",
+                                    Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                });
+    }
+    private boolean isValidEmail(String email) {
+        return android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches();
+    }
+    private boolean isValidPassword(String password) {
+        return password.length() >= 6;
     }
 }
