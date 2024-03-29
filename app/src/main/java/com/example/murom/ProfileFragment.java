@@ -109,11 +109,9 @@ public class ProfileFragment extends Fragment {
                 .addOnFailureListener(e -> {
                     Log.d("-->", "failed to get avatar: " + e);
                 });
-
-        String userName = ProfileState.getInstance().profile.username;
-        String userBio = ProfileState.getInstance().profile.bio;
-        username.setText(userName);
-        bio.setText(userBio);
+        ProfileState profileState = ProfileState.getInstance();
+        username.setText(profileState.profile.username);
+        bio.setText(profileState.profile.bio);
 
 
         RecyclerView highlightsRecycler = rootView.findViewById(R.id.highlights_recycler);

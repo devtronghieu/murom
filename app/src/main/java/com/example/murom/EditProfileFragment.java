@@ -24,6 +24,7 @@ import androidx.fragment.app.Fragment;
 
 import com.bumptech.glide.Glide;
 import com.example.murom.Firebase.Auth;
+import com.example.murom.Firebase.Database;
 import com.example.murom.Firebase.Schema;
 import com.example.murom.Firebase.Storage;
 import com.example.murom.State.ProfileState;
@@ -36,7 +37,7 @@ import java.util.HashMap;
 
 public class EditProfileFragment extends Fragment {
 
-    FirebaseFirestore db= FirebaseFirestore.getInstance();
+    ProfileState profileState = ProfileState.getInstance();
     String currentUserUid = Auth.getUser().getUid();
     Spinner privacy;
     ImageView pickedImageView;
@@ -131,28 +132,17 @@ public class EditProfileFragment extends Fragment {
     }
 
     private void saveChanges(String newUsername, String newDescription) {
-        HashMap<String, Object> updatedProfileData = new HashMap<>();
-        updatedProfileData.put("username", newUsername);
-        updatedProfileData.put("bio", newDescription);
-
-        db.collection("users").document(currentUserUid)
-                .set(updatedProfileData, SetOptions.merge())
-                .addOnSuccessListener(aVoid -> {
-                    // Update successful
-                    Toast.makeText(requireContext(), "Profile updated successfully", Toast.LENGTH_SHORT).show();
-
-                    // Update ProfileState with the new profile
-                    ProfileState profileState = ProfileState.getInstance();
-                    Schema.User updatedProfile = profileState.profile;
-                    updatedProfile.username = newUsername;
-                    updatedProfile.bio = newDescription;
-                    profileState.updateObservableProfile(updatedProfile);
-                })
-                .addOnFailureListener(e -> {
-                    // Update failed
-                    Log.e("EditProfileFragment", "Error updating profile", e);
-                    Toast.makeText(requireContext(), "Failed to update profile", Toast.LENGTH_SHORT).show();
-                });
+        Database.updateUserProfile( currentUserUid, newUsername, newDescription, new Database.UpdateUserProfileCallback() {
+            @Override
+            public void onSaveSuccess(Schema.User user) {
+                profileState.updateObservableProfile(user);
+                Toast.makeText(requireContext(), "Profile updated successfully", Toast.LENGTH_SHORT).show();
+            }
+            @Override
+            public void onSaveFailure(String errorMessage) {
+                Toast.makeText(requireContext(), "Failed to update profile" , Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
 }
