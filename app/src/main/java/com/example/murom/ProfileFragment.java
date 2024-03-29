@@ -28,6 +28,7 @@ import com.example.murom.Recycler.HighlightBubbleAdapter;
 import com.example.murom.Recycler.PostsProfileAdapter;
 import com.example.murom.Recycler.SpacingItemDecoration;
 import com.example.murom.State.PostState;
+import com.example.murom.State.ProfileState;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.storage.StorageReference;
@@ -109,19 +110,11 @@ public class ProfileFragment extends Fragment {
                     Log.d("-->", "failed to get avatar: " + e);
                 });
 
-        DocumentReference userRef = db.collection("User").document(Auth.getUser().getUid());
-        userRef.get().addOnSuccessListener(documentSnapshot -> {
-            if (documentSnapshot.exists()){
-                String userName = documentSnapshot.getString("username");
-                String userBio = documentSnapshot.getString("bio");
-                username.setText(userName);
-                bio.setText(userBio);
-            } else {
-                Log.d("-->", "User document does not exist");
-            }
-        }).addOnFailureListener(e -> {
-            Log.d("-->", "Failed to fetch user data: " + e.getMessage());
-        });
+        String userName = ProfileState.getInstance().profile.username;
+        String userBio = ProfileState.getInstance().profile.bio;
+        username.setText(userName);
+        bio.setText(userBio);
+
         RecyclerView highlightsRecycler = rootView.findViewById(R.id.highlights_recycler);
         highlightsRecycler.setLayoutManager(new LinearLayoutManager(getContext(),RecyclerView.HORIZONTAL, false));
         highlightsRecycler.addItemDecoration(new SpacingItemDecoration(40, 0 ));

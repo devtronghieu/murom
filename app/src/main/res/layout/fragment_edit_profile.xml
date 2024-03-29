@@ -22,7 +22,7 @@
             android:layout_height="wrap_content"
             android:background="@color/transparent"
             android:src="@drawable/ic_back"
-            android:layout_marginTop="3dp"
+            android:layout_marginTop="7dp"
             />
 
         <TextView
@@ -30,9 +30,18 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginLeft="15dp"
-            android:layout_weight="1"
-            android:textSize="20dp"
-            android:text="Edit your profile" />
+
+            android:text="Edit your profile"
+            android:textSize="20dp" />
+
+        <Button
+            android:id="@+id/save_edit_profile_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="120dp"
+            android:background="#00000000"
+            android:text="Save"
+            android:textColor="@color/primary_500" />
 
     </LinearLayout>
 
