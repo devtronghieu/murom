@@ -40,7 +40,8 @@ import io.reactivex.rxjava3.disposables.Disposable;
 
 
 public class ProfileFragment extends Fragment {
-    FirebaseFirestore db = FirebaseFirestore.getInstance();
+    Disposable profileDisposable;
+    Schema.User profile;
     RecyclerView postsRecycler;
     ImageView pickedImageView;
     ActivityResultLauncher<PickVisualMediaRequest> launcher =
@@ -63,13 +64,27 @@ public class ProfileFragment extends Fragment {
     }
 
     ProfileFragmentCallback callback;
-    public ProfileFragment(ProfileFragmentCallback callback) {this.callback = callback;}
+    public ProfileFragment(ProfileFragmentCallback callback) {
+        this.callback = callback;
+        profileDisposable = ProfileState.getInstance().getObservableProfile().subscribe(profile -> {
+            this.profile = profile;
+        });
+    }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
     }
 
+    @Override
+    public void onDestroyView()
+    {
+        if (!profileDisposable.isDisposed()) {
+            profileDisposable.dispose();
+        }
+
+        super.onDestroyView();
+    }
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
