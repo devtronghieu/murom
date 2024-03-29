@@ -28,6 +28,7 @@ import com.example.murom.Recycler.HighlightBubbleAdapter;
 import com.example.murom.Recycler.PostsProfileAdapter;
 import com.example.murom.Recycler.SpacingItemDecoration;
 import com.example.murom.State.PostState;
+import com.example.murom.State.ProfileState;
 import com.google.firebase.storage.StorageReference;
 
 import java.util.ArrayList;
@@ -84,6 +85,7 @@ public class ProfileFragment extends Fragment {
         TextView following = rootView.findViewById(R.id.profile_following);
         TextView following_num = rootView.findViewById(R.id.num_following);
         TextView username = rootView.findViewById(R.id.profile_username);
+        TextView headerUsername = rootView.findViewById(R.id.header_username);
         TextView bio = rootView.findViewById(R.id.profile_bio);
         Button editBtn = rootView.findViewById(R.id.profile_edit_btn);
         editBtn.setOnClickListener(v -> callback.onEditProfile());
@@ -91,8 +93,11 @@ public class ProfileFragment extends Fragment {
         ImageView picture = rootView.findViewById(R.id.profile_imageView);
         TextView photo = rootView.findViewById(R.id.profile_phototext);
 
+        Schema.User profile = ProfileState.getInstance().profile;
 
-
+        username.setText(profile.username);
+        headerUsername.setText(profile.username);
+        bio.setText(profile.bio);
 
         StorageReference avatarRef = Storage.getRef("avatar/" + Auth.getUser().getEmail());
         avatarRef.getDownloadUrl()
