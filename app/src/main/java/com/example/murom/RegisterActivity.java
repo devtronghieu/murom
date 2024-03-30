@@ -52,6 +52,7 @@ public class RegisterActivity extends AppCompatActivity {
     Button registerBtn, toLoginBtn;
     FirebaseAuth mAuth;
     FirebaseFirestore db = FirebaseFirestore.getInstance();
+    private final int MIN_PASSWORD_LEN = 6;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -71,36 +72,10 @@ public class RegisterActivity extends AppCompatActivity {
                 password = editTextPassword.getText().toString();
                 confirmpassword = editTextConfirmPassword.getText().toString();
                 username = editTextUsername.getText().toString();
-                //check null
-                if (TextUtils.isEmpty(email)) {
-                    Toast.makeText(RegisterActivity.this, "Enter email", Toast.LENGTH_SHORT).show();
-                    return;
-                }
-                if (TextUtils.isEmpty(password)) {
-                    Toast.makeText(RegisterActivity.this, "Enter password", Toast.LENGTH_SHORT).show();
-                    return;
-                }
-                if (TextUtils.isEmpty(confirmpassword)) {
-                    Toast.makeText(RegisterActivity.this, "Enter confirm password", Toast.LENGTH_SHORT).show();
-                    return;
-                }
-                if (TextUtils.isEmpty(username)) {
-                    Toast.makeText(RegisterActivity.this, "Enter username", Toast.LENGTH_SHORT).show();
-                    return;
-                }
-                // Check if email is valid
-                if (!isValidEmail(email)) {
-                    Toast.makeText(RegisterActivity.this, "Enter a valid email address", Toast.LENGTH_SHORT).show();
-                    return;
-                }
-                // Check if password valid
-                if (!isValidPassword(password)) {
-                    Toast.makeText(RegisterActivity.this, "Password must be at least 6 characters", Toast.LENGTH_SHORT).show();
-                    return;
-                }
-                //check confirm password
-                if (!password.equals(confirmpassword)) {
-                    Toast.makeText(RegisterActivity.this, "Passwords do not match", Toast.LENGTH_SHORT).show();
+                //check inputs
+                String errorText = validateInputs(email, username, password, confirmpassword);
+                if (!errorText.isEmpty()) {
+                    Toast.makeText(RegisterActivity.this, errorText, Toast.LENGTH_SHORT).show();
                     return;
                 }
                 String hashedPassword = hashPassword(password);
@@ -178,7 +153,33 @@ public class RegisterActivity extends AppCompatActivity {
         return android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches();
     }
     private boolean isValidPassword(String password) {
-        return password.length() >= 6;
+        return password.length() >= MIN_PASSWORD_LEN;
     }
-
+    private String validateInputs(String email, String username, String password, String confirmpassword) {
+        // Check null
+        if (TextUtils.isEmpty(email)) {
+            return "Enter email";
+        }
+        if (TextUtils.isEmpty(password)) {
+            return "Enter password";
+        }
+        if (TextUtils.isEmpty(confirmpassword)) {
+            return "Enter confirm password";
+        }
+        if (TextUtils.isEmpty(username)) {
+            return "Enter username";
+        }
+        
+        // Check valid
+        if (!isValidEmail(email)) {
+            return "Enter a valid email address";
+        }
+        if (!isValidPassword(password)) {
+            return "Password must be at least 6 characters";
+        }
+        if (!password.equals(confirmpassword)) {
+            return "Passwords do not match";
+        }
+        return "";
+    }
 }
