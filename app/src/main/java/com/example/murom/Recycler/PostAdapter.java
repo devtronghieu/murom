@@ -1,21 +1,27 @@
 package com.example.murom.Recycler;
 
 import android.content.Context;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
+import com.example.murom.Firebase.Database;
 import com.example.murom.R;
+import com.example.murom.State.PostState;
+import com.example.murom.State.ProfileState;
 
 import java.util.ArrayList;
+import java.util.Objects;
 
 public class PostAdapter extends RecyclerView.Adapter<PostAdapter.ViewHolder> {
     private Context context;
@@ -23,6 +29,7 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.ViewHolder> {
     private final ArrayList<PostModel> localDataSet;
 
     public static class PostModel {
+        private final String postID;
         private final String avatarUrl;
         private final String username;
         private final ArrayList<String> images;
@@ -31,6 +38,7 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.ViewHolder> {
         private final boolean loved;
 
         public PostModel(
+                String postID,
                 String avatarUrl,
                 String username,
                 ArrayList<String> images,
@@ -38,6 +46,7 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.ViewHolder> {
                 ArrayList<String> lovedByUsers,
                 boolean loved
         ) {
+            this.postID = postID;
             this.avatarUrl = avatarUrl;
             this.username = username;
             this.images = images;
@@ -56,6 +65,11 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.ViewHolder> {
         private final TextView loveText;
         private final TextView caption;
 
+        private final ImageButton editButton;
+        private final LinearLayout editContainer;
+        private final Button deleteButton;
+        private final Button archiveButton;
+
         public ViewHolder(View view) {
             super(view);
 
@@ -66,6 +80,11 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.ViewHolder> {
             commentBtn = view.findViewById(R.id.post_comment_icon);
             loveText = view.findViewById(R.id.post_love_text);
             caption = view.findViewById(R.id.post_desc);
+
+            editButton = view.findViewById(R.id.post_edit_button);
+            editContainer = view.findViewById(R.id.post_edit_container);
+            deleteButton = view.findViewById(R.id.post_delete_button);
+            archiveButton = view.findViewById(R.id.post_archive_button);
         }
     }
 
@@ -100,6 +119,44 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.ViewHolder> {
         viewHolder.loveText.setText(loveText);
 
         viewHolder.caption.setText(data.caption);
+
+        // Edit: Delete / Archive
+        if (Objects.equals(data.username, ProfileState.getInstance().profile.username)) {
+            viewHolder.editButton.setVisibility(View.VISIBLE);
+
+            viewHolder.editContainer.setElevation(8);
+
+            viewHolder.editButton.setOnClickListener(v -> {
+                boolean isEditContainerShowing = viewHolder.editContainer.getVisibility() == View.VISIBLE;
+                if (isEditContainerShowing) {
+                    viewHolder.editContainer.setVisibility(View.GONE);
+                } else {
+                    viewHolder.editContainer.setVisibility(View.VISIBLE);
+                }
+            });
+
+            viewHolder.deleteButton.setOnClickListener(v -> {
+                Database.deletePost(data.postID, new Database.DeletePostCallback() {
+                    @Override
+                    public void onDeleteSuccess(String postID) {
+                        PostState instance = PostState.getInstance();
+
+                        for (int i = 0; i < instance.myPosts.size(); i++) {
+                            if (Objects.equals(instance.myPosts.get(i).id, postID)) {
+                                instance.myPosts.remove(i);
+                            }
+                        }
+                        instance.updateObservableMyPosts(instance.myPosts);
+                        Toast.makeText(context, "Deleted", Toast.LENGTH_SHORT).show();
+                    }
+
+                    @Override
+                    public void onDeleteFailure() {
+                        Toast.makeText(context, "Failed to delete post", Toast.LENGTH_SHORT).show();
+                    }
+                });
+            });
+        }
     }
 
     @Override

@@ -19,7 +19,7 @@ public class PostState {
         return observableMyPosts;
     }
 
-    // Social Posts = Mix of My Posts, My followers' posts, Social recommend Posts?
+    // Social Posts = Mix of My Posts, My followers' posts, Social recommended Posts?
     public ArrayList<PostAdapter.PostModel> socialPosts = new ArrayList<>();
     private final BehaviorSubject<ArrayList<PostAdapter.PostModel>> observableSocialPosts = BehaviorSubject.createDefault(socialPosts);
     public void constructObservableSocialPosts() {
@@ -30,6 +30,7 @@ public class PostState {
             ArrayList<String> images = new ArrayList<>();
             images.add(post.url);
             socialPosts.add(new PostAdapter.PostModel(
+                    post.id,
                     me.profilePicture,
                     me.username,
                     images,

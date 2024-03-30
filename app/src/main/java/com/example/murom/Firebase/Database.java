@@ -1,8 +1,6 @@
 package com.example.murom.Firebase;
 
-import android.content.Context;
 import android.util.Log;
-import android.widget.Toast;
 
 import com.example.murom.State.ProfileState;
 import com.google.firebase.Timestamp;
@@ -153,7 +151,7 @@ public class Database {
                     callback.onDeleteStorySuccess(storyID);
                 })
                 .addOnFailureListener(e -> {
-                    Log.e("-->", "Failed to get stories:", e);
+                    Log.e("-->", "Failed to delete story:", e);
                     callback.onDeleteStoryFailure();
                 });
     }
@@ -244,6 +242,27 @@ public class Database {
                 });
     }
 
+    public interface DeletePostCallback {
+        void onDeleteSuccess(String postID);
+        void onDeleteFailure();
+    }
+
+    public static void deletePost(String postID, DeletePostCallback callback) {
+        postCollection.document(postID).delete()
+                .addOnSuccessListener(runnable -> {
+                    Storage.getRef("post/" + postID).delete()
+                            .addOnFailureListener(e -> {
+                                Log.e("-->", "Failed to delete post on storage:", e);
+                            });
+                    callback.onDeleteSuccess(postID);
+                })
+                .addOnFailureListener(e -> {
+                    Log.e("-->", "Failed to delete post on firestore:", e);
+                    callback.onDeleteFailure();
+                });
+    }
+
+    // Profile aka User
     public interface UpdateUserProfileCallback {
         void onSaveSuccess(Schema.User user);
         void onSaveFailure(String errorMessage);
