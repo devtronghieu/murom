@@ -171,11 +171,14 @@
         android:layout_height="wrap_content"
         android:paddingVertical="8dp">
 
+
         <TextView
             android:id="@+id/profile_username"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="16dp"
+            android:textStyle="bold"
+            android:textSize="15dp"
             android:text="Username"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
@@ -185,7 +188,8 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="16dp"
-            android:layout_marginTop="8dp"
+            android:textSize="15dp"
+            android:layout_marginTop="0dp"
             android:text="bio"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"

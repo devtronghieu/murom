@@ -30,6 +30,8 @@ import com.example.murom.Recycler.PostsProfileAdapter;
 import com.example.murom.Recycler.SpacingItemDecoration;
 import com.example.murom.State.PostState;
 import com.example.murom.State.ProfileState;
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.storage.StorageReference;
 
 import java.util.ArrayList;
@@ -39,6 +41,8 @@ import io.reactivex.rxjava3.disposables.Disposable;
 
 
 public class ProfileFragment extends Fragment {
+    Disposable profileDisposable;
+    Schema.User profile;
     RecyclerView postsRecycler;
     ImageView pickedImageView;
     ActivityResultLauncher<PickVisualMediaRequest> launcher =
@@ -62,13 +66,27 @@ public class ProfileFragment extends Fragment {
     }
 
     ProfileFragmentCallback callback;
-    public ProfileFragment(ProfileFragmentCallback callback) {this.callback = callback;}
+    public ProfileFragment(ProfileFragmentCallback callback) {
+        this.callback = callback;
+        profileDisposable = ProfileState.getInstance().getObservableProfile().subscribe(profile -> {
+            this.profile = profile;
+        });
+    }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
     }
 
+    @Override
+    public void onDestroyView()
+    {
+        if (!profileDisposable.isDisposed()) {
+            profileDisposable.dispose();
+        }
+
+        super.onDestroyView();
+    }
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
@@ -86,22 +104,17 @@ public class ProfileFragment extends Fragment {
         TextView follower_num = rootView.findViewById(R.id.num_follower);
         TextView following = rootView.findViewById(R.id.profile_following);
         TextView following_num = rootView.findViewById(R.id.num_following);
+        ImageButton burgerBtn = rootView.findViewById(R.id.burger_button);
+
         TextView username = rootView.findViewById(R.id.profile_username);
-        TextView headerUsername = rootView.findViewById(R.id.header_username);
         TextView bio = rootView.findViewById(R.id.profile_bio);
         Button editBtn = rootView.findViewById(R.id.profile_edit_btn);
-        ImageButton burgerBtn = rootView.findViewById(R.id.burger_button);
         editBtn.setOnClickListener(v -> callback.onEditProfile());
+        burgerBtn.setOnClickListener(v -> callback.onArchiveClick());
 
         ImageView picture = rootView.findViewById(R.id.profile_imageView);
         TextView photo = rootView.findViewById(R.id.profile_phototext);
 
-        Schema.User profile = ProfileState.getInstance().profile;
-
-        username.setText(profile.username);
-        headerUsername.setText(profile.username);
-        bio.setText(profile.bio);
-        burgerBtn.setOnClickListener(v -> callback.onArchiveClick());
 
         StorageReference avatarRef = Storage.getRef("avatar/" + Auth.getUser().getEmail());
         avatarRef.getDownloadUrl()
@@ -114,6 +127,10 @@ public class ProfileFragment extends Fragment {
                 .addOnFailureListener(e -> {
                     Log.d("-->", "failed to get avatar: " + e);
                 });
+        ProfileState profileState = ProfileState.getInstance();
+        username.setText(profileState.profile.username);
+        bio.setText(profileState.profile.bio);
+
 
         RecyclerView highlightsRecycler = rootView.findViewById(R.id.highlights_recycler);
         highlightsRecycler.setLayoutManager(new LinearLayoutManager(getContext(),RecyclerView.HORIZONTAL, false));

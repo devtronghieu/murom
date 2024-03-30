@@ -24,12 +24,21 @@ import androidx.fragment.app.Fragment;
 
 import com.bumptech.glide.Glide;
 import com.example.murom.Firebase.Auth;
+import com.example.murom.Firebase.Database;
+import com.example.murom.Firebase.Schema;
 import com.example.murom.Firebase.Storage;
+import com.example.murom.State.ProfileState;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.SetOptions;
 import com.google.firebase.storage.StorageReference;
+
+import java.util.HashMap;
 
 
 public class EditProfileFragment extends Fragment {
 
+    ProfileState profileState = ProfileState.getInstance();
+    String currentUserUid = profileState.profile.id;
     Spinner privacy;
     ImageView pickedImageView;
     ActivityResultLauncher<PickVisualMediaRequest> launcher =
@@ -71,6 +80,8 @@ public class EditProfileFragment extends Fragment {
 
         TextView editProfileText = rootView.findViewById(R.id.edit_profile_text);
         ImageView avatar = rootView.findViewById(R.id.edit_profile_avatar);
+        Button saveChangeBtn = rootView.findViewById(R.id.save_edit_profile_button);
+
         Button changeBtn = rootView.findViewById(R.id.change_avatar_button);
         changeBtn.setOnClickListener(view -> setupImagePicker(avatar));
 
@@ -79,6 +90,7 @@ public class EditProfileFragment extends Fragment {
         EditText username = rootView.findViewById(R.id.edit_profile_username);
         EditText description = rootView.findViewById(R.id.edit_profile_description);
         TextView privacyText = rootView.findViewById(R.id.edit_profile_privacy_text);
+        saveChangeBtn.setOnClickListener(view -> saveChanges(username.getText().toString(), description.getText().toString()));
 
         privacy = rootView.findViewById(R.id.edit_profile_privacy);
         initSpinnerFooter();
@@ -117,6 +129,20 @@ public class EditProfileFragment extends Fragment {
         Auth.signOut();
         Intent i = new Intent(requireContext(), LoginActivity.class);
         startActivity(i);
+    }
+
+    private void saveChanges(String newUsername, String newDescription) {
+        Database.updateUserProfile( currentUserUid, newUsername, newDescription, new Database.UpdateUserProfileCallback() {
+            @Override
+            public void onSaveSuccess(Schema.User user) {
+                profileState.updateObservableProfile(user);
+                Toast.makeText(requireContext(), "Profile updated successfully", Toast.LENGTH_SHORT).show();
+            }
+            @Override
+            public void onSaveFailure(String errorMessage) {
+                Toast.makeText(requireContext(), "Failed to update profile" , Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
 }

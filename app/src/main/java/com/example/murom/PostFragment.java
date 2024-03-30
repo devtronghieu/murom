@@ -12,6 +12,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.VideoView;
@@ -52,8 +53,13 @@ public class PostFragment extends Fragment {
     String caption;
     String type;
     Uri postUri;
-    boolean isEdited;
+
+    ProgressBar loadingBar;
+
     CropImageView postImage;
+    boolean isCropping;
+    boolean isEdited;
+
     VideoView postVideo;
 
     Context context;
@@ -68,6 +74,7 @@ public class PostFragment extends Fragment {
 
     // Initialize edit buttons
     public ImageButton flipButton;
+    public ImageButton cropButton;
     public ImageButton flipHorizontallyButton;
     public ImageButton flipVerticallyButton;
     public ImageButton rotateButton;
@@ -80,7 +87,7 @@ public class PostFragment extends Fragment {
     public ConstraintLayout rotateOptions;
     public ImageButton closeButton;
 
-    public TextView addImageText;
+    public TextView addPostText;
     public ImageButton uploadButton;
 
     ActivityResultLauncher<PickVisualMediaRequest> launcher =
@@ -92,6 +99,7 @@ public class PostFragment extends Fragment {
                     type = mimeType != null && mimeType.startsWith("image/") ? "image" : "video";
                     postUri = uri;
                     isEdited = false;
+                    uploadButton.setEnabled(true);
 
                     if (Objects.equals(type, "image")) {
                         postImage.setVisibility(View.VISIBLE);
@@ -134,8 +142,13 @@ public class PostFragment extends Fragment {
         context = requireContext();
 
         activity = getActivity();
-        addImageText = rootView.findViewById(R.id.text_add_image);
+
+        loadingBar = rootView.findViewById(R.id.post_fragment_add_post_loading);
+
+        addPostText = rootView.findViewById(R.id.text_add_post);
+
         uploadButton = rootView.findViewById(R.id.upload_button);
+        uploadButton.setEnabled(false);
 
         postImage = rootView.findViewById(R.id.post_images);
         postVideo = rootView.findViewById(R.id.post_video);
@@ -157,6 +170,7 @@ public class PostFragment extends Fragment {
         flipButton = rootView.findViewById(R.id.flip_icon);
         flipHorizontallyButton = rootView.findViewById(R.id.flip_horizontally_button);
         flipVerticallyButton = rootView.findViewById(R.id.flip_vertically_button);
+        cropButton = rootView.findViewById(R.id.crop_icon);
         rotateButton = rootView.findViewById(R.id.rotate_icon);
         rotateLeftButton = rootView.findViewById(R.id.rotate_left_button);
         rotateRightButton = rootView.findViewById(R.id.rotate_right_button);
@@ -171,6 +185,20 @@ public class PostFragment extends Fragment {
 
         flipHorizontallyButton.setOnClickListener(v -> postImage.flipImageHorizontally());
         flipVerticallyButton.setOnClickListener(v -> postImage.flipImageVertically());
+
+        cropButton.setOnClickListener(v -> {
+            setEditOptionsNone();
+
+            if (!isCropping) {
+                setEditButtonActive(cropContainer);
+                isCropping = true;
+                postImage.setShowCropOverlay(true);
+            } else {
+                isCropping = false;
+                postImage.setShowCropOverlay(false);
+            }
+        });
+        postImage.setShowCropOverlay(false);
 
         rotateButton.setOnClickListener(v -> {
             setEditOptionsNone();
@@ -217,6 +245,7 @@ public class PostFragment extends Fragment {
 
     private void setEditOptionsNone() {
         flipContainer.setBackgroundColor(getResources().getColor(R.color.white, null));
+        cropContainer.setBackgroundColor(getResources().getColor(R.color.white, null));
         rotateContainer.setBackgroundColor(getResources().getColor(R.color.white, null));
         addContainer.setBackgroundColor(getResources().getColor(R.color.white, null));
         closeButton.setVisibility(View.GONE);
@@ -228,11 +257,13 @@ public class PostFragment extends Fragment {
 
     private void selectMediaResource() {
         launcher.launch(new PickVisualMediaRequest.Builder().setMediaType(ActivityResultContracts.PickVisualMedia.ImageAndVideo.INSTANCE).build());
-        addImageText.setVisibility(View.GONE);
+        addPostText.setVisibility(View.GONE);
         setEditOptionsNone();
     }
 
     private void uploadPost() {
+        loadingBar.setVisibility(View.VISIBLE);
+
         Date currentDate = new Date();
         Timestamp createdAt = new Timestamp(currentDate);
         String storagePath = "post/" + postID;
@@ -260,6 +291,10 @@ public class PostFragment extends Fragment {
 
                                 removeFileIfItIsEdited();
 
+                                postImage.setImageBitmap(null);
+                                postVideo.setVideoURI(null);
+                                addPostText.setText(R.string.add_a_new_post);
+
                                 Toast.makeText(context, "Uploaded!", Toast.LENGTH_SHORT).show();
                             })
                             .addOnFailureListener(e -> {
@@ -267,10 +302,14 @@ public class PostFragment extends Fragment {
                                 Log.d("-->", "failed to get post: " + e);
                                 Toast.makeText(context, "Failed to upload post!", Toast.LENGTH_SHORT).show();
                             });
-                }).addOnFailureListener(e -> {
+                })
+                .addOnFailureListener(e -> {
                     removeFileIfItIsEdited();
-                    Log.d("-->", "failed to get post: " + e);
+                    Log.d("-->", "failed to put file: " + e);
                     Toast.makeText(context, "Failed to upload post!", Toast.LENGTH_SHORT).show();
+                })
+                .addOnCompleteListener(e -> {
+                    loadingBar.setVisibility(View.GONE);
                 });
     }
 

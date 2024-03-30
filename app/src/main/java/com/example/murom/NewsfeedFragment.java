@@ -209,8 +209,10 @@ public class NewsfeedFragment extends Fragment {
 
         ArrayList<Schema.Story> myStories = storiesMap.get(profile.id);
 
+        int storySize = 0;
         boolean isViewed = true;
         if (myStories != null && myStories.size() >= 1) {
+            storySize = myStories.size();
             isViewed = Objects.equals(profile.viewedStories.get(profile.id), myStories.get(myStories.size() - 1).id);
         }
 
@@ -218,6 +220,7 @@ public class NewsfeedFragment extends Fragment {
                 profile.id,
                 profile.profilePicture,
                 "Your story",
+                storySize,
                 isViewed
         );
 
