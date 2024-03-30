@@ -158,4 +158,47 @@ public class Database {
             }
         });
     }
+
+    public interface checkUsernameCallback {
+        void onUsernameAvailable();
+        void onUsernameUnavailable();
+        void onUsernameCheckError(String errorMessage);
+        void onCheckFailure();
+    }
+    public static void checkUsernameAvailability(String username, checkUsernameCallback callback) {
+        db.collection("User")
+                .whereEqualTo("username", username)
+                .get()
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        if (!task.getResult().isEmpty()) {
+                            callback.onUsernameUnavailable();
+                        } else {
+                            callback.onUsernameAvailable();
+                        }
+                    } else {
+                        callback.onUsernameCheckError("Error checking username: " + task.getException().getMessage());
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    callback.onCheckFailure();
+                });
+
+    }
+    public static void addUserToFirestore(String userId, String email, String password, String username, Auth.RegistrationCallback callback) {
+        Map<String, String> authInfo = new HashMap<>();
+        authInfo.put("id", userId);
+        authInfo.put("email", email);
+        authInfo.put("password", password);
+        authInfo.put("username", username);
+        db.collection("User")
+                .document(userId)
+                .set(authInfo)
+                .addOnSuccessListener(aVoid -> {
+                    callback.onRegistrationSuccess();
+                })
+                .addOnFailureListener(e -> {
+                    callback.onRegistrationFailure("Error adding user data to Firestore: " + e.getMessage());
+                });
+    }
 }

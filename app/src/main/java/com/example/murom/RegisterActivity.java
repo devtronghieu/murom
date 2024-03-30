@@ -20,6 +20,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 
 import com.example.murom.Firebase.Auth;
+import com.example.murom.Firebase.Database;
 import com.google.android.gms.auth.api.identity.BeginSignInRequest;
 import com.google.android.gms.auth.api.identity.Identity;
 import com.google.android.gms.auth.api.identity.SignInCredential;
@@ -79,21 +80,33 @@ public class RegisterActivity extends AppCompatActivity {
                     return;
                 }
                 String hashedPassword = hashPassword(password);
-                //check exist username
-                db.collection("User")
-                        .whereEqualTo("username", username)
-                        .get().addOnCompleteListener(task -> {
-                            if (task.isSuccessful()) {
-                                if (!task.getResult().isEmpty()) {
-                                    Toast.makeText(RegisterActivity.this, "Username already exists", Toast.LENGTH_SHORT).show();
-                                    return;
-                                }
-                                else {
-                                    register(email,hashedPassword,username);
-                                }
-                            } else {
-                                Toast.makeText(RegisterActivity.this, "Error checking username: " + task.getException().getMessage(), Toast.LENGTH_SHORT).show();
-                                return;
+                Database.checkUsernameAvailability(username, new Database.checkUsernameCallback() {
+                            @Override
+                            public void onUsernameAvailable() {
+                                Auth.register(email, password, username, new Auth.RegistrationCallback() {
+                                    @Override
+                                    public void onRegistrationSuccess() {
+                                        Intent i = new Intent(RegisterActivity.this, LoginActivity.class);
+                                        startActivity(i);
+                                        finish();
+                                    }
+                                    @Override
+                                    public void onRegistrationFailure(String errorMessage) {
+                                        Log.d("-->", "Registration failed");
+                                    }
+                                });
+                            }
+                            @Override
+                            public void onUsernameUnavailable() {
+                                Toast.makeText(RegisterActivity.this, "Username already exists", Toast.LENGTH_SHORT).show();
+                            }
+                            @Override
+                            public void onUsernameCheckError(String errorMessage) {
+                                Toast.makeText(RegisterActivity.this, errorMessage, Toast.LENGTH_SHORT).show();
+                            }
+                            @Override
+                            public void onCheckFailure() {
+                                Toast.makeText(RegisterActivity.this, "Check failed", Toast.LENGTH_SHORT).show();
                             }
                         });
             }
@@ -107,48 +120,6 @@ public class RegisterActivity extends AppCompatActivity {
         });
     }
 
-    private void register(String email, String password, String username){
-        Map<String, String> authInfo = new HashMap<>();
-        mAuth.createUserWithEmailAndPassword(email, password)
-                .addOnCompleteListener(new OnCompleteListener<AuthResult>() {
-                    @Override
-                    public void onComplete(@NonNull Task<AuthResult> task) {
-                        if (task.isSuccessful()) {
-                            Log.d("-->", "createUserWithEmail:success");
-
-                            FirebaseUser user = mAuth.getCurrentUser();
-                            if (user != null) {
-                                DocumentReference userDocRef = db.collection("User")
-                                        .document(user.getUid());
-                                authInfo.put("id", user.getUid());
-                                authInfo.put("email", email);
-                                authInfo.put("password", password);
-                                authInfo.put("username", username);
-                                userDocRef.set(authInfo)
-                                        .addOnSuccessListener(new OnSuccessListener<Void>() {
-                                            @Override
-                                            public void onSuccess(Void aVoid) {
-                                                Log.d("-->", "User data added to Firestore!");
-                                                Intent i = new Intent(RegisterActivity.this, LoginActivity.class);
-                                                startActivity(i);
-                                                finish();
-                                            }
-                                        })
-                                        .addOnFailureListener(new OnFailureListener() {
-                                            @Override
-                                            public void onFailure(@NonNull Exception e) {
-                                                Log.w("-->", "Error adding user data to Firestore", e);
-                                            }
-                                        });
-                            }
-                        } else {
-                            Log.w("-->", "createUserWithEmail:failure", task.getException());
-                            Toast.makeText(RegisterActivity.this, "Authentication failed.",
-                                    Toast.LENGTH_SHORT).show();
-                        }
-                    }
-                });
-    }
     private boolean isValidEmail(String email) {
         return android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches();
     }
