@@ -37,6 +37,7 @@ public class MainActivity extends AppCompatActivity {
     Fragment profileFragment;
     Fragment storyFragment;
     Fragment editProfileFragment;
+    Fragment archiveFragment;
 
 
     @Override
@@ -71,7 +72,17 @@ public class MainActivity extends AppCompatActivity {
         searchFragment = new SearchFragment();
         newsfeedFragment = new NewsfeedFragment(MainActivity.this::handleViewStory);
         reelsFragment = new ReelsFragment();
-        profileFragment = new ProfileFragment(MainActivity.this::handleEditProfile);
+        profileFragment = new ProfileFragment(new ProfileFragment.ProfileFragmentCallback() {
+            @Override
+            public void onEditProfile() {
+                handleEditProfile();
+            }
+
+            @Override
+            public void onArchiveClick() {
+                handleOnArchiveClick();
+            }
+        });
     }
 
     private void setupBottomNavigation() {
@@ -172,5 +183,10 @@ public class MainActivity extends AppCompatActivity {
     private void handleEditProfile(){
         editProfileFragment = new EditProfileFragment(() -> removeFullscreenFragment(editProfileFragment));
         addFullscreenFragment(editProfileFragment);
+    }
+
+    private void handleOnArchiveClick(){
+        archiveFragment = new ArchiveFragment(() -> removeFullscreenFragment(archiveFragment));
+        addFullscreenFragment(archiveFragment);
     }
 }

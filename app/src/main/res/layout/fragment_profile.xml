@@ -23,19 +23,19 @@
             app:layout_constraintTop_toTopOf="parent" />
 
         <TextView
-            android:id="@+id/textView2"
+            android:id="@+id/header_username"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/app_name"
             style="@style/fragment_title"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toStartOf="@+id/imageButton"
+            app:layout_constraintEnd_toStartOf="@+id/burger_button"
             app:layout_constraintHorizontal_bias="0.024"
             app:layout_constraintStart_toEndOf="@+id/imageView"
             app:layout_constraintTop_toTopOf="parent" />
 
         <ImageButton
-            android:id="@+id/imageButton"
+            android:id="@+id/burger_button"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:src="@drawable/murom_ic_menu"
@@ -168,7 +168,8 @@
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        android:paddingVertical="8dp">
 
 
         <TextView
@@ -201,10 +202,10 @@
         android:layout_marginHorizontal="12dp"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginVertical="12dp"
-        android:backgroundTint="@color/primary_500"
+        android:layout_marginVertical="8dp"
+        android:backgroundTint="@color/primary_100"
         android:text="Edit"
-        android:textColor="@color/black"
+        android:textColor="@color/secondary_500"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.491"
         app:layout_constraintStart_toStartOf="parent"
@@ -222,7 +223,7 @@
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:paddingHorizontal="160dp"
+        android:paddingHorizontal="140dp"
         android:paddingVertical="12dp">
 
         <ImageView
