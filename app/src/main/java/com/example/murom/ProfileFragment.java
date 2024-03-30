@@ -28,6 +28,9 @@ import com.example.murom.Recycler.HighlightBubbleAdapter;
 import com.example.murom.Recycler.PostsProfileAdapter;
 import com.example.murom.Recycler.SpacingItemDecoration;
 import com.example.murom.State.PostState;
+import com.example.murom.State.ProfileState;
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.storage.StorageReference;
 
 import java.util.ArrayList;
@@ -37,6 +40,8 @@ import io.reactivex.rxjava3.disposables.Disposable;
 
 
 public class ProfileFragment extends Fragment {
+    Disposable profileDisposable;
+    Schema.User profile;
     RecyclerView postsRecycler;
     ImageView pickedImageView;
     ActivityResultLauncher<PickVisualMediaRequest> launcher =
@@ -59,13 +64,27 @@ public class ProfileFragment extends Fragment {
     }
 
     ProfileFragmentCallback callback;
-    public ProfileFragment(ProfileFragmentCallback callback) {this.callback = callback;}
+    public ProfileFragment(ProfileFragmentCallback callback) {
+        this.callback = callback;
+        profileDisposable = ProfileState.getInstance().getObservableProfile().subscribe(profile -> {
+            this.profile = profile;
+        });
+    }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
     }
 
+    @Override
+    public void onDestroyView()
+    {
+        if (!profileDisposable.isDisposed()) {
+            profileDisposable.dispose();
+        }
+
+        super.onDestroyView();
+    }
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
@@ -105,6 +124,10 @@ public class ProfileFragment extends Fragment {
                 .addOnFailureListener(e -> {
                     Log.d("-->", "failed to get avatar: " + e);
                 });
+        ProfileState profileState = ProfileState.getInstance();
+        username.setText(profileState.profile.username);
+        bio.setText(profileState.profile.bio);
+
 
         RecyclerView highlightsRecycler = rootView.findViewById(R.id.highlights_recycler);
         highlightsRecycler.setLayoutManager(new LinearLayoutManager(getContext(),RecyclerView.HORIZONTAL, false));
