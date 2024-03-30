@@ -7,6 +7,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -57,6 +58,7 @@ public class ProfileFragment extends Fragment {
 
     public interface ProfileFragmentCallback {
         void onEditProfile();
+        void onArchiveClick();
     }
 
     ProfileFragmentCallback callback;
@@ -88,6 +90,7 @@ public class ProfileFragment extends Fragment {
         TextView headerUsername = rootView.findViewById(R.id.header_username);
         TextView bio = rootView.findViewById(R.id.profile_bio);
         Button editBtn = rootView.findViewById(R.id.profile_edit_btn);
+        ImageButton burgerBtn = rootView.findViewById(R.id.burger_button);
         editBtn.setOnClickListener(v -> callback.onEditProfile());
 
         ImageView picture = rootView.findViewById(R.id.profile_imageView);
@@ -98,6 +101,7 @@ public class ProfileFragment extends Fragment {
         username.setText(profile.username);
         headerUsername.setText(profile.username);
         bio.setText(profile.bio);
+        burgerBtn.setOnClickListener(v -> callback.onArchiveClick());
 
         StorageReference avatarRef = Storage.getRef("avatar/" + Auth.getUser().getEmail());
         avatarRef.getDownloadUrl()
