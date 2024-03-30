@@ -72,4 +72,19 @@ public class Auth {
                     }
                 });
     }
+
+    public interface  SignInWithEmailPasswordCallback {
+        void onSignInSuccess();
+        void onSignInFailure(Exception e);
+    }
+    public static void signInWithEmailPassword(String email, String password, SignInWithEmailPasswordCallback callback) {
+        auth.signInWithEmailAndPassword(email, password)
+                .addOnCompleteListener(task -> {
+                        if (task.isSuccessful()) {
+                            callback.onSignInSuccess();
+                        } else {
+                            callback.onSignInFailure(task.getException());
+                        }
+                });
+    }
 }

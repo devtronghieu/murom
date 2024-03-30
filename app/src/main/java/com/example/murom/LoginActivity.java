@@ -132,24 +132,21 @@ public class LoginActivity extends AppCompatActivity {
                     Toast.makeText(LoginActivity.this, "Enter password", Toast.LENGTH_SHORT).show();
                     return;
                 }
-                String hashedPassword = hashPassword(password);
-                mAuth.signInWithEmailAndPassword(email, hashedPassword)
-                        .addOnCompleteListener(new OnCompleteListener<AuthResult>() {
-                            @Override
-                            public void onComplete(@NonNull Task<AuthResult> task) {
-                                if (task.isSuccessful()) {
-                                    // Sign in success, update UI with the signed-in user's information
-                                    Log.d("-->", "signInWithEmail:success");
-                                    navigateToMain();
-                                } else {
-                                    // If sign in fails, display a message to the user.
-                                    Log.w("-->", "signInWithEmail:failure", task.getException());
-                                    Toast.makeText(LoginActivity.this, "Authentication failed.",
-                                            Toast.LENGTH_SHORT).show();
+                Auth.signInWithEmailPassword(email, password, new Auth.SignInWithEmailPasswordCallback() {
+                    @Override
+                    public void onSignInSuccess() {
+                        Log.d("-->", "signInWithEmail:success");
+                        navigateToMain();
+                    }
 
-                                }
-                            }
-                        });
+                    @Override
+                    public void onSignInFailure(Exception e) {
+                        Log.w("-->", "signInWithEmail:failure");
+                        Toast.makeText(LoginActivity.this, "Authentication failed." + e,
+                                Toast.LENGTH_SHORT).show();
+
+                    }
+                });
             }
         });
         toRegisterBtn.setOnClickListener(new View.OnClickListener() {
