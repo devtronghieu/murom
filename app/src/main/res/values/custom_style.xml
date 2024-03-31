@@ -30,5 +30,17 @@
         <item name="android:fontFamily">Poppins</item>
         <item name="android:textStyle">bold</item>
     </style>
+    <style name="caption_regular">
+        <item name="android:textColor">@color/black</item>
+        <item name="android:textSize">15dp</item>
+        <item name="android:fontFamily">Poppins</item>
+        <item name="android:textStyle">normal</item>
+    </style>
+    <style name="title_h1_bold">
+        <item name="android:textSize">36dp</item>
+        <item name="android:fontFamily">Poppins</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:fontWeight">1000</item>
+    </style>
 
 </resources>
