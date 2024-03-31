@@ -6,7 +6,7 @@
     android:layout_height="match_parent">
 
     <VideoView
-        android:id="@+id/reels_container"
+        android:id="@+id/reels_video"
         android:layout_width="0dp"
         android:layout_height="0dp"
         app:layout_constraintStart_toStartOf="parent"
@@ -87,6 +87,6 @@
             android:layout_height="wrap_content"
             android:padding="5dp"
             android:textColor="@color/white"
-            android:textSize="10sp" />
+            android:textSize="15sp" />
     </LinearLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>
