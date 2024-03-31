@@ -14,8 +14,12 @@ import android.widget.ImageButton;
 import android.widget.TextView;
 
 import com.example.murom.Firebase.Schema;
+import com.example.murom.Recycler.ArchiveStoryAdapter;
 import com.example.murom.Recycler.PostsProfileAdapter;
 import com.example.murom.State.PostState;
+import com.example.murom.State.ProfileState;
+import com.example.murom.State.StoryState;
+import com.example.murom.Utils.BitmapUtils;
 
 import java.util.ArrayList;
 
@@ -23,7 +27,15 @@ import io.reactivex.rxjava3.disposables.Disposable;
 
 public class ArchiveFragment extends Fragment {
     RecyclerView postsRecycler;
-    Disposable myPostsDisposable;
+    RecyclerView storiesRecycler;
+    Disposable myArchivePostsDisposable;
+    Disposable myArchiveStoriesDisposable;
+    ImageButton backBtn;
+    TextView selectedOption;
+    ImageButton dropdownButton;
+    View selectionDropdown;
+    Button postBtn;
+    Button storyBtn;
 
     public interface ArchiveFragmentCallback{
         void onClose();
@@ -44,42 +56,43 @@ public class ArchiveFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
        View rootView = inflater.inflate(R.layout.fragment_archive, container, false);
+        Schema.User profile = ProfileState.getInstance().profile;
 
-        ImageButton backBtn = rootView.findViewById(R.id.back_btn);
-        TextView selectedOption = rootView.findViewById(R.id.selected_archive_option);
-        ImageButton dropdownButton = rootView.findViewById(R.id.dropdown_button);
-        View selectionDropdown = rootView.findViewById(R.id.archive_option_selection_dropdown);
-        Button postBtn = rootView.findViewById(R.id.select_post_btn);
-        Button storyBtn = rootView.findViewById(R.id.select_story_btn);
+        backBtn = rootView.findViewById(R.id.back_btn);
+        selectedOption = rootView.findViewById(R.id.selected_archive_option);
+        dropdownButton = rootView.findViewById(R.id.dropdown_button);
+        selectionDropdown = rootView.findViewById(R.id.archive_option_selection_dropdown);
+        postBtn = rootView.findViewById(R.id.select_post_btn);
+        storyBtn = rootView.findViewById(R.id.select_story_btn);
+        postsRecycler = rootView.findViewById(R.id.archive_post_list);
+        storiesRecycler = rootView.findViewById(R.id.archive_story_list);
 
         backBtn.setOnClickListener(v -> callback.onClose());
-        dropdownButton.setOnClickListener(v -> showDropdown(selectionDropdown));
-        postBtn.setOnClickListener(v -> {
-            selectArchivePosts(selectedOption);
-            selectionDropdown.setVisibility(View.GONE);
-        });
-        storyBtn.setOnClickListener(v -> {
-            selectArchiveStories(selectedOption);
-            selectionDropdown.setVisibility(View.GONE);
-        });
+        dropdownButton.setOnClickListener(v -> showDropdown());
+        postBtn.setOnClickListener(v -> selectArchivePosts());
+        storyBtn.setOnClickListener(v -> selectArchiveStories());
 
-        postsRecycler = rootView.findViewById(R.id.archive_post_list);
         postsRecycler.setLayoutManager(new GridLayoutManager(requireContext(),3));
-        myPostsDisposable = PostState.getInstance().getObservableMyPosts().subscribe(this::renderMyPosts);
+        myArchivePostsDisposable = PostState.getInstance().getObservableMyPosts().subscribe(this::renderMyPosts);
+
+        storiesRecycler.setLayoutManager(new GridLayoutManager(requireContext(), 3));
+        myArchiveStoriesDisposable = StoryState.getInstance().getObservableStoriesMap().subscribe(storyMap -> renderMyStories(storyMap.get(profile.id)));
 
        return rootView;
     }
 
-    private void showDropdown(View selectionDropdown) {
+    private void showDropdown() {
         selectionDropdown.setVisibility(View.VISIBLE);
     }
 
-    private void selectArchivePosts(TextView selectedOption) {
+    private void selectArchivePosts() {
         selectedOption.setText("Post");
+        selectionDropdown.setVisibility(View.GONE);
     }
 
-    private void selectArchiveStories(TextView selectedOption) {
+    private void selectArchiveStories() {
         selectedOption.setText("Story");
+        selectionDropdown.setVisibility(View.GONE);
     }
 
     private void renderMyPosts(ArrayList<Schema.Post> myPosts) {
@@ -91,5 +104,16 @@ public class ArchiveFragment extends Fragment {
 
         PostsProfileAdapter postsProfileAdapter = new PostsProfileAdapter(postsProfileModel);
         postsRecycler.setAdapter(postsProfileAdapter);
+    }
+
+    private void renderMyStories(ArrayList<Schema.Story> myStories) {
+        ArrayList<ArchiveStoryAdapter.ArchiveStoryModel> archiveStoryModel = new ArrayList<>();
+
+        myStories.forEach(post -> {
+            archiveStoryModel.add(new ArchiveStoryAdapter.ArchiveStoryModel(post.url));
+        });
+
+        ArchiveStoryAdapter archiveStoryAdapter = new ArchiveStoryAdapter(archiveStoryModel);
+        postsRecycler.setAdapter(archiveStoryAdapter);
     }
 }
