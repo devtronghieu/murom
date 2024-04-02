@@ -77,6 +77,7 @@ public class ArchiveFragment extends Fragment {
 
         storiesRecycler.setLayoutManager(new GridLayoutManager(requireContext(), 3));
         myArchiveStoriesDisposable = StoryState.getInstance().getObservableStoriesMap().subscribe(storyMap -> renderMyStories(storyMap.get(profile.id)));
+        storiesRecycler.setVisibility(View.GONE);
 
        return rootView;
     }
@@ -87,33 +88,37 @@ public class ArchiveFragment extends Fragment {
 
     private void selectArchivePosts() {
         selectedOption.setText("Post");
+        postsRecycler.setVisibility(View.VISIBLE);
+        storiesRecycler.setVisibility(View.GONE);
         selectionDropdown.setVisibility(View.GONE);
     }
 
     private void selectArchiveStories() {
         selectedOption.setText("Story");
+        storiesRecycler.setVisibility(View.VISIBLE);
+        postsRecycler.setVisibility(View.GONE);
         selectionDropdown.setVisibility(View.GONE);
     }
 
-    private void renderMyPosts(ArrayList<Schema.Post> myPosts) {
-        ArrayList<PostsProfileAdapter.PostsProfileModel> postsProfileModel = new ArrayList<>();
+    void renderMyPosts(ArrayList<Schema.Post> myPosts) {
+        ArrayList<PostsProfileAdapter.PostsProfileModel> archivePostModel = new ArrayList<>();
 
         myPosts.forEach(post -> {
-            postsProfileModel.add(new PostsProfileAdapter.PostsProfileModel(post.url));
+            archivePostModel.add(new PostsProfileAdapter.PostsProfileModel(post.url));
         });
 
-        PostsProfileAdapter postsProfileAdapter = new PostsProfileAdapter(postsProfileModel);
+        PostsProfileAdapter postsProfileAdapter = new PostsProfileAdapter(archivePostModel);
         postsRecycler.setAdapter(postsProfileAdapter);
     }
 
     private void renderMyStories(ArrayList<Schema.Story> myStories) {
         ArrayList<ArchiveStoryAdapter.ArchiveStoryModel> archiveStoryModel = new ArrayList<>();
 
-        myStories.forEach(post -> {
-            archiveStoryModel.add(new ArchiveStoryAdapter.ArchiveStoryModel(post.url));
+        myStories.forEach(story -> {
+            archiveStoryModel.add(new ArchiveStoryAdapter.ArchiveStoryModel(story.url));
         });
 
         ArchiveStoryAdapter archiveStoryAdapter = new ArchiveStoryAdapter(archiveStoryModel);
-        postsRecycler.setAdapter(archiveStoryAdapter);
+        storiesRecycler.setAdapter(archiveStoryAdapter);
     }
 }
