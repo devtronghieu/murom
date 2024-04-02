@@ -172,6 +172,7 @@ public class Database {
 
     // Post Collection
     public static final CollectionReference postCollection = db.collection("Post");
+    public static final CollectionReference archivedPostCollection = db.collection("ArchivedPost");
 
     public static void addPost(Schema.Post doc) {
         Map<String, Object> documentData = new HashMap<>();
@@ -180,6 +181,7 @@ public class Database {
         documentData.put("url", doc.url);
         documentData.put("type", doc.type);
         documentData.put("caption", doc.caption);
+        documentData.put("is_archived", doc.isArchived);
 
         postCollection
                 .document(doc.id)
@@ -189,6 +191,11 @@ public class Database {
                 })
                 .addOnFailureListener(e -> Log.d("-->", "Failed to add Story doc: " + e));;
     }
+
+    public static void archivePost(String postID) {
+        postCollection.document(postID).update("is_archived", true);
+    }
+
 
     public interface GetPostsByUIDCallback {
         void onGetPostsSuccess(ArrayList<Schema.Post> posts);
@@ -216,7 +223,8 @@ public class Database {
                                     "",
                                     "",
                                     "",
-                                    Timestamp.now()
+                                    Timestamp.now(),
+                                    false
                             );
 
                             post.id = doc.getId();
@@ -225,6 +233,7 @@ public class Database {
                             post.url = doc.getString("url");
                             post.type = doc.getString("type");
                             post.caption = doc.getString("caption");
+                            post.isArchived = doc.getBoolean("is_archived");
 
                             posts.add(post);
                         }

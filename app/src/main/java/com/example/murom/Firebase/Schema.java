@@ -56,14 +56,16 @@ public class Schema {
         public String type;
         public String caption;
         public Timestamp createdAt;
+        public boolean isArchived;
 
-        public Post(String id, String userId, String url, String type, String caption, Timestamp createdAt) {
+        public Post(String id, String userId, String url, String type, String caption, Timestamp createdAt, boolean isArchived) {
             this.id = id;
             this.userId = userId;
             this.url = url;
             this.type = type;
             this.caption = caption;
             this.createdAt = createdAt;
+            this.isArchived = isArchived;
         }
     }
 
