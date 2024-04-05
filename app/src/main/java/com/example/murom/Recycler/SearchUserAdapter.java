@@ -11,6 +11,7 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
+import com.example.murom.Firebase.Schema;
 import com.example.murom.R;
 
 import java.util.ArrayList;
@@ -18,23 +19,7 @@ import java.util.ArrayList;
 public class SearchUserAdapter extends RecyclerView.Adapter<SearchUserAdapter.ViewHolder> {
     private Context context;
 
-    private final ArrayList<UserModel> localDataSet;
-
-    public static class UserModel {
-        private final String avatarUrl;
-        private final String username;
-        private final String profileUrl;
-
-        public UserModel(
-                String avatarUrl,
-                String username,
-                String profileUrl
-        ) {
-            this.avatarUrl = avatarUrl;
-            this.username = username;
-            this.profileUrl = profileUrl;
-        }
-    }
+    private final ArrayList<Schema.SearchUser> localDataSet;
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
         private final ImageView avatar;
@@ -47,7 +32,7 @@ public class SearchUserAdapter extends RecyclerView.Adapter<SearchUserAdapter.Vi
         }
     }
 
-    public SearchUserAdapter(ArrayList<UserModel> dataSet) {
+    public SearchUserAdapter(ArrayList<Schema.SearchUser> dataSet) {
         localDataSet = dataSet;
     }
 
@@ -64,7 +49,7 @@ public class SearchUserAdapter extends RecyclerView.Adapter<SearchUserAdapter.Vi
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder viewHolder, int position) {
-        UserModel data = localDataSet.get(position);
+        Schema.SearchUser data = localDataSet.get(position);
 
         viewHolder.username.setText(data.username);
 

@@ -7,6 +7,7 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -16,6 +17,8 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.TextView;
 
+import com.example.murom.Firebase.Database;
+import com.example.murom.Firebase.Schema;
 import com.example.murom.Recycler.GridSpacingItemDecoration;
 import com.example.murom.Recycler.PostImageAdapter;
 import com.example.murom.Recycler.SearchUserAdapter;
@@ -128,18 +131,19 @@ public class SearchFragment extends Fragment {
 
     private void searchUsername(String query, TextView keyword, TextView postsCount, RecyclerView userRecycler) {
         Random rand = new Random();
-
         keyword.setText(query);
-        ArrayList<SearchUserAdapter.UserModel> search_result = new ArrayList<>();
-
-        for (int i = 0; i < rand.nextInt(5) + 5; i++) {
-            search_result.add(new SearchUserAdapter.UserModel(
-                    "https://picsum.photos/200", "account" + i, "profileUrl"
-            ));
-        }
-        SearchUserAdapter searchUserAdapter = new SearchUserAdapter(search_result);
-        userRecycler.setAdapter(searchUserAdapter);
-        postsCount.setText(MessageFormat.format("{0} accounts", search_result.size()));
+        Database.searchUser(query, new Database.OnSearchUserCompleteListener() {
+            @Override
+            public void onSearchUserComplete(ArrayList<Schema.SearchUser> searchResult) {
+                SearchUserAdapter searchUserAdapter = new SearchUserAdapter(searchResult);
+                userRecycler.setAdapter(searchUserAdapter);
+                postsCount.setText(MessageFormat.format("{0} accounts", searchResult.size()));
+            }
+            @Override
+            public void onSearchUserFailed(String errorMessage) {
+                Log.d("-->", "Error searching user" + errorMessage);
+            }
+        });
     }
 
 }

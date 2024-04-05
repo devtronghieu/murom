@@ -9,6 +9,7 @@ import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
 import com.google.firebase.firestore.SetOptions;
 
@@ -342,6 +343,33 @@ public class Database {
                 })
                 .addOnFailureListener(e -> {
                     callback.onRegistrationFailure("Error adding user data to Firestore: " + e.getMessage());
+                });
+    }
+
+    public interface OnSearchUserCompleteListener {
+        void onSearchUserComplete(ArrayList<Schema.SearchUser> searchResult);
+        void onSearchUserFailed(String errorMessage);
+    }
+    public static void searchUser(String query, OnSearchUserCompleteListener listener) {
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+
+        db.collection("User")
+                .whereGreaterThanOrEqualTo("username", query)
+                .whereLessThan("username", query + "\uf8ff")
+                .get()
+                .addOnSuccessListener(queryDocumentSnapshots -> {
+                    ArrayList<Schema.SearchUser> searchResult = new ArrayList<>();
+
+                    for (QueryDocumentSnapshot document : queryDocumentSnapshots) {
+                        String username = document.getString("username");
+                        String avatarUrl = document.getString("profile_picture");
+                        searchResult.add(new Schema.SearchUser(avatarUrl, username, document.getId()));
+                    }
+                    listener.onSearchUserComplete(searchResult);
+                })
+                .addOnFailureListener(e -> {
+                    Log.d("-->", "Error searching user accounts: ", e);
+                    listener.onSearchUserFailed(e.getMessage());
                 });
     }
 }
