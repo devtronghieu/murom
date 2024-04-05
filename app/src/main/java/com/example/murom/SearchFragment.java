@@ -4,6 +4,8 @@ import android.content.Context;
 import android.os.Bundle;
 
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
+import androidx.fragment.app.FragmentTransaction;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -130,15 +132,30 @@ public class SearchFragment extends Fragment {
     }
 
     private void searchUsername(String query, TextView keyword, TextView postsCount, RecyclerView userRecycler) {
-        Random rand = new Random();
         keyword.setText(query);
         Database.searchUser(query, new Database.OnSearchUserCompleteListener() {
             @Override
             public void onSearchUserComplete(ArrayList<Schema.SearchUser> searchResult) {
-                SearchUserAdapter searchUserAdapter = new SearchUserAdapter(searchResult);
+                SearchUserAdapter searchUserAdapter = new SearchUserAdapter(searchResult, userId -> {
+                    FragmentManager fragmentManager = getChildFragmentManager();
+                    FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+                    Fragment profileFragment = ProfileFragment.newInstance(userId, new ProfileFragment.ProfileFragmentCallback() {
+                        @Override
+                        public void onEditProfile() {
+                        }
+
+                        @Override
+                        public void onArchiveClick() {
+                        }
+                    });
+                    fragmentTransaction.replace(requireView().getId(), profileFragment);
+                    fragmentTransaction.addToBackStack(null);
+                    fragmentTransaction.commit();
+                });
                 userRecycler.setAdapter(searchUserAdapter);
                 postsCount.setText(MessageFormat.format("{0} accounts", searchResult.size()));
             }
+
             @Override
             public void onSearchUserFailed(String errorMessage) {
                 Log.d("-->", "Error searching user" + errorMessage);

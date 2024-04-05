@@ -1,6 +1,7 @@
 package com.example.murom.Recycler;
 
 import android.content.Context;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -20,6 +21,7 @@ public class SearchUserAdapter extends RecyclerView.Adapter<SearchUserAdapter.Vi
     private Context context;
 
     private final ArrayList<Schema.SearchUser> localDataSet;
+    private OnUserItemClickListener listener;
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
         private final ImageView avatar;
@@ -30,12 +32,19 @@ public class SearchUserAdapter extends RecyclerView.Adapter<SearchUserAdapter.Vi
             avatar = view.findViewById(R.id.component_user_display_avatar);
             username = view.findViewById(R.id.component_user_display_username);
         }
+
+        public void setOnClickListener(String uid) {
+        }
     }
 
-    public SearchUserAdapter(ArrayList<Schema.SearchUser> dataSet) {
+    public SearchUserAdapter(ArrayList<Schema.SearchUser> dataSet, OnUserItemClickListener listener) {
         localDataSet = dataSet;
+        this.listener = listener;
     }
 
+    public interface OnUserItemClickListener {
+        void onUserItemClick(String userId);
+    }
     @NonNull
     @Override
     public ViewHolder onCreateViewHolder(ViewGroup viewGroup, int viewType) {
@@ -52,9 +61,13 @@ public class SearchUserAdapter extends RecyclerView.Adapter<SearchUserAdapter.Vi
         Schema.SearchUser data = localDataSet.get(position);
 
         viewHolder.username.setText(data.username);
-
         Glide.with(this.context).load(data.avatarUrl).into(viewHolder.avatar);
-
+        viewHolder.itemView.setOnClickListener(v -> {
+            int adapterPosition = viewHolder.getAdapterPosition();
+            if (adapterPosition != RecyclerView.NO_POSITION && listener != null) {
+                listener.onUserItemClick(data.userId);
+            }
+        });
     }
 
     @Override
