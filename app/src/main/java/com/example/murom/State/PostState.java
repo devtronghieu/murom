@@ -35,8 +35,7 @@ public class PostState {
                     me.username,
                     images,
                     post.caption,
-                    new ArrayList<>(),
-                    false
+                    post.lovedByUIDs
             ));
         });
 

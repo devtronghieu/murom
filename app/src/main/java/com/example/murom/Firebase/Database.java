@@ -216,6 +216,7 @@ public class Database {
                                     "",
                                     "",
                                     "",
+                                    new ArrayList<>(),
                                     Timestamp.now()
                             );
 
@@ -224,6 +225,10 @@ public class Database {
                             post.userId = doc.getString("user_id");
                             post.url = doc.getString("url");
                             post.type = doc.getString("type");
+                            ArrayList<String> lovedByUIDs = (ArrayList<String>)doc.get("loved_by");
+                            if (lovedByUIDs != null) {
+                                post.lovedByUIDs = lovedByUIDs;
+                            }
                             post.caption = doc.getString("caption");
 
                             posts.add(post);
@@ -240,6 +245,12 @@ public class Database {
                         callback.onGetPostsFailure();
                     }
                 });
+    }
+
+    public static void updatePostLovedBy(String postID, ArrayList<String> lovedBy) {
+        Map<String, Object> updates = new HashMap<>();
+        updates.put("loved_by", lovedBy);
+        postCollection.document(postID).update(updates);
     }
 
     public interface DeletePostCallback {

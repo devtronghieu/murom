@@ -35,7 +35,6 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.ViewHolder> {
         private final ArrayList<String> images;
         private final String caption;
         private final ArrayList<String> lovedByUsers;
-        private final boolean loved;
 
         public PostModel(
                 String postID,
@@ -43,8 +42,7 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.ViewHolder> {
                 String username,
                 ArrayList<String> images,
                 String caption,
-                ArrayList<String> lovedByUsers,
-                boolean loved
+                ArrayList<String> lovedByUsers
         ) {
             this.postID = postID;
             this.avatarUrl = avatarUrl;
@@ -52,7 +50,6 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.ViewHolder> {
             this.images = images;
             this.caption = caption;
             this.lovedByUsers = lovedByUsers;
-            this.loved = loved;
         }
     }
 
@@ -113,6 +110,21 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.ViewHolder> {
 
         Glide.with(this.context).load(data.images.get(0)).into(viewHolder.image);
 
+        String uid = ProfileState.getInstance().profile.id;
+        boolean isLoved = data.lovedByUsers.contains(uid);
+        if (isLoved) {
+            viewHolder.loveBtn.setImageResource(R.drawable.murom_ic_love_active);
+        }
+        viewHolder.loveBtn.setOnClickListener(v -> {
+            if (isLoved) {
+                data.lovedByUsers.remove(uid);
+            } else {
+                data.lovedByUsers.add(uid);
+            }
+            Database.updatePostLovedBy(data.postID, data.lovedByUsers);
+            notifyItemChanged(viewHolder.getAdapterPosition());
+        });
+
         String loveText = "";
         loveText += data.lovedByUsers.size();
         loveText += " likes";
@@ -144,8 +156,11 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.ViewHolder> {
                         for (int i = 0; i < instance.myPosts.size(); i++) {
                             if (Objects.equals(instance.myPosts.get(i).id, postID)) {
                                 instance.myPosts.remove(i);
+                                break;
                             }
                         }
+                        localDataSet.remove(viewHolder.getAdapterPosition());
+                        notifyItemRemoved(viewHolder.getAdapterPosition());
                         instance.updateObservableMyPosts(instance.myPosts);
                         Toast.makeText(context, "Deleted", Toast.LENGTH_SHORT).show();
                     }
