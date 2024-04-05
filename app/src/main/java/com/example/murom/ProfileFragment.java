@@ -172,6 +172,7 @@ public class ProfileFragment extends Fragment {
         ArrayList<PostsProfileAdapter.PostsProfileModel> postsProfileModel = new ArrayList<>();
 
         myPosts.forEach(post -> {
+            if (post.isArchived) return;
             postsProfileModel.add(new PostsProfileAdapter.PostsProfileModel(post.url));
         });
 
