@@ -238,7 +238,7 @@ public class Database {
                                 post.lovedByUIDs = lovedByUIDs;
                             }
                             post.caption = doc.getString("caption");
-                            post.isArchived = doc.getBoolean("is_archived");
+                            post.isArchived = Boolean.TRUE.equals(doc.getBoolean("is_archived"));
 
                             posts.add(post);
                         }
