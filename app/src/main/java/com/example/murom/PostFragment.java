@@ -11,9 +11,9 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ProgressBar;
-import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.VideoView;
 
@@ -66,7 +66,13 @@ public class PostFragment extends Fragment {
 
     public LinearLayoutManager imagesLayoutManager = new LinearLayoutManager(getContext(), RecyclerView.HORIZONTAL, false);
 
+    Button addPostButton;
+
+
     // Initialize edit buttons containers
+    ConstraintLayout imageEditToolsContainer;
+    ConstraintLayout videoEditToolsContainer;
+
     public ConstraintLayout flipContainer;
     public ConstraintLayout cropContainer;
     public ConstraintLayout rotateContainer;
@@ -88,7 +94,6 @@ public class PostFragment extends Fragment {
     public ConstraintLayout rotateOptions;
     public ImageButton closeButton;
 
-    public TextView addPostText;
     public ImageButton uploadButton;
 
     ActivityResultLauncher<PickVisualMediaRequest> launcher =
@@ -101,17 +106,16 @@ public class PostFragment extends Fragment {
                     postUri = uri;
                     isEdited = false;
                     uploadButton.setEnabled(true);
+                    addPostButton.setVisibility(View.GONE);
 
                     if (Objects.equals(type, "image")) {
-                        postImage.setVisibility(View.VISIBLE);
-                        postVideo.setVisibility(View.GONE);
                         postImage.setImageUriAsync(uri);
                     } else {
-                        postImage.setVisibility(View.GONE);
-                        postVideo.setVisibility(View.VISIBLE);
                         postVideo.setVideoPath(uri.toString());
                         postVideo.start();
                     }
+
+                    showComponentsByType(type);
                 }
             });
 
@@ -146,7 +150,11 @@ public class PostFragment extends Fragment {
 
         loadingBar = rootView.findViewById(R.id.post_fragment_add_post_loading);
 
-        addPostText = rootView.findViewById(R.id.text_add_post);
+        addPostButton = rootView.findViewById(R.id.add_post_button);
+        addPostButton.setOnClickListener(v -> { selectMediaResource(); });
+
+        imageEditToolsContainer = rootView.findViewById(R.id.post_image_edit_tools_container);
+        videoEditToolsContainer = rootView.findViewById(R.id.post_video_edit_tools_container);
 
         uploadButton = rootView.findViewById(R.id.upload_button);
         uploadButton.setEnabled(false);
@@ -236,12 +244,38 @@ public class PostFragment extends Fragment {
             }
         });
 
+        showComponentsByType(type);
 
         return rootView;
     }
 
+    void showComponentsByType(String type) {
+        if (Objects.equals(type, "image")) {
+            postVideo.setVisibility(View.GONE);
+            postImage.setVisibility(View.VISIBLE);
+            videoEditToolsContainer.setVisibility(View.GONE);
+            imageEditToolsContainer.setVisibility(View.VISIBLE);
+        } else if (Objects.equals(type, "video")) {
+            postImage.setVisibility(View.GONE);
+            postVideo.setVisibility(View.VISIBLE);
+            imageEditToolsContainer.setVisibility(View.GONE);
+            videoEditToolsContainer.setVisibility(View.VISIBLE);
+        } else {
+            postImage.setVisibility(View.GONE);
+            postVideo.setVisibility(View.GONE);
+            imageEditToolsContainer.setVisibility(View.GONE);
+            videoEditToolsContainer.setVisibility(View.GONE);
+            addPostButton.setVisibility(View.VISIBLE);
+        }
+    }
+
     private void setEditButtonActive(ConstraintLayout button) {
         button.setBackgroundColor(getResources().getColor(R.color.primary_100, null));
+
+        if (button.getId() != R.id.crop_button) {
+            isCropping = false;
+            postImage.setShowCropOverlay(false);
+        }
     }
 
     private void setEditOptionsNone() {
@@ -249,7 +283,6 @@ public class PostFragment extends Fragment {
         cropContainer.setBackgroundColor(getResources().getColor(R.color.white, null));
         rotateContainer.setBackgroundColor(getResources().getColor(R.color.white, null));
         addContainer.setBackgroundColor(getResources().getColor(R.color.white, null));
-        closeButton.setVisibility(View.GONE);
 
         flipOptions.setVisibility(View.GONE);
         rotateOptions.setVisibility(View.GONE);
@@ -258,7 +291,6 @@ public class PostFragment extends Fragment {
 
     private void selectMediaResource() {
         launcher.launch(new PickVisualMediaRequest.Builder().setMediaType(ActivityResultContracts.PickVisualMedia.ImageAndVideo.INSTANCE).build());
-        addPostText.setVisibility(View.GONE);
         setEditOptionsNone();
     }
 
@@ -296,9 +328,10 @@ public class PostFragment extends Fragment {
                                 postVideo.setVideoURI(null);
                                 captionInput.setText("");
 
-                                addPostText.setText(R.string.add_a_new_post);
-                                addPostText.setVisibility(View.VISIBLE);
                                 setEditOptionsNone();
+
+                                type = "";
+                                showComponentsByType(type);
 
                                 Toast.makeText(context, "Uploaded!", Toast.LENGTH_SHORT).show();
                             })
