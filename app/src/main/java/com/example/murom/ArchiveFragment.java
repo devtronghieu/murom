@@ -12,16 +12,18 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.TextView;
+import android.widget.Toast;
 
+import com.example.murom.Firebase.Database;
 import com.example.murom.Firebase.Schema;
 import com.example.murom.Recycler.ArchiveStoryAdapter;
 import com.example.murom.Recycler.PostsProfileAdapter;
+import com.example.murom.State.ArchivedStoryState;
 import com.example.murom.State.PostState;
 import com.example.murom.State.ProfileState;
-import com.example.murom.State.StoryState;
-import com.example.murom.Utils.BitmapUtils;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 
 import io.reactivex.rxjava3.disposables.Disposable;
 
@@ -76,8 +78,22 @@ public class ArchiveFragment extends Fragment {
         myArchivePostsDisposable = PostState.getInstance().getObservableMyPosts().subscribe(this::renderMyPosts);
 
         storiesRecycler.setLayoutManager(new GridLayoutManager(requireContext(), 3));
-        myArchiveStoriesDisposable = StoryState.getInstance().getObservableStoriesMap().subscribe(storyMap -> renderMyStories(storyMap.get(profile.id)));
-//        storiesRecycler.setVisibility(View.GONE);
+
+        storiesRecycler.setVisibility(View.GONE);
+
+        Database.getArchivedStoriesByUID(profile.id, new Database.GetStoriesByUIDCallback() {
+            @Override
+            public void onGetStoriesSuccess(ArrayList<Schema.Story> stories) {
+                HashMap<String, ArrayList<Schema.Story>> archivedStoriesMap = new HashMap<>();
+                archivedStoriesMap.put(profile.id, stories);
+                ArchivedStoryState.getInstance().updateObservableArchivedStoriesMap(archivedStoriesMap);
+            }
+
+            @Override
+            public void onGetStoriesFailure() {
+                Toast.makeText(requireContext(), "Failed to load stories", Toast.LENGTH_SHORT).show();
+            }
+        });
 
        return rootView;
     }
@@ -94,6 +110,9 @@ public class ArchiveFragment extends Fragment {
     }
 
     private void selectArchiveStories() {
+        myArchiveStoriesDisposable = ArchivedStoryState
+                .getInstance().getObservableArchivedStoriesMap()
+                .subscribe(archivedStoryMap -> renderMyStories(archivedStoryMap.get(profile.id)));
         selectedOption.setText("Story");
         storiesRecycler.setVisibility(View.VISIBLE);
         postsRecycler.setVisibility(View.GONE);
