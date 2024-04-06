@@ -86,7 +86,8 @@ public class PostFragment extends Fragment {
     public ImageButton rotateButton;
     public ImageButton rotateLeftButton;
     public ImageButton rotateRightButton;
-    public ImageButton addButton;
+    public ImageButton imageToolsAddButton;
+    ImageButton videoToolsAddButton;
     TextInputEditText captionInput;
 
     // Initialize edit options
@@ -183,7 +184,20 @@ public class PostFragment extends Fragment {
         rotateButton = rootView.findViewById(R.id.rotate_icon);
         rotateLeftButton = rootView.findViewById(R.id.rotate_left_button);
         rotateRightButton = rootView.findViewById(R.id.rotate_right_button);
-        addButton = rootView.findViewById(R.id.add_icon);
+
+        imageToolsAddButton = rootView.findViewById(R.id.add_icon);
+        imageToolsAddButton.setOnClickListener(v -> {
+            setEditOptionsNone();
+            setEditButtonActive(addContainer);
+            selectMediaResource();
+        });
+
+        videoToolsAddButton = rootView.findViewById(R.id.post_video_edit_tools_add_icon);
+        videoToolsAddButton.setOnClickListener(v -> {
+            setEditOptionsNone();
+            setEditButtonActive(addContainer);
+            selectMediaResource();
+        });
 
         flipButton.setOnClickListener(v -> {
             setEditOptionsNone();
@@ -219,11 +233,7 @@ public class PostFragment extends Fragment {
         rotateLeftButton.setOnClickListener(v -> postImage.rotateImage(90));
         rotateRightButton.setOnClickListener(v -> postImage.rotateImage(-90));
 
-        addButton.setOnClickListener(v -> {
-            setEditOptionsNone();
-            setEditButtonActive(addContainer);
-            selectMediaResource();
-        });
+
 
         closeButton.setOnClickListener(v -> {
             setEditOptionsNone();
