@@ -422,13 +422,10 @@ public class Database {
         // Create a query to find the document to delete
         Query query = followCollection.whereEqualTo("user_id", myId)
                 .whereEqualTo("following_user_id", userId);
-        query.addSnapshotListener((snapshot, error) -> {
-            if (error != null) {
-                Log.e("Unfollow", "Error checking follow status: " + error.getMessage());
-                return;
-            }
-            if (snapshot != null && !snapshot.isEmpty()) {
-                snapshot.getDocuments().get(0).getReference().delete()
+        query.get().addOnSuccessListener(queryDocumentSnapshots -> {
+            if (!queryDocumentSnapshots.isEmpty()) {
+                DocumentSnapshot documentSnapshot = queryDocumentSnapshots.getDocuments().get(0);
+                documentSnapshot.getReference().delete()
                         .addOnSuccessListener(aVoid -> {
                             Log.d("Unfollow", "Document successfully deleted!");
                         })
