@@ -157,7 +157,7 @@ public class NewsfeedFragment extends Fragment {
 
         // Data fetching
         String uid = ProfileState.getInstance().profile.id;
-        Database.getStoriesByUID(uid, new Database.GetStoriesByUIDCallback() {
+        Database.getActiveStoriesByUID(uid, new Database.GetStoriesByUIDCallback() {
             @Override
             public void onGetStoriesSuccess(ArrayList<Schema.Story> stories) {
                 HashMap<String, ArrayList<Schema.Story>> storiesMap = new HashMap<>();
