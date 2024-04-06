@@ -24,10 +24,10 @@ public class ArchiveStoryAdapter extends RecyclerView.Adapter<ArchiveStoryAdapte
     }
 
     public static class ViewHolder extends RecyclerView.ViewHolder{
-        private final ImageButton postImageButton;
+        private final ImageButton storyImageButton;
         public ViewHolder(View view){
             super(view);
-            postImageButton = view.findViewById(R.id.post_btn);
+            storyImageButton = view.findViewById(R.id.story_button);
         }
     }
 
@@ -41,7 +41,7 @@ public class ArchiveStoryAdapter extends RecyclerView.Adapter<ArchiveStoryAdapte
         this.context= viewGroup.getContext();
 
         View view = LayoutInflater.from(this.context)
-                .inflate(R.layout.component_profile_post, viewGroup,false);
+                .inflate(R.layout.component_archive_story, viewGroup,false);
         return new ViewHolder(view);
     }
 
@@ -50,9 +50,8 @@ public class ArchiveStoryAdapter extends RecyclerView.Adapter<ArchiveStoryAdapte
         ArchiveStoryModel data = localDataSet.get(position);
         Glide.with(this.context)
                 .load(data.imageUrl)
-                .override(viewHolder.postImageButton.getWidth(), viewHolder.postImageButton.getHeight())
-                .fitCenter()
-                .into(viewHolder.postImageButton);
+                .centerCrop()
+                .into(viewHolder.storyImageButton);
     }
     @Override
     public int getItemCount(){ return localDataSet.size(); }

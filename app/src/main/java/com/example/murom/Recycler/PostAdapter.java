@@ -16,6 +16,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.example.murom.Firebase.Database;
+import com.example.murom.Firebase.Schema;
 import com.example.murom.R;
 import com.example.murom.State.PostState;
 import com.example.murom.State.ProfileState;
@@ -66,6 +67,7 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.ViewHolder> {
         private final LinearLayout editContainer;
         private final Button deleteButton;
         private final Button archiveButton;
+
 
         public ViewHolder(View view) {
             super(view);
@@ -171,7 +173,34 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.ViewHolder> {
                     }
                 });
             });
+            
+            viewHolder.archiveButton.setOnClickListener(v -> {
+                Database.archivePost(data.postID);
+                viewHolder.editContainer.setVisibility(View.GONE);
+                
+            });
         }
+    }
+
+    private void deletePost(String id) {
+        Database.deletePost(id, new Database.DeletePostCallback() {
+            @Override
+            public void onDeleteSuccess(String postID) {
+                PostState instance = PostState.getInstance();
+
+                for (int i = 0; i < instance.myPosts.size(); i++) {
+                    if (Objects.equals(instance.myPosts.get(i).id, postID)) {
+                        instance.myPosts.remove(i);
+                    }
+                }
+                instance.updateObservableMyPosts(instance.myPosts);
+            }
+
+            @Override
+            public void onDeleteFailure() {
+                Toast.makeText(context, "Failed to delete post", Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
     @Override

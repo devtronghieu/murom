@@ -81,6 +81,7 @@ public class PostFragment extends Fragment {
     public ImageButton rotateLeftButton;
     public ImageButton rotateRightButton;
     public ImageButton addButton;
+    TextInputEditText captionInput;
 
     // Initialize edit options
     public ConstraintLayout flipOptions;
@@ -153,7 +154,7 @@ public class PostFragment extends Fragment {
         postImage = rootView.findViewById(R.id.post_images);
         postVideo = rootView.findViewById(R.id.post_video);
 
-        TextInputEditText captionInput = rootView.findViewById(R.id.caption_input);
+        captionInput = rootView.findViewById(R.id.caption_input);
 
         // Set container for edit buttons
         flipContainer = rootView.findViewById(R.id.flip_button);
@@ -281,7 +282,7 @@ public class PostFragment extends Fragment {
                     StorageReference postRef = Storage.getRef(storagePath);
                     postRef.getDownloadUrl()
                             .addOnSuccessListener(postURI -> {
-                                Schema.Post post = new Schema.Post(postID, profile.id, postURI.toString(), type, caption, new ArrayList<>(), createdAt);
+                                Schema.Post post = new Schema.Post(postID, profile.id, postURI.toString(), type, caption, new ArrayList<>(), false, createdAt);
                                 Database.addPost(post);
 
                                 PostState postState = PostState.getInstance();
@@ -293,7 +294,11 @@ public class PostFragment extends Fragment {
 
                                 postImage.setImageBitmap(null);
                                 postVideo.setVideoURI(null);
+                                captionInput.setText("");
+
                                 addPostText.setText(R.string.add_a_new_post);
+                                addPostText.setVisibility(View.VISIBLE);
+                                setEditOptionsNone();
 
                                 Toast.makeText(context, "Uploaded!", Toast.LENGTH_SHORT).show();
                             })

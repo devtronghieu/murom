@@ -58,8 +58,9 @@ public class Schema {
         public String caption;
         public ArrayList<String> lovedByUIDs;
         public Timestamp createdAt;
+        public boolean isArchived;
 
-        public Post(String id, String userId, String url, String type, String caption, ArrayList<String> lovedByUIDs, Timestamp createdAt) {
+        public Post(String id, String userId, String url, String type, String caption, ArrayList<String> lovedByUIDs,  boolean isArchived, Timestamp createdAt) {
             this.id = id;
             this.userId = userId;
             this.url = url;
@@ -67,6 +68,7 @@ public class Schema {
             this.caption = caption;
             this.lovedByUIDs = lovedByUIDs;
             this.createdAt = createdAt;
+            this.isArchived = isArchived;
         }
     }
 

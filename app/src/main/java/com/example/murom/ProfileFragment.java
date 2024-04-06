@@ -127,6 +127,7 @@ public class ProfileFragment extends Fragment {
                 .addOnFailureListener(e -> {
                     Log.d("-->", "failed to get avatar: " + e);
                 });
+
         ProfileState profileState = ProfileState.getInstance();
         username.setText(profileState.profile.username);
         bio.setText(profileState.profile.bio);
@@ -171,6 +172,7 @@ public class ProfileFragment extends Fragment {
         ArrayList<PostsProfileAdapter.PostsProfileModel> postsProfileModel = new ArrayList<>();
 
         myPosts.forEach(post -> {
+            if (post.isArchived) return;
             postsProfileModel.add(new PostsProfileAdapter.PostsProfileModel(post.url));
         });
 
