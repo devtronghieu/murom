@@ -90,7 +90,7 @@ public class Database {
         void onGetStoriesFailure();
     }
 
-    public static void getStoriesByUID(String uid, GetStoriesByUIDCallback callback) {
+    public static void getActiveStoriesByUID(String uid, GetStoriesByUIDCallback callback) {
         Date yesterday = new Date(System.currentTimeMillis() - (24 * 60 * 60 * 1000));
         Timestamp yesterdayTimestamp = new Timestamp(yesterday);
 
@@ -128,6 +128,56 @@ public class Database {
 
                         callback.onGetStoriesSuccess(stories);
                     } else {
+                        Exception exception = task.getException();
+                        if (exception != null) {
+                            Log.e("-->", "Failed to get stories:", exception);
+                        } else {
+                            Log.e("-->", "Failed to get stories: Unknown reason");
+                        }
+                        callback.onGetStoriesFailure();
+                    }
+                });
+    }
+    public static void getArchivedStoriesByUID(String uid, GetStoriesByUIDCallback callback) {
+        Date yesterday = new Date(System.currentTimeMillis() - (24 * 60 * 60 * 1000));
+        Timestamp yesterdayTimestamp = new Timestamp(yesterday);
+
+        storyCollection
+                .whereEqualTo("user_id", uid)
+                .whereLessThanOrEqualTo("created_at", yesterdayTimestamp)
+                .orderBy("created_at", Query.Direction.ASCENDING)
+                .get()
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        ArrayList<Schema.Story> stories = new ArrayList<>();
+
+                        QuerySnapshot snap = task.getResult();
+                        List<DocumentSnapshot> docs = snap.getDocuments();
+
+                        for (int i = 0; i < docs.size(); i++) {
+                            DocumentSnapshot doc = docs.get(i);
+
+                            Schema.Story story = new Schema.Story(
+                                    "",
+                                    Timestamp.now(),
+                                    "",
+                                    "",
+                                    ""
+                            );
+
+                            story.id = doc.getId();
+                            story.createdAt = doc.getTimestamp("created_at");
+                            story.uid = uid;
+                            story.url = doc.getString("url");
+                            story.type = doc.getString("type");
+
+                            Log.d("--> story", "getArchivedStoriesByUID: " + story.id);
+                            stories.add(story);
+                        }
+
+                        callback.onGetStoriesSuccess(stories);
+                    } else {
+                        Log.d("--> story", "getArchivedStoriesByUID: error");
                         Exception exception = task.getException();
                         if (exception != null) {
                             Log.e("-->", "Failed to get stories:", exception);
