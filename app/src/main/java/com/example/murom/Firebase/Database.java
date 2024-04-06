@@ -13,7 +13,10 @@ import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
 import com.google.firebase.firestore.SetOptions;
+import com.google.type.DateTime;
 
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -402,11 +405,13 @@ public class Database {
     private static void followUser(String userId) {
         String myId = Auth.getUser().getUid();
         CollectionReference followCollection = FirebaseFirestore.getInstance().collection("Follower");
-
+        LocalDateTime currentDateTime = LocalDateTime.now();
+        Date currentDate = Date.from(currentDateTime.atZone(ZoneId.systemDefault()).toInstant());
+        
         Map<String, Object> followData = new HashMap<>();
         followData.put("user_id", myId);
         followData.put("following_user_id", userId);
-
+        followData.put("datetime_added", currentDate);
         followCollection.add(followData)
                 .addOnSuccessListener(documentReference -> {
                     Log.d("Follow", "Document added with ID: " + documentReference.getId());
