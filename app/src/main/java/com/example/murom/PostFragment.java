@@ -282,7 +282,7 @@ public class PostFragment extends Fragment {
                     StorageReference postRef = Storage.getRef(storagePath);
                     postRef.getDownloadUrl()
                             .addOnSuccessListener(postURI -> {
-                                Schema.Post post = new Schema.Post(postID, profile.id, postURI.toString(), type, caption, createdAt, false);
+                                Schema.Post post = new Schema.Post(postID, profile.id, postURI.toString(), type, caption, new ArrayList<>(), false, createdAt);
                                 Database.addPost(post);
 
                                 PostState postState = PostState.getInstance();

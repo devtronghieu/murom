@@ -46,7 +46,7 @@
                 android:layout_marginEnd="12dp"
                 android:background="@null"
                 android:contentDescription="@string/notification_icon"
-                android:src="@drawable/murom_love"
+                android:src="@drawable/murom_ic_love"
                 android:tint="@color/white"/>
 
             <ImageButton
