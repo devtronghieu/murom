@@ -1,7 +1,5 @@
 package com.example.murom.State;
 
-import android.util.Log;
-
 import com.example.murom.Firebase.Schema;
 import com.example.murom.Recycler.PostAdapter;
 
@@ -32,7 +30,6 @@ public class PostState {
             if (post.isArchived) {
                 return;
             }
-            Log.d("-->", "constructObservableSocialPosts: " + post.isArchived);
             ArrayList<String> images = new ArrayList<>();
             images.add(post.url);
             socialPosts.add(new PostAdapter.PostModel(
