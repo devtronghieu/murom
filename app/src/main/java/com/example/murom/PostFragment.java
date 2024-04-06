@@ -81,7 +81,7 @@ public class PostFragment extends Fragment {
     public ImageButton rotateLeftButton;
     public ImageButton rotateRightButton;
     public ImageButton addButton;
-    TextInputEditText captionInput;
+    public TextInputEditText captionInput;
 
     // Initialize edit options
     public ConstraintLayout flipOptions;
@@ -141,11 +141,9 @@ public class PostFragment extends Fragment {
                              Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_post, container, false);
         context = requireContext();
-
         activity = getActivity();
 
         loadingBar = rootView.findViewById(R.id.post_fragment_add_post_loading);
-
         addPostText = rootView.findViewById(R.id.text_add_post);
 
         uploadButton = rootView.findViewById(R.id.upload_button);
