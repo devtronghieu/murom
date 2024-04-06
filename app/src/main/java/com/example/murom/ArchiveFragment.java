@@ -36,6 +36,7 @@ public class ArchiveFragment extends Fragment {
     View selectionDropdown;
     Button postBtn;
     Button storyBtn;
+    Schema.User profile = ProfileState.getInstance().profile;
 
     public interface ArchiveFragmentCallback{
         void onClose();
@@ -56,7 +57,6 @@ public class ArchiveFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
        View rootView = inflater.inflate(R.layout.fragment_archive, container, false);
-        Schema.User profile = ProfileState.getInstance().profile;
 
         backBtn = rootView.findViewById(R.id.back_btn);
         selectedOption = rootView.findViewById(R.id.selected_archive_option);
@@ -77,7 +77,7 @@ public class ArchiveFragment extends Fragment {
 
         storiesRecycler.setLayoutManager(new GridLayoutManager(requireContext(), 3));
         myArchiveStoriesDisposable = StoryState.getInstance().getObservableStoriesMap().subscribe(storyMap -> renderMyStories(storyMap.get(profile.id)));
-        storiesRecycler.setVisibility(View.GONE);
+//        storiesRecycler.setVisibility(View.GONE);
 
        return rootView;
     }
@@ -104,6 +104,7 @@ public class ArchiveFragment extends Fragment {
         ArrayList<PostsProfileAdapter.PostsProfileModel> archivePostModel = new ArrayList<>();
 
         myPosts.forEach(post -> {
+            if (!post.isArchived) return;
             archivePostModel.add(new PostsProfileAdapter.PostsProfileModel(post.url));
         });
 
