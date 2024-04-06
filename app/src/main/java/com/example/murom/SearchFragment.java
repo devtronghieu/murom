@@ -98,7 +98,7 @@ public class SearchFragment extends Fragment {
                         popularPosts.setText("Popular Posts");
                     }
                     else {
-                        resultRecycler.setLayoutManager(new GridLayoutManager(getContext(), 2));
+                        resultRecycler.setLayoutManager(new GridLayoutManager(getContext(), 1));
                         searchUsername(query, keyword, postsCount, resultRecycler);
                         popularPosts.setText("Most Related Accounts");
                     }
@@ -137,20 +137,7 @@ public class SearchFragment extends Fragment {
             @Override
             public void onSearchUserComplete(ArrayList<Schema.SearchUser> searchResult) {
                 SearchUserAdapter searchUserAdapter = new SearchUserAdapter(searchResult, userId -> {
-                    FragmentManager fragmentManager = getChildFragmentManager();
-                    FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
-                    Fragment profileFragment = ProfileFragment.newInstance(userId, new ProfileFragment.ProfileFragmentCallback() {
-                        @Override
-                        public void onEditProfile() {
-                        }
 
-                        @Override
-                        public void onArchiveClick() {
-                        }
-                    });
-                    fragmentTransaction.replace(requireView().getId(), profileFragment);
-                    fragmentTransaction.addToBackStack(null);
-                    fragmentTransaction.commit();
                 });
                 userRecycler.setAdapter(searchUserAdapter);
                 postsCount.setText(MessageFormat.format("{0} accounts", searchResult.size()));

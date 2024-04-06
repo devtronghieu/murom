@@ -1,6 +1,7 @@
 package com.example.murom.Firebase;
 
 import android.util.Log;
+import android.widget.Button;
 
 import com.example.murom.State.ProfileState;
 import com.google.firebase.Timestamp;
@@ -371,5 +372,74 @@ public class Database {
                     Log.d("-->", "Error searching user accounts: ", e);
                     listener.onSearchUserFailed(e.getMessage());
                 });
+    }
+    public static void isFollowing(String userId, Button button) {
+        String myId = Auth.getUser().getUid();
+        CollectionReference followCollection = db.collection("Follower");
+
+        Query query = followCollection.whereEqualTo("user_id", myId)
+                .whereEqualTo("following_user_id", userId);
+
+        query.addSnapshotListener((snapshot, error) -> {
+            if (error != null) {
+                Log.e("FollowStatus", "Error listening for follow status: " + error.getMessage());
+                return;
+            }
+
+            if (snapshot != null && !snapshot.isEmpty()) {
+                button.setText("Following");
+                button.setOnClickListener(view -> {
+                    unfollowUser(userId);
+                });
+            } else {
+                button.setText("Follow");
+                button.setOnClickListener(view -> {
+                    followUser(userId);
+                });
+            }
+        });
+    }
+    private static void followUser(String userId) {
+        String myId = Auth.getUser().getUid();
+        CollectionReference followCollection = FirebaseFirestore.getInstance().collection("Follower");
+
+        Map<String, Object> followData = new HashMap<>();
+        followData.put("user_id", myId);
+        followData.put("following_user_id", userId);
+
+        followCollection.add(followData)
+                .addOnSuccessListener(documentReference -> {
+                    Log.d("Follow", "Document added with ID: " + documentReference.getId());
+                })
+                .addOnFailureListener(e -> {
+                    Log.e("Follow", "Error adding document: " + e.getMessage());
+                });
+    }
+    public static void unfollowUser(String userId) {
+        String myId = Auth.getUser().getUid();
+        CollectionReference followCollection = FirebaseFirestore.getInstance().collection("Follower");
+
+        // Create a query to find the document to delete
+        Query query = followCollection.whereEqualTo("user_id", myId)
+                .whereEqualTo("following_user_id", userId);
+        query.addSnapshotListener((snapshot, error) -> {
+            if (error != null) {
+                Log.e("Unfollow", "Error checking follow status: " + error.getMessage());
+                return;
+            }
+            if (snapshot != null && !snapshot.isEmpty()) {
+                snapshot.getDocuments().get(0).getReference().delete()
+                        .addOnSuccessListener(aVoid -> {
+                            Log.d("Unfollow", "Document successfully deleted!");
+                        })
+                        .addOnFailureListener(e -> {
+                            Log.e("Unfollow", "Error deleting document: " + e.getMessage());
+                        });
+            } else {
+                Log.d("Unfollow", "Document not found, nothing to delete!" +
+                        "\nuid: " + userId +
+                        "\nmyid: " + myId);
+            }
+        });
     }
 }
