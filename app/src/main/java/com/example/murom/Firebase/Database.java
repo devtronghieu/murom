@@ -1,6 +1,7 @@
 package com.example.murom.Firebase;
 
 import android.util.Log;
+import android.widget.Button;
 
 import com.example.murom.State.ProfileState;
 import com.google.firebase.Timestamp;
@@ -9,9 +10,13 @@ import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
 import com.google.firebase.firestore.SetOptions;
+import com.google.type.DateTime;
 
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -413,5 +418,100 @@ public class Database {
                 .addOnFailureListener(e -> {
                     callback.onRegistrationFailure("Error adding user data to Firestore: " + e.getMessage());
                 });
+    }
+
+    public interface OnSearchUserCompleteListener {
+        void onSearchUserComplete(ArrayList<Schema.SearchUser> searchResult);
+        void onSearchUserFailed(String errorMessage);
+    }
+    public static void searchUser(String query, OnSearchUserCompleteListener listener) {
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+
+        db.collection("User")
+                .whereGreaterThanOrEqualTo("username", query)
+                .whereLessThan("username", query + "\uf8ff")
+                .get()
+                .addOnSuccessListener(queryDocumentSnapshots -> {
+                    ArrayList<Schema.SearchUser> searchResult = new ArrayList<>();
+
+                    for (QueryDocumentSnapshot document : queryDocumentSnapshots) {
+                        String username = document.getString("username");
+                        String avatarUrl = document.getString("profile_picture");
+                        searchResult.add(new Schema.SearchUser(avatarUrl, username, document.getId()));
+                    }
+                    listener.onSearchUserComplete(searchResult);
+                })
+                .addOnFailureListener(e -> {
+                    Log.d("-->", "Error searching user accounts: ", e);
+                    listener.onSearchUserFailed(e.getMessage());
+                });
+    }
+    public static void isFollowing(String userId, Button button) {
+        String myId = Auth.getUser().getUid();
+        CollectionReference followCollection = db.collection("Follower");
+
+        Query query = followCollection.whereEqualTo("user_id", myId)
+                .whereEqualTo("following_user_id", userId);
+
+        query.addSnapshotListener((snapshot, error) -> {
+            if (error != null) {
+                Log.e("FollowStatus", "Error listening for follow status: " + error.getMessage());
+                return;
+            }
+
+            if (snapshot != null && !snapshot.isEmpty()) {
+                button.setText("Following");
+                button.setOnClickListener(view -> {
+                    unfollowUser(userId);
+                });
+            } else {
+                button.setText("Follow");
+                button.setOnClickListener(view -> {
+                    followUser(userId);
+                });
+            }
+        });
+    }
+    private static void followUser(String userId) {
+        String myId = Auth.getUser().getUid();
+        CollectionReference followCollection = FirebaseFirestore.getInstance().collection("Follower");
+        LocalDateTime currentDateTime = LocalDateTime.now();
+        Date currentDate = Date.from(currentDateTime.atZone(ZoneId.systemDefault()).toInstant());
+        
+        Map<String, Object> followData = new HashMap<>();
+        followData.put("user_id", myId);
+        followData.put("following_user_id", userId);
+        followData.put("datetime_added", currentDate);
+        followCollection.add(followData)
+                .addOnSuccessListener(documentReference -> {
+                    Log.d("Follow", "Document added with ID: " + documentReference.getId());
+                })
+                .addOnFailureListener(e -> {
+                    Log.e("Follow", "Error adding document: " + e.getMessage());
+                });
+    }
+    public static void unfollowUser(String userId) {
+        String myId = Auth.getUser().getUid();
+        CollectionReference followCollection = FirebaseFirestore.getInstance().collection("Follower");
+
+        // Create a query to find the document to delete
+        Query query = followCollection.whereEqualTo("user_id", myId)
+                .whereEqualTo("following_user_id", userId);
+        query.get().addOnSuccessListener(queryDocumentSnapshots -> {
+            if (!queryDocumentSnapshots.isEmpty()) {
+                DocumentSnapshot documentSnapshot = queryDocumentSnapshots.getDocuments().get(0);
+                documentSnapshot.getReference().delete()
+                        .addOnSuccessListener(aVoid -> {
+                            Log.d("Unfollow", "Document successfully deleted!");
+                        })
+                        .addOnFailureListener(e -> {
+                            Log.e("Unfollow", "Error deleting document: " + e.getMessage());
+                        });
+            } else {
+                Log.d("Unfollow", "Document not found, nothing to delete!" +
+                        "\nuid: " + userId +
+                        "\nmyid: " + myId);
+            }
+        });
     }
 }

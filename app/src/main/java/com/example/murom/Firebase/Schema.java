@@ -72,4 +72,15 @@ public class Schema {
         }
     }
 
+    public static class SearchUser {
+        public String avatarUrl;
+        public String username;
+        public String userId;
+
+        public SearchUser(String avatarUrl, String username, String userId) {
+            this.avatarUrl = avatarUrl;
+            this.username = username;
+            this.userId = userId;
+        }
+    }
 }
