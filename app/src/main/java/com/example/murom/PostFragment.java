@@ -2,6 +2,7 @@ package com.example.murom;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
@@ -22,8 +23,6 @@ import androidx.activity.result.PickVisualMediaRequest;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.fragment.app.Fragment;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
 
 import com.canhub.cropper.CropImageView;
 import com.example.murom.Firebase.Database;
@@ -35,6 +34,8 @@ import com.example.murom.Utils.BitmapUtils;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.firebase.Timestamp;
 import com.google.firebase.storage.StorageReference;
+import com.gowtham.library.utils.TrimType;
+import com.gowtham.library.utils.TrimVideo;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -64,8 +65,6 @@ public class PostFragment extends Fragment {
 
     Context context;
 
-    public LinearLayoutManager imagesLayoutManager = new LinearLayoutManager(getContext(), RecyclerView.HORIZONTAL, false);
-
     Button addPostButton;
 
 
@@ -86,8 +85,13 @@ public class PostFragment extends Fragment {
     public ImageButton rotateButton;
     public ImageButton rotateLeftButton;
     public ImageButton rotateRightButton;
-    public ImageButton imageToolsAddButton;
+
+    ImageButton imageToolsAddButton;
+
     ImageButton videoToolsAddButton;
+    ImageButton videoToolsCropButton;
+    ImageButton videoToolsTrimButton;
+
     TextInputEditText captionInput;
 
     // Initialize edit options
@@ -118,6 +122,19 @@ public class PostFragment extends Fragment {
 
                     showComponentsByType(type);
                 }
+            });
+
+    ActivityResultLauncher<Intent> trimForResult = registerForActivityResult(
+            new ActivityResultContracts.StartActivityForResult(),
+            result -> {
+                if (result.getResultCode() == Activity.RESULT_OK &&
+                        result.getData() != null) {
+                    postUri = Uri.parse(TrimVideo.getTrimmedVideoPath(result.getData()));
+                    Log.d("-->", "trimmed uri: " + postUri.toString());
+                    postVideo.setVideoPath(postUri.toString());
+                    postVideo.start();
+                } else
+                    Log.d("-->", "videoTrimResultLauncher data is null");
             });
 
     public PostFragment() {
@@ -195,8 +212,23 @@ public class PostFragment extends Fragment {
         videoToolsAddButton = rootView.findViewById(R.id.post_video_edit_tools_add_icon);
         videoToolsAddButton.setOnClickListener(v -> {
             setEditOptionsNone();
-            setEditButtonActive(addContainer);
             selectMediaResource();
+        });
+
+        videoToolsCropButton = rootView.findViewById(R.id.post_video_edit_tools_crop_icon);
+        videoToolsCropButton.setOnClickListener(v -> {
+            setEditOptionsNone();
+        });
+
+        videoToolsTrimButton = rootView.findViewById(R.id.post_video_edit_tools_trim_icon);
+        videoToolsTrimButton.setOnClickListener(v -> {
+            setEditOptionsNone();
+            isEdited = true;
+
+            TrimVideo.activity(String.valueOf(postUri))
+                    .setTrimType(TrimType.MIN_MAX_DURATION)
+                    .setMinToMax(1, 15)
+                    .start(this, trimForResult);
         });
 
         flipButton.setOnClickListener(v -> {
@@ -310,6 +342,7 @@ public class PostFragment extends Fragment {
         Date currentDate = new Date();
         Timestamp createdAt = new Timestamp(currentDate);
         String storagePath = "post/" + postID;
+
 
         if (Objects.equals(type, "image")) {
             Bitmap bitmap = postImage.getCroppedImage();
