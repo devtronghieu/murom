@@ -13,7 +13,6 @@ import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
 import com.google.firebase.firestore.SetOptions;
-import com.google.type.DateTime;
 
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -72,6 +71,54 @@ public class Database {
                 callback.onGetUserFailure();
             }
         });
+    }
+
+    public interface GetProfilesCallback {
+        void onGetProfilesSuccess(HashMap<String, Schema.User> profileMap);
+
+        void onGetProfilesFailure();
+    }
+    public static void getProfiles(ArrayList<String> profileIDs, GetProfilesCallback callback) {
+        userCollection
+                .whereIn("id", profileIDs)
+                .get()
+                .addOnSuccessListener(runnable -> {
+                    List<DocumentSnapshot> docs = runnable.getDocuments();
+                    HashMap<String, Schema.User> profiles = new HashMap<>();
+
+                    for (int i = 0; i < docs.size(); i++) {
+                        DocumentSnapshot doc = docs.get(i);
+
+                        Schema.User profile = new Schema.User(
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                new HashMap<>()
+                        );
+
+                        profile.id = doc.getString("id");
+                        profile.bio = doc.getString("bio");
+                        profile.email = doc.getString("email");
+                        profile.passwordHash = doc.getString("password");
+                        profile.profilePicture = doc.getString("profile_picture");
+                        profile.username = doc.getString("username");
+                        HashMap<String, String> viewedStories = (HashMap<String, String>) doc.get("viewed_stories");
+                        if (viewedStories != null) {
+                            profile.viewedStories = viewedStories;
+                        }
+
+                        profiles.put(profile.id, profile);
+                    }
+
+                    callback.onGetProfilesSuccess(profiles);
+                })
+                .addOnFailureListener(e -> {
+                    Log.d("-->", "failed to get profiles");
+                    callback.onGetProfilesFailure();
+                });
     }
 
     public static final CollectionReference storyCollection = db.collection("Story");
@@ -256,7 +303,6 @@ public class Database {
         void onGetPostsSuccess(ArrayList<Schema.Post> posts);
         void onGetPostsFailure();
     }
-
     public static void getPostsByUID(String uid, GetPostsByUIDCallback callback) {
         postCollection
                 .whereEqualTo("user_id", uid)
@@ -297,6 +343,70 @@ public class Database {
 
                             posts.add(post);
                         }
+
+                        callback.onGetPostsSuccess(posts);
+                    } else {
+                        Exception exception = task.getException();
+                        if (exception != null) {
+                            Log.e("-->", "Failed to get posts:", exception);
+                        } else {
+                            Log.e("-->", "Failed to get posts: Unknown reason");
+                        }
+                        callback.onGetPostsFailure();
+                    }
+                });
+    }
+
+    public interface GetPostsByUIDsCallback {
+        void onGetPostsSuccess(ArrayList<Schema.Post> posts);
+        void onGetPostsFailure();
+    }
+    public static void getPostsByUIDs(ArrayList<String> userIDs, int offset, int limit, GetPostsByUIDsCallback callback) {
+        Log.d("-->", "userIDs: " + userIDs);
+
+        postCollection
+                .whereIn("user_id", userIDs)
+                .whereEqualTo("is_archived", false)
+                .orderBy("created_at", Query.Direction.DESCENDING)
+                .limit(limit)
+                .get()
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        ArrayList<Schema.Post> posts = new ArrayList<>();
+
+                        QuerySnapshot snap = task.getResult();
+                        List<DocumentSnapshot> docs = snap.getDocuments();
+
+                        for (int i = 0; i < docs.size(); i++) {
+                            DocumentSnapshot doc = docs.get(i);
+
+                            Schema.Post post = new Schema.Post(
+                                    "",
+                                    "",
+                                    "",
+                                    "",
+                                    "",
+                                    new ArrayList<>(),
+                                    false,
+                                    Timestamp.now()
+                            );
+
+                            post.id = doc.getId();
+                            post.createdAt = doc.getTimestamp("created_at");
+                            post.userId = doc.getString("user_id");
+                            post.url = doc.getString("url");
+                            post.type = doc.getString("type");
+                            ArrayList<String> lovedByUIDs = (ArrayList<String>)doc.get("loved_by");
+                            if (lovedByUIDs != null) {
+                                post.lovedByUIDs = lovedByUIDs;
+                            }
+                            post.caption = doc.getString("caption");
+                            post.isArchived = Boolean.TRUE.equals(doc.getBoolean("is_archived"));
+
+                            posts.add(post);
+                        }
+
+                        Log.d("-->", "Social posts: " + posts);
 
                         callback.onGetPostsSuccess(posts);
                     } else {
@@ -446,6 +556,45 @@ public class Database {
                     listener.onSearchUserFailed(e.getMessage());
                 });
     }
+
+    public interface GetFollowersByUIDCallback {
+        void onGetFollowersByUIDSuccess(ArrayList<String> followerIDs);
+        void onGetFollowersByUIDFailure();
+    }
+
+    public static void getFollowersByUID(String uid, GetFollowersByUIDCallback callback) {
+        CollectionReference followCollection = db.collection("Follower");
+        followCollection
+                .whereEqualTo("user_id", uid)
+                .get()
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        ArrayList<String> followerIDs = new ArrayList<>();
+
+                        QuerySnapshot snap = task.getResult();
+                        List<DocumentSnapshot> docs = snap.getDocuments();
+
+                        for (int i = 0; i < docs.size(); i++) {
+                            DocumentSnapshot doc = docs.get(i);
+                            String followerID = doc.getString("following_user_id");
+                            if (followerID != null) {
+                                followerIDs.add(followerID);
+                            }
+                        }
+
+                        callback.onGetFollowersByUIDSuccess(followerIDs);
+                    } else {
+                        Exception exception = task.getException();
+                        if (exception != null) {
+                            Log.e("-->", "Failed to get posts:", exception);
+                        } else {
+                            Log.e("-->", "Failed to get posts: Unknown reason");
+                        }
+                        callback.onGetFollowersByUIDFailure();
+                    }
+                });
+    }
+
     public static void isFollowing(String userId, Button button) {
         String myId = Auth.getUser().getUid();
         CollectionReference followCollection = db.collection("Follower");

@@ -45,6 +45,9 @@ public class NewsfeedFragment extends Fragment {
     Disposable storiesMapDisposable;
     Disposable socialPostsDisposable;
 
+    int offset = 0;
+    int limit = 20;
+
     // Components
     RecyclerView storiesRecycler;
     RecyclerView postRecycler;
@@ -146,16 +149,41 @@ public class NewsfeedFragment extends Fragment {
         postRecycler.addItemDecoration(new SpacingItemDecoration(0, 45));
 
         PostState postState = PostState.getInstance();
-        socialPostsDisposable = postState.getObservableSocialPosts().subscribe(this::setNewsfeeds);
+        ProfileState profileState = ProfileState.getInstance();
+
+        socialPostsDisposable = postState.getObservableSocialPosts().subscribe(posts -> {
+            ArrayList<PostAdapter.PostModel> postModels = new ArrayList<>();
+            Log.d("-->", "Newsfeed posts: " + posts);
+            posts.forEach(post -> {
+                Schema.User postOwnerProfile = profileState.followerProfileMap.get(post.userId);
+
+                if (postOwnerProfile != null) {
+                    ArrayList<String> images = new ArrayList<>();
+                    images.add(post.url);
+                    postModels.add(new PostAdapter.PostModel(
+                            post.id,
+                            postOwnerProfile.profilePicture,
+                            postOwnerProfile.username,
+                            images,
+                            post.caption,
+                            post.lovedByUIDs
+                    ));
+                }
+            });
+            this.setNewsfeeds(postModels);
+        });
 
         // Swipe to refresh the posts
         swipeRefreshLayout = rootView.findViewById(R.id.post_swipe_refresh);
         swipeRefreshLayout.setOnRefreshListener(() -> {
-            PostState.getInstance().constructObservableSocialPosts();
+            PostState.getInstance().constructObservableSocialPosts(offset, limit);
             swipeRefreshLayout.setRefreshing(false);
         });
 
-        // Data fetching
+        // Fetch posts
+        PostState.getInstance().constructObservableSocialPosts(offset, limit);
+
+        // Fetch stories
         String uid = ProfileState.getInstance().profile.id;
         Database.getActiveStoriesByUID(uid, new Database.GetStoriesByUIDCallback() {
             @Override
@@ -168,19 +196,6 @@ public class NewsfeedFragment extends Fragment {
             @Override
             public void onGetStoriesFailure() {
                 Toast.makeText(requireContext(), "Failed to load stories", Toast.LENGTH_SHORT).show();
-            }
-        });
-
-        Database.getPostsByUID(uid, new Database.GetPostsByUIDCallback() {
-            @Override
-            public void onGetPostsSuccess(ArrayList<Schema.Post> posts) {
-                PostState.getInstance().updateObservableMyPosts(posts);
-                PostState.getInstance().constructObservableSocialPosts();
-            }
-
-            @Override
-            public void onGetPostsFailure() {
-                Toast.makeText(requireContext(), "Failed to load your posts", Toast.LENGTH_SHORT).show();
             }
         });
 
