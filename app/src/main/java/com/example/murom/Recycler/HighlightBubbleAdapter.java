@@ -87,7 +87,9 @@ public class HighlightBubbleAdapter extends RecyclerView.Adapter<HighlightBubble
 
         if(position == 0){
             viewHolder.highlightImage.setOnClickListener(v -> callback.handleAddHighlight());
-            viewHolder.highlightImage.setOnLongClickListener(v -> true);
+            viewHolder.highlightImage.setOnLongClickListener(v -> {
+                return true;
+            });
         }
     }
 
