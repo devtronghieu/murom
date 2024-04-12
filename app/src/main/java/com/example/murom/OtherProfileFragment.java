@@ -23,6 +23,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.example.murom.Firebase.Auth;
+import com.example.murom.Firebase.Database;
 import com.example.murom.Firebase.Schema;
 import com.example.murom.Firebase.Storage;
 import com.example.murom.Recycler.HighlightBubbleAdapter;
@@ -45,6 +46,9 @@ public class OtherProfileFragment extends Fragment {
     Schema.User profile;
     RecyclerView postsRecycler;
     Disposable myPostsDisposable;
+    ImageView avatar;
+    TextView username;
+    TextView bio;
     public interface OtherProfileFragmentCallback {
 
     }
@@ -67,6 +71,8 @@ public class OtherProfileFragment extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        String userId = getArguments().getString("userId");
+        fetchUserProfile(userId);
     }
 
     @Override
@@ -86,7 +92,7 @@ public class OtherProfileFragment extends Fragment {
 
         View rootView = inflater.inflate(R.layout.fragment_other_profile, container, false);
 
-        ImageView avatar = rootView.findViewById(R.id.profile_avatar);
+        avatar = rootView.findViewById(R.id.profile_avatar);
         TextView post = rootView.findViewById(R.id.profile_post);
         TextView post_num = rootView.findViewById(R.id.num_post);
         TextView follower = rootView.findViewById(R.id.profile_follower);
@@ -94,8 +100,8 @@ public class OtherProfileFragment extends Fragment {
         TextView following = rootView.findViewById(R.id.profile_following);
         TextView following_num = rootView.findViewById(R.id.num_following);
 
-        TextView username = rootView.findViewById(R.id.profile_username);
-        TextView bio = rootView.findViewById(R.id.profile_bio);
+        username = rootView.findViewById(R.id.profile_username);
+        bio = rootView.findViewById(R.id.profile_bio);
         Button followBtn = rootView.findViewById(R.id.profile_follow_btn);
 
         ImageView picture = rootView.findViewById(R.id.profile_imageView);
@@ -116,7 +122,6 @@ public class OtherProfileFragment extends Fragment {
         ProfileState profileState = ProfileState.getInstance();
         username.setText(profileState.profile.username);
         bio.setText(profileState.profile.bio);
-
 
         RecyclerView highlightsRecycler = rootView.findViewById(R.id.highlights_recycler);
         highlightsRecycler.setLayoutManager(new LinearLayoutManager(getContext(),RecyclerView.HORIZONTAL, false));
@@ -162,5 +167,37 @@ public class OtherProfileFragment extends Fragment {
 
         PostsProfileAdapter postsProfileAdapter = new PostsProfileAdapter(postsProfileModel);
         postsRecycler.setAdapter(postsProfileAdapter);
+    }
+
+    private void fetchUserProfile(String userId) {
+
+        Database.getUser(userId, new Database.GetUserCallback() {
+            @Override
+            public void onGetUserSuccess(Schema.User user) {
+                updateProfileUI(user);
+                ProfileState.getInstance().updateObservableProfile(user);
+            }
+
+            @Override
+            public void onGetUserFailure() {
+                Log.d("-->", "Failed to fetch user profile");
+            }
+        });
+    }
+
+    private void updateProfileUI(Schema.User user) {
+        username.setText(user.username);
+        bio.setText(user.bio);
+        StorageReference avatarRef = Storage.getRef("avatar/" + user.email);
+        avatarRef.getDownloadUrl()
+                .addOnSuccessListener(uri -> {
+                    String imageUrl = uri.toString();
+                    Glide.with(avatar.getContext())
+                            .load(imageUrl)
+                            .into(avatar);
+                })
+                .addOnFailureListener(e -> {
+                    Log.d("-->", "failed to get avatar: " + e);
+                });
     }
 }
