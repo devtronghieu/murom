@@ -25,17 +25,16 @@ import com.bumptech.glide.Glide;
 import com.example.murom.Firebase.Auth;
 import com.example.murom.Firebase.Schema;
 import com.example.murom.Firebase.Storage;
+import com.example.murom.Recycler.HighlightBottomSheetAdapter;
 import com.example.murom.Recycler.HighlightBubbleAdapter;
 import com.example.murom.Recycler.PostsProfileAdapter;
 import com.example.murom.Recycler.SpacingItemDecoration;
 import com.example.murom.State.PostState;
 import com.example.murom.State.ProfileState;
-import com.google.firebase.firestore.DocumentReference;
-import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.firebase.storage.StorageReference;
 
 import java.util.ArrayList;
-import java.util.Random;
 
 import io.reactivex.rxjava3.disposables.Disposable;
 
@@ -43,8 +42,26 @@ import io.reactivex.rxjava3.disposables.Disposable;
 public class ProfileFragment extends Fragment {
     Disposable profileDisposable;
     Schema.User profile;
+    ProfileState profileState = ProfileState.getInstance();
     RecyclerView postsRecycler;
     ImageView pickedImageView;
+    BottomSheetDialog bottomSheet;
+    HighlightBottomSheetAdapter highlightBottomSheetAdapter;
+    HighlightBubbleAdapter highlightBubbleAdapter;
+    RecyclerView highlightsRecycler;
+    ImageView avatar;
+    TextView post;
+    TextView post_num;
+    TextView follower;
+    TextView follower_num;
+    TextView following;
+    TextView following_num;
+    ImageButton burgerBtn;
+    TextView username;
+    TextView bio;
+    Button editBtn;
+    ImageView picture;
+    TextView photo;
     ActivityResultLauncher<PickVisualMediaRequest> launcher =
             registerForActivityResult(new ActivityResultContracts.PickVisualMedia(), new ActivityResultCallback<Uri>() {
                 @Override
@@ -90,31 +107,29 @@ public class ProfileFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        Random rand = new Random();
-        String uid = Auth.getUser().getUid();
-
-
         // Inflate the layout for this fragment
         View rootView = inflater.inflate(R.layout.fragment_profile, container, false);
 
-        ImageView avatar = rootView.findViewById(R.id.profile_avatar);
-        TextView post = rootView.findViewById(R.id.profile_post);
-        TextView post_num = rootView.findViewById(R.id.num_post);
-        TextView follower = rootView.findViewById(R.id.profile_follower);
-        TextView follower_num = rootView.findViewById(R.id.num_follower);
-        TextView following = rootView.findViewById(R.id.profile_following);
-        TextView following_num = rootView.findViewById(R.id.num_following);
-        ImageButton burgerBtn = rootView.findViewById(R.id.burger_button);
+        avatar = rootView.findViewById(R.id.profile_avatar);
+        post = rootView.findViewById(R.id.profile_post);
+        post_num = rootView.findViewById(R.id.num_post);
+        follower = rootView.findViewById(R.id.profile_follower);
+        follower_num = rootView.findViewById(R.id.num_follower);
+        following = rootView.findViewById(R.id.profile_following);
+        following_num = rootView.findViewById(R.id.num_following);
+        burgerBtn = rootView.findViewById(R.id.burger_button);
 
-        TextView username = rootView.findViewById(R.id.profile_username);
-        TextView bio = rootView.findViewById(R.id.profile_bio);
-        Button editBtn = rootView.findViewById(R.id.profile_edit_btn);
+        username = rootView.findViewById(R.id.profile_username);
+        bio = rootView.findViewById(R.id.profile_bio);
+        editBtn = rootView.findViewById(R.id.profile_edit_btn);
+
+        picture = rootView.findViewById(R.id.profile_imageView);
+        photo = rootView.findViewById(R.id.profile_phototext);
+        highlightsRecycler = rootView.findViewById(R.id.highlights_recycler);
+        bottomSheet = new BottomSheetDialog(this.getContext());
+
         editBtn.setOnClickListener(v -> callback.onEditProfile());
         burgerBtn.setOnClickListener(v -> callback.onArchiveClick());
-
-        ImageView picture = rootView.findViewById(R.id.profile_imageView);
-        TextView photo = rootView.findViewById(R.id.profile_phototext);
-
 
         StorageReference avatarRef = Storage.getRef("avatar/" + Auth.getUser().getEmail());
         avatarRef.getDownloadUrl()
@@ -128,35 +143,44 @@ public class ProfileFragment extends Fragment {
                     Log.d("-->", "failed to get avatar: " + e);
                 });
 
-        ProfileState profileState = ProfileState.getInstance();
         username.setText(profileState.profile.username);
         bio.setText(profileState.profile.bio);
 
-
-        RecyclerView highlightsRecycler = rootView.findViewById(R.id.highlights_recycler);
         highlightsRecycler.setLayoutManager(new LinearLayoutManager(getContext(),RecyclerView.HORIZONTAL, false));
         highlightsRecycler.addItemDecoration(new SpacingItemDecoration(40, 0 ));
+        HighlightBottomSheetAdapter.HighlightBottomSheetModel newHighlight =
+                new HighlightBottomSheetAdapter.HighlightBottomSheetModel("", "", "");
+        highlightBottomSheetAdapter = new HighlightBottomSheetAdapter(newHighlight);
 
         ArrayList<HighlightBubbleAdapter.HighlightBubbleModel> highlights = new ArrayList<>();
 
-        for (int i = 0 ; i < rand.nextInt(5)+5; i++){
-            highlights.add(new HighlightBubbleAdapter.HighlightBubbleModel(uid,"https://picsum.photos/200", "hehe" + i));
-        }
+        highlights.add(new HighlightBubbleAdapter.HighlightBubbleModel("", "", "New"));
 
-        HighlightBubbleAdapter highlightBubbleAdapter = new HighlightBubbleAdapter(highlights);
-        /*HighlightBubbleAdapter highlightBubbleAdapter = new HighlightBubbleAdapter(highlights, new HighlightBubbleAdapter.HighlightBubbleCallback() {
+        highlightBubbleAdapter = new HighlightBubbleAdapter(highlights, new HighlightBubbleAdapter.HighlightBubbleCallback() {
             @Override
-            public void handleUploadHighlight() {
-                launcher.launch(new PickVisualMediaRequest.Builder()
-                        .setMediaType(ActivityResultContracts.PickVisualMedia.ImageAndVideo.INSTANCE)
-                        .build());
+            public void handleDeleteHighlight(String highlightId) {
+                // delete highlight
+            }
+
+            @Override
+            public void handleEditHighlight(String highlightId) {
+                // get highlight by Id -> create new highlight with the highlight model
+            }
+
+            @Override
+            public void handleAddHighlight() {
+                HighlightBottomSheetAdapter.HighlightBottomSheetModel newHighlight =
+                        new HighlightBottomSheetAdapter.HighlightBottomSheetModel("", "", "");
+                highlightBottomSheetAdapter = new HighlightBottomSheetAdapter(newHighlight);
+                createBottomSheet();
+                bottomSheet.show();
             }
 
             @Override
             public void handleViewHighlight(String uid) {
-                callback.onViewHighlight(uid);
+                // view highlight
             }
-        });*/
+        });
         highlightsRecycler.setAdapter(highlightBubbleAdapter);
 
 
@@ -178,5 +202,14 @@ public class ProfileFragment extends Fragment {
 
         PostsProfileAdapter postsProfileAdapter = new PostsProfileAdapter(postsProfileModel);
         postsRecycler.setAdapter(postsProfileAdapter);
+    }
+
+    private void createBottomSheet() {
+        View view = getLayoutInflater().inflate(R.layout.bottom_sheet, null, false);
+        RecyclerView recyclerView = view.findViewById(R.id.bottom_sheet_content);
+
+        recyclerView.setAdapter(highlightBottomSheetAdapter);
+        recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
+        bottomSheet.setContentView(view);
     }
 }
