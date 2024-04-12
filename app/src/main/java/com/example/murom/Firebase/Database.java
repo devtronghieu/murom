@@ -193,6 +193,52 @@ public class Database {
                     }
                 });
     }
+    public static void getStoriesByUID(String uid, GetStoriesByUIDCallback callback) {
+        storyCollection
+                .whereEqualTo("user_id", uid)
+                .orderBy("created_at", Query.Direction.ASCENDING)
+                .get()
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        ArrayList<Schema.Story> stories = new ArrayList<>();
+
+                        QuerySnapshot snap = task.getResult();
+                        List<DocumentSnapshot> docs = snap.getDocuments();
+
+                        for (int i = 0; i < docs.size(); i++) {
+                            DocumentSnapshot doc = docs.get(i);
+
+                            Schema.Story story = new Schema.Story(
+                                    "",
+                                    Timestamp.now(),
+                                    "",
+                                    "",
+                                    ""
+                            );
+
+                            story.id = doc.getId();
+                            story.createdAt = doc.getTimestamp("created_at");
+                            story.uid = uid;
+                            story.url = doc.getString("url");
+                            story.type = doc.getString("type");
+
+                            Log.d("--> story", "getArchivedStoriesByUID: " + story.id);
+                            stories.add(story);
+                        }
+
+                        callback.onGetStoriesSuccess(stories);
+                    } else {
+                        Log.d("--> story", "getArchivedStoriesByUID: error");
+                        Exception exception = task.getException();
+                        if (exception != null) {
+                            Log.e("-->", "Failed to get stories:", exception);
+                        } else {
+                            Log.e("-->", "Failed to get stories: Unknown reason");
+                        }
+                        callback.onGetStoriesFailure();
+                    }
+                });
+    }
 
     public interface DeleteStoryCallback {
         void onDeleteStorySuccess(String storyID);

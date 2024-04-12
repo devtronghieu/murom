@@ -135,7 +135,7 @@ public class ArchiveFragment extends Fragment {
         ArrayList<ArchiveStoryAdapter.ArchiveStoryModel> archiveStoryModel = new ArrayList<>();
 
         myStories.forEach(story -> {
-            archiveStoryModel.add(new ArchiveStoryAdapter.ArchiveStoryModel(story.url));
+            archiveStoryModel.add(new ArchiveStoryAdapter.ArchiveStoryModel(story.id, story.url));
         });
 
         ArchiveStoryAdapter archiveStoryAdapter = new ArchiveStoryAdapter(archiveStoryModel);

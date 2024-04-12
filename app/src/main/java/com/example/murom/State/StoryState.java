@@ -9,33 +9,20 @@ import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.subjects.BehaviorSubject;
 
 public class StoryState {
-    public HashMap<String, ArrayList<Schema.Story>> storiesMap = new HashMap<>();
-    private final BehaviorSubject<HashMap<String, ArrayList<Schema.Story>>> observableStoriesMap = BehaviorSubject.createDefault(storiesMap);
-    public void updateObservableStoriesMap(HashMap<String, ArrayList<Schema.Story>> storiesMap) {
-        this.storiesMap = storiesMap;
-        observableStoriesMap.onNext(storiesMap);
+    public ArrayList<Schema.Story> stories = new ArrayList<>();
+    private final BehaviorSubject<ArrayList<Schema.Story>> observableStoriesMap = BehaviorSubject.createDefault(stories);
+    public void updateObservableStoriesMap(ArrayList<Schema.Story> stories) {
+        this.stories = stories;
+        observableStoriesMap.onNext(stories);
     }
-    public Observable<HashMap<String, ArrayList<Schema.Story>>> getObservableStoriesMap() {
+    public Observable<ArrayList<Schema.Story>> getObservableStoriesMap() {
         return observableStoriesMap;
     }
-
-    // Story Owner
-    private final BehaviorSubject<Schema.User> observableStoryOwner = BehaviorSubject.createDefault(
-            new Schema.User("", "", "", "", "", "", new HashMap<>())
-    );
-    public void updateObservableStoryOwner(String uid) {
-        // TODO: fetch the corresponding story owner profile
-        observableStoryOwner.onNext(ProfileState.getInstance().profile);
-    }
-    public Observable<Schema.User> getObservableStoryOwner() {
-        return observableStoryOwner;
-    }
-
 
     // Singleton
     private static StoryState instance = null;
 
-    private  StoryState() {}
+    private StoryState() {}
 
     public static StoryState getInstance() {
         if (instance == null) {

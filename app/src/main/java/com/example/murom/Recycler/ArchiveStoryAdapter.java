@@ -18,9 +18,13 @@ public class ArchiveStoryAdapter extends RecyclerView.Adapter<ArchiveStoryAdapte
     private Context context;
     private  final ArrayList<ArchiveStoryModel> localDataSet;
     public  static class ArchiveStoryModel{
+        private final String id;
         private final String imageUrl;
 
-        public ArchiveStoryModel(String imageUrl){ this.imageUrl = imageUrl; }
+        public ArchiveStoryModel(String id,String imageUrl){
+            this.id = id;
+            this.imageUrl = imageUrl;
+        }
     }
 
     public static class ViewHolder extends RecyclerView.ViewHolder{

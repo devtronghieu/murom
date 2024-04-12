@@ -21,7 +21,7 @@ import com.example.murom.Firebase.Database;
 import com.example.murom.Firebase.Schema;
 import com.example.murom.Firebase.Storage;
 import com.example.murom.State.ProfileState;
-import com.example.murom.State.StoryState;
+import com.example.murom.State.ActiveStoryState;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -88,10 +88,10 @@ public class StoryFragment extends Fragment {
             handleDeleteStory();
         });
 
-        StoryState storyState = StoryState.getInstance();
+        ActiveStoryState activeStoryState = ActiveStoryState.getInstance();
 
-        storyOwnerDisposable = storyState.getObservableStoryOwner().subscribe(profile -> {
-            stories = storyState.storiesMap.get(profile.id);
+        storyOwnerDisposable = activeStoryState.getObservableActiveStoryOwner().subscribe(profile -> {
+            stories = activeStoryState.activeStoriesMap.get(profile.id);
 
             if (stories == null || stories.size() == 0) {
                 Toast.makeText(requireContext(), "No stories found!", Toast.LENGTH_SHORT).show();
@@ -184,8 +184,8 @@ public class StoryFragment extends Fragment {
         Database.deleteStory(story.id, new Database.DeleteStoryCallback() {
             @Override
             public void onDeleteStorySuccess(String storyID) {
-                StoryState instance = StoryState.getInstance();
-                HashMap<String, ArrayList<Schema.Story>> storiesMap = instance.storiesMap;
+                ActiveStoryState instance = ActiveStoryState.getInstance();
+                HashMap<String, ArrayList<Schema.Story>> storiesMap = instance.activeStoriesMap;
                 String uid = ProfileState.getInstance().profile.id;
 
                 String storagePath = "story/" + uid + "/" + story.createdAt;
@@ -195,7 +195,7 @@ public class StoryFragment extends Fragment {
                                 Objects.requireNonNull(storiesMap.get(uid)).remove(currentStoryIndex);
                             }
 
-                            instance.updateObservableStoriesMap(storiesMap);
+                            instance.updateObservableActiveStoriesMap(storiesMap);
 
                             if (stories.size() == 0) {
                                 callback.onClose();

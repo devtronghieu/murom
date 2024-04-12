@@ -25,6 +25,7 @@ import com.example.murom.Recycler.SpacingItemDecoration;
 import com.example.murom.Recycler.StoryBubbleAdapter;
 import com.example.murom.State.PostState;
 import com.example.murom.State.ProfileState;
+import com.example.murom.State.ActiveStoryState;
 import com.example.murom.State.StoryState;
 import com.google.firebase.Timestamp;
 import com.google.firebase.storage.StorageReference;
@@ -83,14 +84,14 @@ public class NewsfeedFragment extends Fragment {
                                             Schema.Story story = new Schema.Story(UUID.randomUUID().toString(), createdAt, uid, storyURI.toString(), type);
                                             Database.addStory(story);
 
-                                            StoryState storyState = StoryState.getInstance();
-                                            HashMap<String, ArrayList<Schema.Story>> newStoriesMap = storyState.storiesMap;
-                                            ArrayList<Schema.Story> myStories = storyState.storiesMap.get(uid);
+                                            ActiveStoryState activeStoryState = ActiveStoryState.getInstance();
+                                            HashMap<String, ArrayList<Schema.Story>> newStoriesMap = activeStoryState.activeStoriesMap;
+                                            ArrayList<Schema.Story> myStories = activeStoryState.activeStoriesMap.get(uid);
                                             if (myStories == null) {
                                                 myStories = new ArrayList<>();
                                             }
                                             myStories.add(story);
-                                            storyState.updateObservableStoriesMap(newStoriesMap);
+                                            activeStoryState.updateObservableActiveStoriesMap(newStoriesMap);
 
                                             Toast.makeText(requireContext(), "Uploaded!", Toast.LENGTH_SHORT).show();
                                         })
@@ -133,10 +134,10 @@ public class NewsfeedFragment extends Fragment {
         storiesRecycler.addItemDecoration(new SpacingItemDecoration(40, 0));
 
         profileDisposable = ProfileState.getInstance().getObservableProfile().subscribe(profile -> {
-            handleWatchStoriesToRender(profile, StoryState.getInstance().storiesMap);
+            handleWatchStoriesToRender(profile, ActiveStoryState.getInstance().activeStoriesMap);
         });
 
-        storiesMapDisposable = StoryState.getInstance().getObservableStoriesMap().subscribe(storiesMap -> {
+        storiesMapDisposable = ActiveStoryState.getInstance().getObservableActiveStoriesMap().subscribe(storiesMap -> {
             handleWatchStoriesToRender(ProfileState.getInstance().profile, storiesMap);
         });
 
@@ -162,7 +163,19 @@ public class NewsfeedFragment extends Fragment {
             public void onGetStoriesSuccess(ArrayList<Schema.Story> stories) {
                 HashMap<String, ArrayList<Schema.Story>> storiesMap = new HashMap<>();
                 storiesMap.put(uid, stories);
-                StoryState.getInstance().updateObservableStoriesMap(storiesMap);
+                ActiveStoryState.getInstance().updateObservableActiveStoriesMap(storiesMap);
+            }
+
+            @Override
+            public void onGetStoriesFailure() {
+                Toast.makeText(requireContext(), "Failed to load stories", Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        Database.getStoriesByUID(uid, new Database.GetStoriesByUIDCallback() {
+            @Override
+            public void onGetStoriesSuccess(ArrayList<Schema.Story> stories) {
+                StoryState.getInstance().updateObservableStoriesMap(stories);
             }
 
             @Override
