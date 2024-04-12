@@ -47,7 +47,7 @@ public class SearchUserAdapter extends RecyclerView.Adapter<SearchUserAdapter.Vi
     }
 
     public interface OnUserItemClickListener {
-        void onUserItemClick(String userId);
+        void onSearchUserItemClick(String userId);
     }
     @NonNull
     @Override
@@ -74,8 +74,9 @@ public class SearchUserAdapter extends RecyclerView.Adapter<SearchUserAdapter.Vi
         viewHolder.itemView.setOnClickListener(v -> {
             int adapterPosition = viewHolder.getAdapterPosition();
             if (adapterPosition != RecyclerView.NO_POSITION && listener != null) {
-                listener.onUserItemClick(data.userId);
+                listener.onSearchUserItemClick(localDataSet.get(position).userId);
             }
+            Log.d("-->", "Click on: " + data.userId);
         });
     }
 
