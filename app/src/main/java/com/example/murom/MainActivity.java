@@ -17,7 +17,7 @@ import com.example.murom.Firebase.Auth;
 import com.example.murom.Firebase.Database;
 import com.example.murom.Firebase.Schema;
 import com.example.murom.State.ProfileState;
-import com.example.murom.State.StoryState;
+import com.example.murom.State.ActiveStoryState;
 import com.example.murom.databinding.ActivityMainBinding;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
@@ -234,7 +234,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void handleViewStory(String uid) {
-        StoryState.getInstance().updateObservableStoryOwner(uid);
+        ActiveStoryState.getInstance().updateObservableActiveStoryOwner(uid);
         storyFragment = new StoryFragment(() -> removeFullscreenFragment(storyFragment));
         addFullscreenFragment(storyFragment);
     }
