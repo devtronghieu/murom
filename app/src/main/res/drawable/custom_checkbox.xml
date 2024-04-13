@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:id="@+id/background">
+        <shape android:shape="oval">
+            <solid android:color="#FFFFFF" />
+        </shape>
+    </item>
+
+    <item android:id="@+id/checkmark">
+        <path
+            android:fillColor="#00FF00"
+            android:pathData="M8.5,5 L12,9 L15.5,5 Z" />
+    </item>
+</layer-list>
