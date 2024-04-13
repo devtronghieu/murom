@@ -13,7 +13,6 @@ import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
 import com.google.firebase.firestore.SetOptions;
-import com.google.type.DateTime;
 
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -22,6 +21,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 public class Database {
     private static final FirebaseFirestore db = FirebaseFirestore.getInstance();
@@ -74,6 +74,54 @@ public class Database {
         });
     }
 
+    public interface GetProfilesCallback {
+        void onGetProfilesSuccess(HashMap<String, Schema.User> profileMap);
+
+        void onGetProfilesFailure();
+    }
+    public static void getProfiles(ArrayList<String> profileIDs, GetProfilesCallback callback) {
+        userCollection
+                .whereIn("id", profileIDs)
+                .get()
+                .addOnSuccessListener(runnable -> {
+                    List<DocumentSnapshot> docs = runnable.getDocuments();
+                    HashMap<String, Schema.User> profiles = new HashMap<>();
+
+                    for (int i = 0; i < docs.size(); i++) {
+                        DocumentSnapshot doc = docs.get(i);
+
+                        Schema.User profile = new Schema.User(
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                "",
+                                new HashMap<>()
+                        );
+
+                        profile.id = doc.getString("id");
+                        profile.bio = doc.getString("bio");
+                        profile.email = doc.getString("email");
+                        profile.passwordHash = doc.getString("password");
+                        profile.profilePicture = doc.getString("profile_picture");
+                        profile.username = doc.getString("username");
+                        HashMap<String, String> viewedStories = (HashMap<String, String>) doc.get("viewed_stories");
+                        if (viewedStories != null) {
+                            profile.viewedStories = viewedStories;
+                        }
+
+                        profiles.put(profile.id, profile);
+                    }
+
+                    callback.onGetProfilesSuccess(profiles);
+                })
+                .addOnFailureListener(e -> {
+                    Log.d("-->", "failed to get profiles");
+                    callback.onGetProfilesFailure();
+                });
+    }
+
     public static final CollectionReference storyCollection = db.collection("Story");
 
     public static void addStory(Schema.Story story) {
@@ -95,18 +143,23 @@ public class Database {
         void onGetStoriesFailure();
     }
 
-    public static void getActiveStoriesByUID(String uid, GetStoriesByUIDCallback callback) {
+    public interface GetActiveStoriesCallback {
+        void onGetStoriesSuccess(HashMap<String, ArrayList<Schema.Story>> storyMap);
+        void onGetStoriesFailure();
+    }
+
+    public static void getActiveStories(ArrayList<String> userIDs, GetActiveStoriesCallback callback) {
         Date yesterday = new Date(System.currentTimeMillis() - (24 * 60 * 60 * 1000));
         Timestamp yesterdayTimestamp = new Timestamp(yesterday);
 
         storyCollection
-                .whereEqualTo("user_id", uid)
+                .whereIn("user_id", userIDs)
                 .whereGreaterThanOrEqualTo("created_at", yesterdayTimestamp)
                 .orderBy("created_at", Query.Direction.ASCENDING)
                 .get()
                 .addOnCompleteListener(task -> {
                     if (task.isSuccessful()) {
-                        ArrayList<Schema.Story> stories = new ArrayList<>();
+                        HashMap<String, ArrayList<Schema.Story>> storyMap = new HashMap<>();
 
                         QuerySnapshot snap = task.getResult();
                         List<DocumentSnapshot> docs = snap.getDocuments();
@@ -124,14 +177,17 @@ public class Database {
 
                             story.id = doc.getId();
                             story.createdAt = doc.getTimestamp("created_at");
-                            story.uid = uid;
+                            story.uid = doc.getString("user_id");
                             story.url = doc.getString("url");
                             story.type = doc.getString("type");
 
-                            stories.add(story);
+                            if (!storyMap.containsKey(story.uid)) {
+                                storyMap.put(story.uid, new ArrayList<>());
+                            }
+                            Objects.requireNonNull(storyMap.get(story.uid)).add(story);
                         }
 
-                        callback.onGetStoriesSuccess(stories);
+                        callback.onGetStoriesSuccess(storyMap);
                     } else {
                         Exception exception = task.getException();
                         if (exception != null) {
@@ -143,6 +199,7 @@ public class Database {
                     }
                 });
     }
+
     public static void getArchivedStoriesByUID(String uid, GetStoriesByUIDCallback callback) {
         Date yesterday = new Date(System.currentTimeMillis() - (24 * 60 * 60 * 1000));
         Timestamp yesterdayTimestamp = new Timestamp(yesterday);
@@ -308,11 +365,70 @@ public class Database {
         void onGetPostsSuccess(ArrayList<Schema.Post> posts);
         void onGetPostsFailure();
     }
-
     public static void getPostsByUID(String uid, GetPostsByUIDCallback callback) {
         postCollection
                 .whereEqualTo("user_id", uid)
                 .orderBy("created_at", Query.Direction.DESCENDING)
+                .get()
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        ArrayList<Schema.Post> posts = new ArrayList<>();
+
+                        QuerySnapshot snap = task.getResult();
+                        List<DocumentSnapshot> docs = snap.getDocuments();
+
+                        for (int i = 0; i < docs.size(); i++) {
+                            DocumentSnapshot doc = docs.get(i);
+
+                            Schema.Post post = new Schema.Post(
+                                    "",
+                                    "",
+                                    "",
+                                    "",
+                                    "",
+                                    new ArrayList<>(),
+                                    false,
+                                    Timestamp.now()
+                            );
+
+                            post.id = doc.getId();
+                            post.createdAt = doc.getTimestamp("created_at");
+                            post.userId = doc.getString("user_id");
+                            post.url = doc.getString("url");
+                            post.type = doc.getString("type");
+                            ArrayList<String> lovedByUIDs = (ArrayList<String>)doc.get("loved_by");
+                            if (lovedByUIDs != null) {
+                                post.lovedByUIDs = lovedByUIDs;
+                            }
+                            post.caption = doc.getString("caption");
+                            post.isArchived = Boolean.TRUE.equals(doc.getBoolean("is_archived"));
+
+                            posts.add(post);
+                        }
+
+                        callback.onGetPostsSuccess(posts);
+                    } else {
+                        Exception exception = task.getException();
+                        if (exception != null) {
+                            Log.e("-->", "Failed to get posts:", exception);
+                        } else {
+                            Log.e("-->", "Failed to get posts: Unknown reason");
+                        }
+                        callback.onGetPostsFailure();
+                    }
+                });
+    }
+
+    public interface GetPostsByUIDsCallback {
+        void onGetPostsSuccess(ArrayList<Schema.Post> posts);
+        void onGetPostsFailure();
+    }
+    public static void getPostsByUIDs(ArrayList<String> userIDs, int offset, int limit, GetPostsByUIDsCallback callback) {
+        postCollection
+                .whereIn("user_id", userIDs)
+                .whereEqualTo("is_archived", false)
+                .orderBy("created_at", Query.Direction.DESCENDING)
+                .limit(limit)
                 .get()
                 .addOnCompleteListener(task -> {
                     if (task.isSuccessful()) {
@@ -498,6 +614,45 @@ public class Database {
                     listener.onSearchUserFailed(e.getMessage());
                 });
     }
+
+    public interface GetFollowersByUIDCallback {
+        void onGetFollowersByUIDSuccess(ArrayList<String> followerIDs);
+        void onGetFollowersByUIDFailure();
+    }
+
+    public static void getFollowersByUID(String uid, GetFollowersByUIDCallback callback) {
+        CollectionReference followCollection = db.collection("Follower");
+        followCollection
+                .whereEqualTo("user_id", uid)
+                .get()
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        ArrayList<String> followerIDs = new ArrayList<>();
+
+                        QuerySnapshot snap = task.getResult();
+                        List<DocumentSnapshot> docs = snap.getDocuments();
+
+                        for (int i = 0; i < docs.size(); i++) {
+                            DocumentSnapshot doc = docs.get(i);
+                            String followerID = doc.getString("following_user_id");
+                            if (followerID != null) {
+                                followerIDs.add(followerID);
+                            }
+                        }
+
+                        callback.onGetFollowersByUIDSuccess(followerIDs);
+                    } else {
+                        Exception exception = task.getException();
+                        if (exception != null) {
+                            Log.e("-->", "Failed to get posts:", exception);
+                        } else {
+                            Log.e("-->", "Failed to get posts: Unknown reason");
+                        }
+                        callback.onGetFollowersByUIDFailure();
+                    }
+                });
+    }
+
     public static void isFollowing(String userId, Button button) {
         String myId = Auth.getUser().getUid();
         CollectionReference followCollection = db.collection("Follower");

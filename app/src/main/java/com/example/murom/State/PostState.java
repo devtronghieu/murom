@@ -1,7 +1,9 @@
 package com.example.murom.State;
 
+import android.util.Log;
+
+import com.example.murom.Firebase.Database;
 import com.example.murom.Firebase.Schema;
-import com.example.murom.Recycler.PostAdapter;
 
 import java.util.ArrayList;
 
@@ -20,32 +22,28 @@ public class PostState {
     }
 
     // Social Posts = Mix of My Posts, My followers' posts, Social recommended Posts?
-    public ArrayList<PostAdapter.PostModel> socialPosts = new ArrayList<>();
-    private final BehaviorSubject<ArrayList<PostAdapter.PostModel>> observableSocialPosts = BehaviorSubject.createDefault(socialPosts);
-    public void constructObservableSocialPosts() {
-        ArrayList<PostAdapter.PostModel> socialPosts = new ArrayList<>();
-        Schema.User me = ProfileState.getInstance().profile;
+    public ArrayList<Schema.Post> socialPosts = new ArrayList<>();
+    private final BehaviorSubject<ArrayList<Schema.Post>> observableSocialPosts = BehaviorSubject.createDefault(socialPosts);
+    public void constructObservableSocialPosts(int offset, int limit) {
+        ProfileState profileState = ProfileState.getInstance();
+        ArrayList<String> socialIDs = new ArrayList<>(profileState.followerIDs);
+        socialIDs.add(profileState.profile.id);
 
-        this.myPosts.forEach(post -> {
-            if (post.isArchived) {
-                return;
+        Database.getPostsByUIDs(socialIDs, offset, limit, new Database.GetPostsByUIDsCallback() {
+            @Override
+            public void onGetPostsSuccess(ArrayList<Schema.Post> posts) {
+                socialPosts = posts;
+                observableSocialPosts.onNext(posts);
             }
-            ArrayList<String> images = new ArrayList<>();
-            images.add(post.url);
-            socialPosts.add(new PostAdapter.PostModel(
-                    post.id,
-                    me.profilePicture,
-                    me.username,
-                    images,
-                    post.caption,
-                    post.lovedByUIDs
-            ));
-        });
 
-        this.socialPosts = socialPosts;
-        observableSocialPosts.onNext(socialPosts);
+            @Override
+            public void onGetPostsFailure() {
+                Log.d("-->", "failed to get social posts");
+                observableMyPosts.onNext(socialPosts);
+            }
+        });
     }
-    public Observable<ArrayList<PostAdapter.PostModel>> getObservableSocialPosts() {
+    public Observable<ArrayList<Schema.Post>> getObservableSocialPosts() {
         return observableSocialPosts;
     }
 
