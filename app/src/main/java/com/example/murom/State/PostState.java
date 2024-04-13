@@ -26,7 +26,7 @@ public class PostState {
     private final BehaviorSubject<ArrayList<Schema.Post>> observableSocialPosts = BehaviorSubject.createDefault(socialPosts);
     public void constructObservableSocialPosts(int offset, int limit) {
         ProfileState profileState = ProfileState.getInstance();
-        ArrayList<String> socialIDs = profileState.followerIDs;
+        ArrayList<String> socialIDs = new ArrayList<>(profileState.followerIDs);
         socialIDs.add(profileState.profile.id);
 
         Database.getPostsByUIDs(socialIDs, offset, limit, new Database.GetPostsByUIDsCallback() {

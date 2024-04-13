@@ -21,6 +21,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 public class Database {
     private static final FirebaseFirestore db = FirebaseFirestore.getInstance();
@@ -142,18 +143,23 @@ public class Database {
         void onGetStoriesFailure();
     }
 
-    public static void getActiveStoriesByUID(String uid, GetStoriesByUIDCallback callback) {
+    public interface GetActiveStoriesCallback {
+        void onGetStoriesSuccess(HashMap<String, ArrayList<Schema.Story>> storyMap);
+        void onGetStoriesFailure();
+    }
+
+    public static void getActiveStories(ArrayList<String> userIDs, GetActiveStoriesCallback callback) {
         Date yesterday = new Date(System.currentTimeMillis() - (24 * 60 * 60 * 1000));
         Timestamp yesterdayTimestamp = new Timestamp(yesterday);
 
         storyCollection
-                .whereEqualTo("user_id", uid)
+                .whereIn("user_id", userIDs)
                 .whereGreaterThanOrEqualTo("created_at", yesterdayTimestamp)
                 .orderBy("created_at", Query.Direction.ASCENDING)
                 .get()
                 .addOnCompleteListener(task -> {
                     if (task.isSuccessful()) {
-                        ArrayList<Schema.Story> stories = new ArrayList<>();
+                        HashMap<String, ArrayList<Schema.Story>> storyMap = new HashMap<>();
 
                         QuerySnapshot snap = task.getResult();
                         List<DocumentSnapshot> docs = snap.getDocuments();
@@ -171,14 +177,17 @@ public class Database {
 
                             story.id = doc.getId();
                             story.createdAt = doc.getTimestamp("created_at");
-                            story.uid = uid;
+                            story.uid = doc.getString("user_id");
                             story.url = doc.getString("url");
                             story.type = doc.getString("type");
 
-                            stories.add(story);
+                            if (!storyMap.containsKey(story.uid)) {
+                                storyMap.put(story.uid, new ArrayList<>());
+                            }
+                            Objects.requireNonNull(storyMap.get(story.uid)).add(story);
                         }
 
-                        callback.onGetStoriesSuccess(stories);
+                        callback.onGetStoriesSuccess(storyMap);
                     } else {
                         Exception exception = task.getException();
                         if (exception != null) {
@@ -190,6 +199,7 @@ public class Database {
                     }
                 });
     }
+
     public static void getArchivedStoriesByUID(String uid, GetStoriesByUIDCallback callback) {
         Date yesterday = new Date(System.currentTimeMillis() - (24 * 60 * 60 * 1000));
         Timestamp yesterdayTimestamp = new Timestamp(yesterday);
@@ -408,8 +418,6 @@ public class Database {
         void onGetPostsFailure();
     }
     public static void getPostsByUIDs(ArrayList<String> userIDs, int offset, int limit, GetPostsByUIDsCallback callback) {
-        Log.d("-->", "userIDs: " + userIDs);
-
         postCollection
                 .whereIn("user_id", userIDs)
                 .whereEqualTo("is_archived", false)
@@ -451,8 +459,6 @@ public class Database {
 
                             posts.add(post);
                         }
-
-                        Log.d("-->", "Social posts: " + posts);
 
                         callback.onGetPostsSuccess(posts);
                     } else {

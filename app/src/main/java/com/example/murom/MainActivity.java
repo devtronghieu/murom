@@ -196,7 +196,6 @@ public class MainActivity extends AppCompatActivity {
     private void replaceFragment(Fragment fragment) {
         fullscreenFragmentContainer.setVisibility(View.GONE);
         toggleBottomMenu(true);
-
         FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
         fragmentTransaction.replace(R.id.main_layout_fragment, fragment);
         fragmentTransaction.commit();

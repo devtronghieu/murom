@@ -23,10 +23,9 @@ import com.example.murom.Firebase.Storage;
 import com.example.murom.Recycler.PostAdapter;
 import com.example.murom.Recycler.SpacingItemDecoration;
 import com.example.murom.Recycler.StoryBubbleAdapter;
+import com.example.murom.State.ActiveStoryState;
 import com.example.murom.State.PostState;
 import com.example.murom.State.ProfileState;
-import com.example.murom.State.ActiveStoryState;
-import com.example.murom.State.StoryState;
 import com.google.firebase.Timestamp;
 import com.google.firebase.storage.StorageReference;
 
@@ -42,7 +41,6 @@ public class NewsfeedFragment extends Fragment {
     Activity activity;
 
     // AppState
-    Disposable profileDisposable;
     Disposable storiesMapDisposable;
     Disposable socialPostsDisposable;
 
@@ -54,59 +52,57 @@ public class NewsfeedFragment extends Fragment {
     RecyclerView postRecycler;
     SwipeRefreshLayout swipeRefreshLayout;
 
-    // Component states
-    ArrayList<StoryBubbleAdapter.StoryBubbleModel> storyBubbles = new ArrayList<>();
-
     ActivityResultLauncher<PickVisualMediaRequest> launcher =
             registerForActivityResult(new ActivityResultContracts.PickVisualMedia(), uri -> {
                 if (uri == null) {
                     Toast.makeText(requireContext(), "No image selected!", Toast.LENGTH_SHORT).show();
-                } else {
-                    Date currentDate = new Date();
-                    Timestamp createdAt = new Timestamp(currentDate);
-                    String uid = Auth.getUser().getUid();
-
-                    String storagePath = "story/" + uid + "/" + createdAt;
-
-                    String mimeType = activity.getContentResolver().getType(uri);
-
-                    boolean isImage = mimeType != null && mimeType.startsWith("image/");
-
-                    String type;
-                    if (isImage) {
-                        type = "image";
-                    } else {
-                        type = "video";
-                    }
-
-                    Storage.getRef(storagePath).putFile(uri)
-                            .addOnSuccessListener(taskSnapshot -> {
-                                StorageReference storyRef = Storage.getRef(storagePath);
-                                storyRef.getDownloadUrl()
-                                        .addOnSuccessListener(storyURI -> {
-                                            Schema.Story story = new Schema.Story(UUID.randomUUID().toString(), createdAt, uid, storyURI.toString(), type);
-                                            Database.addStory(story);
-
-                                            ActiveStoryState activeStoryState = ActiveStoryState.getInstance();
-                                            HashMap<String, ArrayList<Schema.Story>> newStoriesMap = activeStoryState.activeStoriesMap;
-                                            ArrayList<Schema.Story> myStories = activeStoryState.activeStoriesMap.get(uid);
-                                            if (myStories == null) {
-                                                myStories = new ArrayList<>();
-                                            }
-                                            myStories.add(story);
-                                            activeStoryState.updateObservableActiveStoriesMap(newStoriesMap);
-
-                                            Toast.makeText(requireContext(), "Uploaded!", Toast.LENGTH_SHORT).show();
-                                        })
-                                        .addOnFailureListener(e -> {
-                                            Log.d("-->", "failed to get story: " + e);
-                                            Toast.makeText(requireContext(), "Failed to upload story!", Toast.LENGTH_SHORT).show();
-                                        });
-                            }).addOnFailureListener(e -> {
-                                Log.d("-->", "failed to get story: " + e);
-                                Toast.makeText(requireContext(), "Failed to upload story!", Toast.LENGTH_SHORT).show();
-                            });
+                    return;
                 }
+
+                Date currentDate = new Date();
+                Timestamp createdAt = new Timestamp(currentDate);
+                String uid = Auth.getUser().getUid();
+
+                String storagePath = "story/" + uid + "/" + createdAt;
+
+                String mimeType = activity.getContentResolver().getType(uri);
+
+                boolean isImage = mimeType != null && mimeType.startsWith("image/");
+
+                String type;
+                if (isImage) {
+                    type = "image";
+                } else {
+                    type = "video";
+                }
+
+                Storage.getRef(storagePath).putFile(uri)
+                        .addOnSuccessListener(taskSnapshot -> {
+                            StorageReference storyRef = Storage.getRef(storagePath);
+                            storyRef.getDownloadUrl()
+                                    .addOnSuccessListener(storyURI -> {
+                                        Schema.Story story = new Schema.Story(UUID.randomUUID().toString(), createdAt, uid, storyURI.toString(), type);
+                                        Database.addStory(story);
+
+                                        ActiveStoryState activeStoryState = ActiveStoryState.getInstance();
+                                        HashMap<String, ArrayList<Schema.Story>> newStoriesMap = activeStoryState.activeStoriesMap;
+                                        ArrayList<Schema.Story> myStories = activeStoryState.activeStoriesMap.get(uid);
+                                        if (myStories == null) {
+                                            myStories = new ArrayList<>();
+                                        }
+                                        myStories.add(story);
+                                        activeStoryState.updateObservableActiveStoriesMap(newStoriesMap);
+
+                                        Toast.makeText(requireContext(), "Uploaded!", Toast.LENGTH_SHORT).show();
+                                    })
+                                    .addOnFailureListener(e -> {
+                                        Log.d("-->", "failed to get story: " + e);
+                                        Toast.makeText(requireContext(), "Failed to upload story!", Toast.LENGTH_SHORT).show();
+                                    });
+                        }).addOnFailureListener(e -> {
+                            Log.d("-->", "failed to get story: " + e);
+                            Toast.makeText(requireContext(), "Failed to upload story!", Toast.LENGTH_SHORT).show();
+                        });
             });
 
     public interface  NewsfeedFragmentCallback {
@@ -136,13 +132,7 @@ public class NewsfeedFragment extends Fragment {
         storiesRecycler.setLayoutManager(new LinearLayoutManager(getContext(), RecyclerView.HORIZONTAL, false));
         storiesRecycler.addItemDecoration(new SpacingItemDecoration(40, 0));
 
-        profileDisposable = ProfileState.getInstance().getObservableProfile().subscribe(profile -> {
-            handleWatchStoriesToRender(profile, ActiveStoryState.getInstance().activeStoriesMap);
-        });
-
-        storiesMapDisposable = ActiveStoryState.getInstance().getObservableActiveStoriesMap().subscribe(storiesMap -> {
-            handleWatchStoriesToRender(ProfileState.getInstance().profile, storiesMap);
-        });
+        storiesMapDisposable = ActiveStoryState.getInstance().getObservableActiveStoriesMap().subscribe(this::handleWatchStoriesToRender);
 
         // Social Posts
         postRecycler = rootView.findViewById(R.id.post_recycler);
@@ -154,7 +144,6 @@ public class NewsfeedFragment extends Fragment {
 
         socialPostsDisposable = postState.getObservableSocialPosts().subscribe(posts -> {
             ArrayList<PostAdapter.PostModel> postModels = new ArrayList<>();
-            Log.d("-->", "Newsfeed posts: " + posts);
             posts.forEach(post -> {
                 Schema.User postOwnerProfile = profileState.followerProfileMap.get(post.userId);
 
@@ -185,25 +174,12 @@ public class NewsfeedFragment extends Fragment {
         PostState.getInstance().constructObservableSocialPosts(offset, limit);
 
         // Fetch stories
-        String uid = ProfileState.getInstance().profile.id;
-        Database.getActiveStoriesByUID(uid, new Database.GetStoriesByUIDCallback() {
+        ArrayList<String> socialIDs = new ArrayList<>(profileState.followerIDs);
+        socialIDs.add(profileState.profile.id);
+        Database.getActiveStories(socialIDs, new Database.GetActiveStoriesCallback() {
             @Override
-            public void onGetStoriesSuccess(ArrayList<Schema.Story> stories) {
-                HashMap<String, ArrayList<Schema.Story>> storiesMap = new HashMap<>();
-                storiesMap.put(uid, stories);
-                ActiveStoryState.getInstance().updateObservableActiveStoriesMap(storiesMap);
-            }
-
-            @Override
-            public void onGetStoriesFailure() {
-                Toast.makeText(requireContext(), "Failed to load stories", Toast.LENGTH_SHORT).show();
-            }
-        });
-
-        Database.getStoriesByUID(uid, new Database.GetStoriesByUIDCallback() {
-            @Override
-            public void onGetStoriesSuccess(ArrayList<Schema.Story> stories) {
-                StoryState.getInstance().updateObservableStoriesMap(stories);
+            public void onGetStoriesSuccess(HashMap<String, ArrayList<Schema.Story>> storyMap) {
+                ActiveStoryState.getInstance().updateObservableActiveStoriesMap(storyMap);
             }
 
             @Override
@@ -217,10 +193,6 @@ public class NewsfeedFragment extends Fragment {
 
     @Override
     public void onDestroyView() {
-        if (!profileDisposable.isDisposed()) {
-            profileDisposable.dispose();
-        }
-
         if (!storiesMapDisposable.isDisposed()) {
             storiesMapDisposable.dispose();
         }
@@ -232,33 +204,46 @@ public class NewsfeedFragment extends Fragment {
         super.onDestroyView();
     }
 
-    void handleWatchStoriesToRender(Schema.User profile, HashMap<String, ArrayList<Schema.Story>> storiesMap) {
-        if (Objects.equals(profile.id, "")) return;
+    void handleWatchStoriesToRender(HashMap<String, ArrayList<Schema.Story>> storiesMap) {
+        ArrayList<StoryBubbleAdapter.StoryBubbleModel> storyBubbles = new ArrayList<>();
+        ProfileState profileState = ProfileState.getInstance();
+        Schema.User profile = profileState.profile;
 
         ArrayList<Schema.Story> myStories = storiesMap.get(profile.id);
-
-        int storySize = 0;
-        boolean isViewed = true;
-        if (myStories != null && myStories.size() >= 1) {
-            storySize = myStories.size();
-            isViewed = Objects.equals(profile.viewedStories.get(profile.id), myStories.get(myStories.size() - 1).id);
+        Log.d("-->", "stories map: " + storiesMap);
+        Log.d("-->", "my stories: " + myStories);
+        if (myStories != null) {
+            StoryBubbleAdapter.StoryBubbleModel myStoryBubble = new StoryBubbleAdapter.StoryBubbleModel(
+                    profile.id,
+                    profile.profilePicture,
+                    "Your story",
+                    myStories.size(),
+                    Objects.equals(profile.viewedStories.get(profile.id), myStories.get(myStories.size() - 1).id)
+            );
+            storyBubbles.add(myStoryBubble);
         }
 
-        StoryBubbleAdapter.StoryBubbleModel myStoriesBubble = new StoryBubbleAdapter.StoryBubbleModel(
-                profile.id,
-                profile.profilePicture,
-                "Your story",
-                storySize,
-                isViewed
-        );
+        profileState.followerIDs.forEach(id -> {
+            Schema.User ownerProfile = profileState.followerProfileMap.get(id);
+            if (ownerProfile == null) {
+                return;
+            }
 
-        if (storyBubbles.size() == 0) {
-            storyBubbles.add(myStoriesBubble);
-        } else {
-            storyBubbles.set(0, myStoriesBubble);
-        }
+            ArrayList<Schema.Story> stories = storiesMap.get(ownerProfile.id);
+            if (stories == null) {
+                return;
+            }
 
-        // TODO: fetch friends' stories
+            StoryBubbleAdapter.StoryBubbleModel storyBubble = new StoryBubbleAdapter.StoryBubbleModel(
+                    id,
+                    ownerProfile.profilePicture,
+                    ownerProfile.username,
+                    stories.size(),
+                    Objects.equals(profile.viewedStories.get(profile.id), stories.get(stories.size() - 1).id)
+            );
+
+            storyBubbles.add(storyBubble);
+        });
 
         StoryBubbleAdapter storyBubbleAdapter = new StoryBubbleAdapter(storyBubbles, new StoryBubbleAdapter.StoryBubbleCallback() {
             @Override
