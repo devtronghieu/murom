@@ -174,9 +174,7 @@ public class NewsfeedFragment extends Fragment {
         PostState.getInstance().constructObservableSocialPosts(offset, limit);
 
         // Fetch stories
-        ArrayList<String> socialIDs = new ArrayList<>(profileState.followerIDs);
-        socialIDs.add(profileState.profile.id);
-        Database.getActiveStories(socialIDs, new Database.GetActiveStoriesCallback() {
+        Database.getActiveStories(profileState.socialIDs, new Database.GetActiveStoriesCallback() {
             @Override
             public void onGetStoriesSuccess(HashMap<String, ArrayList<Schema.Story>> storyMap) {
                 ActiveStoryState.getInstance().updateObservableActiveStoriesMap(storyMap);
@@ -210,8 +208,6 @@ public class NewsfeedFragment extends Fragment {
         Schema.User profile = profileState.profile;
 
         ArrayList<Schema.Story> myStories = storiesMap.get(profile.id);
-        Log.d("-->", "stories map: " + storiesMap);
-        Log.d("-->", "my stories: " + myStories);
         if (myStories != null) {
             StoryBubbleAdapter.StoryBubbleModel myStoryBubble = new StoryBubbleAdapter.StoryBubbleModel(
                     profile.id,

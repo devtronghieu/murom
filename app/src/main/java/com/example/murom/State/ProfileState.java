@@ -20,10 +20,13 @@ public class ProfileState {
 
     // Followers' ids
     public ArrayList<String> followerIDs = new ArrayList<>();
+    public ArrayList<String> socialIDs = new ArrayList<>();
     private final BehaviorSubject<ArrayList<String>> observableFollowerIDs =
             BehaviorSubject.createDefault(followerIDs);
     public void updateObservableFollowerIDs(ArrayList<String> followerIDs) {
         this.followerIDs = followerIDs;
+        this.socialIDs = new ArrayList<>(followerIDs);
+        this.socialIDs.add(0, profile.id);
         observableFollowerIDs.onNext(followerIDs);
     }
     public Observable<ArrayList<String>> getObservableFollowerIDs() { return observableFollowerIDs; }

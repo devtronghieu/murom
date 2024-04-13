@@ -98,10 +98,6 @@ public class StoryFragment extends Fragment {
                 return;
             }
 
-            for (int i = 0; i < stories.size(); i++) {
-                Log.d("-->", "story: " + stories.get(i).id);
-            }
-
             if (Objects.equals(profile.id, ProfileState.getInstance().profile.id)) {
                 editButton.setVisibility(View.VISIBLE);
             }
