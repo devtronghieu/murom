@@ -239,6 +239,12 @@ public class Database {
                     }
                 });
     }
+    public static void getStoriesByStoriesID(ArrayList<String> storiesID) {
+        ArrayList<Schema.Story> stories = new ArrayList<>();
+        storiesID.forEach(id -> {
+            storyCollection.document(id);
+        });
+    }
 
     public interface DeleteStoryCallback {
         void onDeleteStorySuccess(String storyID);
