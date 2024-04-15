@@ -80,6 +80,11 @@ public class Database {
         void onGetProfilesFailure();
     }
     public static void getProfiles(ArrayList<String> profileIDs, GetProfilesCallback callback) {
+        if (profileIDs.size() == 0) {
+            callback.onGetProfilesSuccess(new HashMap<>());
+            return;
+        }
+
         userCollection
                 .whereIn("id", profileIDs)
                 .get()
@@ -149,6 +154,11 @@ public class Database {
     }
 
     public static void getActiveStories(ArrayList<String> userIDs, GetActiveStoriesCallback callback) {
+        if (userIDs.size() == 0) {
+            callback.onGetStoriesSuccess(new HashMap<>());
+            return;
+        }
+
         Date yesterday = new Date(System.currentTimeMillis() - (24 * 60 * 60 * 1000));
         Timestamp yesterdayTimestamp = new Timestamp(yesterday);
 
@@ -424,6 +434,11 @@ public class Database {
         void onGetPostsFailure();
     }
     public static void getPostsByUIDs(ArrayList<String> userIDs, int offset, int limit, GetPostsByUIDsCallback callback) {
+        if (userIDs.size() == 0) {
+            callback.onGetPostsSuccess(new ArrayList<>());
+            return;
+        }
+
         postCollection
                 .whereIn("user_id", userIDs)
                 .whereEqualTo("is_archived", false)
