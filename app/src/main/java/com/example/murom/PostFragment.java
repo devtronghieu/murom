@@ -21,6 +21,7 @@ import android.widget.VideoView;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.PickVisualMediaRequest;
 import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.annotation.NonNull;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.fragment.app.Fragment;
 
@@ -31,14 +32,24 @@ import com.example.murom.Firebase.Storage;
 import com.example.murom.State.PostState;
 import com.example.murom.State.ProfileState;
 import com.example.murom.Utils.BitmapUtils;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.Task;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.firebase.Timestamp;
 import com.google.firebase.storage.StorageReference;
+import com.google.mlkit.vision.common.InputImage;
+import com.google.mlkit.vision.label.ImageLabel;
+import com.google.mlkit.vision.label.ImageLabeler;
+import com.google.mlkit.vision.label.ImageLabeling;
+import com.google.mlkit.vision.label.defaults.ImageLabelerOptions;
 import com.gowtham.library.utils.TrimType;
 import com.gowtham.library.utils.TrimVideo;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -115,6 +126,13 @@ public class PostFragment extends Fragment {
 
                     if (Objects.equals(type, "image")) {
                         postImage.setImageUriAsync(uri);
+                        InputImage image;
+                        try{
+                            image = InputImage.fromFilePath(context,uri);
+                            generateHashtagSuggestions(image);
+                        }catch (IOException e) {
+                            e.printStackTrace();
+                        }
                     } else {
                         postVideo.setVideoPath(uri.toString());
                         postVideo.start();
@@ -405,5 +423,29 @@ public class PostFragment extends Fragment {
                 Toast.makeText(context, "SecurityException: Lack of permissions to delete " + postUri, Toast.LENGTH_SHORT).show();
             }
         }
+    }
+
+    private void generateHashtagSuggestions(InputImage image) {
+        List<String> Hashtag = new ArrayList<>();
+        final StringBuilder hashtagBuilder = new StringBuilder();
+        String res ="";
+        // Sử dụng cùng logic như trước để lấy nhãn hình ảnh
+        ImageLabelerOptions options =
+                new ImageLabelerOptions.Builder().setConfidenceThreshold(0.8f).build();
+        ImageLabeler labeler = ImageLabeling.getClient(options);
+
+        Task<List<ImageLabel>> result = labeler.process(image)
+                .addOnSuccessListener(new OnSuccessListener<List<ImageLabel>>() {
+                    @Override
+                    public void onSuccess(List<ImageLabel> labels) {
+                        for (ImageLabel label : labels) {
+                            //Hashtag.add("#"+label.getText());
+                            Log.d("tét", label.getText());
+                            hashtagBuilder.append("#").append(label.getText()).append(" ");
+                        }
+                        String temp = hashtagBuilder.toString().trim();
+                        captionInput.setText(temp);
+                    }
+                });
     }
 }
