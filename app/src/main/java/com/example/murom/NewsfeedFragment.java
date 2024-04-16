@@ -208,16 +208,16 @@ public class NewsfeedFragment extends Fragment {
         Schema.User profile = profileState.profile;
 
         ArrayList<Schema.Story> myStories = storiesMap.get(profile.id);
-        if (myStories != null) {
-            StoryBubbleAdapter.StoryBubbleModel myStoryBubble = new StoryBubbleAdapter.StoryBubbleModel(
-                    profile.id,
-                    profile.profilePicture,
-                    "Your story",
-                    myStories.size(),
-                    Objects.equals(profile.viewedStories.get(profile.id), myStories.get(myStories.size() - 1).id)
-            );
-            storyBubbles.add(myStoryBubble);
-        }
+        int myStoriesSize = myStories != null ? myStories.size() : 0;
+
+        StoryBubbleAdapter.StoryBubbleModel myStoryBubble = new StoryBubbleAdapter.StoryBubbleModel(
+                profile.id,
+                profile.profilePicture,
+                "Your story",
+                myStoriesSize,
+                myStoriesSize > 0 && Objects.equals(profile.viewedStories.get(profile.id), myStories.get(myStories.size() - 1).id)
+        );
+        storyBubbles.add(myStoryBubble);
 
         profileState.followerIDs.forEach(id -> {
             Schema.User ownerProfile = profileState.followerProfileMap.get(id);
