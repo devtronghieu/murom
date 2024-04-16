@@ -296,11 +296,29 @@ public class Database {
                     }
                 });
     }
-    public static void getStoriesByStoriesID(ArrayList<String> storiesID) {
+    public static ArrayList<Schema.Story> getStoriesByStoriesID(ArrayList<String> storiesID) {
         ArrayList<Schema.Story> stories = new ArrayList<>();
+
         storiesID.forEach(id -> {
-            storyCollection.document(id);
+            storyCollection.document(id).get().addOnCompleteListener(task -> {
+                if (task.isSuccessful()) {
+                    DocumentSnapshot doc = task.getResult();
+
+                    Schema.Story newStory = new Schema.Story(
+                            id,
+                            doc.getTimestamp("createdAt"),
+                            doc.getString("uid"),
+                            doc.getString("url"),
+                            doc.getString("type")
+                        );
+
+                    stories.add(newStory);
+                }
+
+            });
         });
+
+        return stories;
     }
 
     public interface DeleteStoryCallback {
