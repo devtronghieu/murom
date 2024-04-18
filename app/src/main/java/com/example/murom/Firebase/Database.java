@@ -260,15 +260,15 @@ public class Database {
                     }
                 });
     }
-    public static void getStoriesByUID(String uid, GetStoriesByUIDCallback callback) {
+    public static ArrayList<Schema.Story> getStoriesByUID(String uid, GetStoriesByUIDCallback callback) {
+        ArrayList<Schema.Story> stories = new ArrayList<>();
+
         storyCollection
                 .whereEqualTo("user_id", uid)
                 .orderBy("created_at", Query.Direction.ASCENDING)
                 .get()
                 .addOnCompleteListener(task -> {
                     if (task.isSuccessful()) {
-                        ArrayList<Schema.Story> stories = new ArrayList<>();
-
                         QuerySnapshot snap = task.getResult();
                         List<DocumentSnapshot> docs = snap.getDocuments();
 
@@ -305,8 +305,10 @@ public class Database {
                         callback.onGetStoriesFailure();
                     }
                 });
+
+        return stories;
     }
-    public static ArrayList<Schema.Story> getStoriesByStoriesID(ArrayList<String> storiesID) {
+    public static ArrayList<Schema.Story> getStoriesByStoriesID(ArrayList<String> storiesID, GetStoriesByUIDCallback callback) {
         ArrayList<Schema.Story> stories = new ArrayList<>();
 
         storiesID.forEach(id -> {
@@ -323,12 +325,45 @@ public class Database {
                         );
 
                     stories.add(newStory);
+                    callback.onGetStoriesSuccess(stories);
+                } else {
+                    Log.d("-->", "getStoriesByStoriesID failed ");
+                    callback.onGetStoriesFailure();
                 }
 
             });
         });
 
+        for (int i = 0; i < stories.size(); i++) {
+            Log.d("-->", "getStoriesByStoriesID: " + stories.get(i).id + ", url: " + stories.get(i).url);
+        }
+
         return stories;
+    }
+
+    public static Schema.Story getStoryByID(String storyID) {
+        Schema.Story newStory = new Schema.Story(
+                storyID,
+                Timestamp.now(),
+                "",
+                "",
+                ""
+        );
+
+        storyCollection.document(storyID).get().addOnCompleteListener(task -> {
+            if (task.isSuccessful()) {
+                DocumentSnapshot doc = task.getResult();
+
+                newStory.createdAt = doc.getTimestamp("createdAt");
+                newStory.uid = doc.getString("uid");
+                newStory.url = doc.getString("url");
+                newStory.type = doc.getString("type");
+            } else {
+                Log.d("-->", "getStoriesByStoriesID failed ");
+            }
+        });
+
+        return newStory;
     }
 
     public interface DeleteStoryCallback {
