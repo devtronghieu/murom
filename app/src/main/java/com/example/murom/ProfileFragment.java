@@ -1,5 +1,6 @@
 package com.example.murom;
 
+import android.content.res.Resources;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
@@ -23,14 +24,17 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.example.murom.Firebase.Auth;
+import com.example.murom.Firebase.Database;
 import com.example.murom.Firebase.Schema;
 import com.example.murom.Firebase.Storage;
-import com.example.murom.Recycler.HighlightBottomSheetAdapter;
+import com.example.murom.Recycler.ArchiveStoryAdapter;
 import com.example.murom.Recycler.HighlightBubbleAdapter;
 import com.example.murom.Recycler.PostsProfileAdapter;
 import com.example.murom.Recycler.SpacingItemDecoration;
+import com.example.murom.State.CurrentSelectedStoriesState;
 import com.example.murom.State.PostState;
 import com.example.murom.State.ProfileState;
+import com.example.murom.State.StoryState;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.firebase.storage.StorageReference;
 
@@ -46,7 +50,6 @@ public class ProfileFragment extends Fragment {
     RecyclerView postsRecycler;
     ImageView pickedImageView;
     BottomSheetDialog bottomSheet;
-    HighlightBottomSheetAdapter highlightBottomSheetAdapter;
     HighlightBubbleAdapter highlightBubbleAdapter;
     RecyclerView highlightsRecycler;
     ImageView avatar;
@@ -62,6 +65,10 @@ public class ProfileFragment extends Fragment {
     Button editBtn;
     ImageView picture;
     TextView photo;
+    Disposable restStoriesDisposable;
+    Disposable allStoriesDisposable;
+    Disposable selectedStoriesDisposable;
+
     ActivityResultLauncher<PickVisualMediaRequest> launcher =
             registerForActivityResult(new ActivityResultContracts.PickVisualMedia(), new ActivityResultCallback<Uri>() {
                 @Override
@@ -148,9 +155,6 @@ public class ProfileFragment extends Fragment {
 
         highlightsRecycler.setLayoutManager(new LinearLayoutManager(getContext(),RecyclerView.HORIZONTAL, false));
         highlightsRecycler.addItemDecoration(new SpacingItemDecoration(40, 0 ));
-        HighlightBottomSheetAdapter.HighlightBottomSheetModel newHighlight =
-                new HighlightBottomSheetAdapter.HighlightBottomSheetModel("", "", "");
-        highlightBottomSheetAdapter = new HighlightBottomSheetAdapter(newHighlight);
 
         ArrayList<HighlightBubbleAdapter.HighlightBubbleModel> highlights = new ArrayList<>();
 
@@ -169,9 +173,7 @@ public class ProfileFragment extends Fragment {
 
             @Override
             public void handleAddHighlight() {
-                HighlightBottomSheetAdapter.HighlightBottomSheetModel newHighlight =
-                        new HighlightBottomSheetAdapter.HighlightBottomSheetModel("", "", "");
-                highlightBottomSheetAdapter = new HighlightBottomSheetAdapter(newHighlight);
+
                 createBottomSheet();
                 bottomSheet.show();
             }
@@ -189,6 +191,19 @@ public class ProfileFragment extends Fragment {
         postsRecycler.setLayoutManager(new GridLayoutManager(requireContext(),3));
         myPostsDisposable = PostState.getInstance().getObservableMyPosts().subscribe(this::renderMyPosts);
 
+        // Fetch archive stories
+        Database.getStoriesByUID(profile.id, new Database.GetStoriesByUIDCallback() {
+            @Override
+            public void onGetStoriesSuccess(ArrayList<Schema.Story> stories) {
+                StoryState.getInstance().updateObservableStoriesMap(stories);
+            }
+
+            @Override
+            public void onGetStoriesFailure() {
+
+            }
+        });
+
         return rootView;
     }
 
@@ -205,11 +220,146 @@ public class ProfileFragment extends Fragment {
     }
 
     private void createBottomSheet() {
-        View view = getLayoutInflater().inflate(R.layout.bottom_sheet, null, false);
-        RecyclerView recyclerView = view.findViewById(R.id.bottom_sheet_content);
+        View view = getLayoutInflater().inflate(R.layout.component_highlight_bottom_sheet, null, false);
+        RecyclerView restStoriesRecycler = view.findViewById(R.id.rest_stories);
+        RecyclerView selectedStoriesRecycler = view.findViewById(R.id.selected_stories);
+        Button selectedBtn = view.findViewById(R.id.selected_stories_btn);
+        Button allBtn = view.findViewById(R.id.all_stories_btn);
 
-        recyclerView.setAdapter(highlightBottomSheetAdapter);
-        recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
+        allStoriesDisposable = StoryState.getInstance().getObservableStoriesMap().subscribe(stories -> {
+            handleRenderAllObservableStories(restStoriesRecycler);
+        });
+
+        restStoriesDisposable = CurrentSelectedStoriesState.getInstance().getObservableStoriesMap().subscribe(stories -> {
+            handleRenderAllObservableStories(restStoriesRecycler);
+        });
+
+        selectedStoriesDisposable = CurrentSelectedStoriesState.getInstance().getObservableStoriesMap().subscribe(stories -> {
+            handleRenderSelectedObservableStories(stories, selectedStoriesRecycler);
+        });
+
+        restStoriesRecycler.setLayoutManager(new GridLayoutManager(getContext(), 3));
+        selectedStoriesRecycler.setLayoutManager(new GridLayoutManager(getContext(), 3));
+
+        selectedBtn.setOnClickListener(v -> {
+            Resources resources = getResources();
+            selectedBtn.setBackground(resources.getDrawable(R.drawable.murom_ic_underline_btn, null));
+            allBtn.setBackground(resources.getDrawable(R.color.transparent, null));
+            selectedStoriesRecycler.setVisibility(View.VISIBLE);
+            restStoriesRecycler.setVisibility(View.GONE);
+        });
+
+        allBtn.setOnClickListener(v -> {
+            Resources resources = getResources();
+            selectedBtn.setBackground(resources.getDrawable(R.color.transparent, null));
+            allBtn.setBackground(resources.getDrawable(R.drawable.murom_ic_underline_btn, null));
+            selectedStoriesRecycler.setVisibility(View.GONE);
+            restStoriesRecycler.setVisibility(View.VISIBLE);
+        });
+
         bottomSheet.setContentView(view);
+    }
+
+    private void destroyBottomSheet() {
+        bottomSheet.cancel();
+        if (!restStoriesDisposable.isDisposed()) {
+            restStoriesDisposable.dispose();
+        }
+        if (!selectedStoriesDisposable.isDisposed()) {
+            selectedStoriesDisposable.dispose();
+        }
+        if (!allStoriesDisposable.isDisposed()) {
+            allStoriesDisposable.dispose();
+        }
+    }
+
+    void handleRenderAllObservableStories(RecyclerView recyclerView) {
+        ArrayList<Schema.Story> highlightStories = CurrentSelectedStoriesState.getInstance().stories;
+        ArrayList<Schema.Story> stories = StoryState.getInstance().stories;
+
+        ArrayList<ArchiveStoryAdapter.ArchiveStoryModel> storyModel = new ArrayList<ArchiveStoryAdapter.ArchiveStoryModel>();
+
+        for (int i = 0; i < stories.size(); i++) {
+            boolean isChecked = false;
+            for (int j = 0; j < highlightStories.size(); j++) {
+                if (highlightStories.get(j).id == stories.get(i).id) {
+                    isChecked = true;
+                }
+            }
+
+            ArchiveStoryAdapter.ArchiveStoryModel storyData = new ArchiveStoryAdapter.ArchiveStoryModel(
+                    stories.get(i).id,
+                    stories.get(i).url,
+                    true,
+                    isChecked
+            );
+
+            Log.d("--> all", "handleRenderAllObservableStories: " + stories.get(i).id);
+            storyModel.add(storyData);
+        }
+
+        ArchiveStoryAdapter storyAdapter = new ArchiveStoryAdapter(storyModel, new ArchiveStoryAdapter.ArchiveStoryCallback() {
+            @Override
+            public void handleSelectStory(String id) {
+                ArrayList<Schema.Story> highlightStories = CurrentSelectedStoriesState.getInstance().stories;
+                Schema.Story newStory = Database.getStoryByID(id);
+
+                highlightStories.add(newStory);
+                CurrentSelectedStoriesState.getInstance().updateObservableStoriesMap(highlightStories);
+
+                for (int i = 0; i < highlightStories.size(); i++) {
+                    Log.d("--> add", "handleSelectStory: " + highlightStories.get(i));
+                }
+            }
+
+            @Override
+            public void handleUnselectStory(String id) {
+            }
+        });
+        recyclerView.setAdapter(storyAdapter);
+    }
+
+    void handleRenderSelectedObservableStories(ArrayList<Schema.Story> stories, RecyclerView recyclerView) {
+        Log.d("-->", "re-render");
+        ArrayList<ArchiveStoryAdapter.ArchiveStoryModel> storyModel = new ArrayList<>();
+
+        for (int i = 0; i < stories.size(); i++) {
+            ArchiveStoryAdapter.ArchiveStoryModel storyData = new ArchiveStoryAdapter.ArchiveStoryModel(
+                    stories.get(i).id,
+                    stories.get(i).url,
+                    true,
+                    true
+            );
+            storyModel.add(storyData);
+
+            Log.d("--> selected", "handleRenderSelectedStory: " + stories.get(i).id);
+        }
+
+        ArchiveStoryAdapter storyAdapter = new ArchiveStoryAdapter(storyModel, new ArchiveStoryAdapter.ArchiveStoryCallback() {
+            @Override
+            public void handleSelectStory(String id) {
+            }
+
+            @Override
+            public void handleUnselectStory(String id) {
+                ArrayList<Schema.Story> highlightStories = CurrentSelectedStoriesState.getInstance().stories;
+
+                for (int i = 0; i < highlightStories.size(); i++) {
+                    if (highlightStories.get(i).id == id) {
+                        if (highlightStories.size() == 1) {
+                            highlightStories = new ArrayList<>();
+                        } else {
+                            highlightStories.remove(i);
+                        }
+                    }
+                }
+
+                Log.d("--> unselect", "handleUnselectStory: " + highlightStories.size());
+                CurrentSelectedStoriesState.getInstance().updateObservableStoriesMap(highlightStories);
+                Log.d("--> unselect", "handleUnselectStory: 5");
+
+            }
+        });
+        recyclerView.setAdapter(storyAdapter);
     }
 }

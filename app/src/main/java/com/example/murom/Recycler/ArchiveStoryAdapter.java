@@ -4,6 +4,7 @@ package com.example.murom.Recycler;
         import android.view.LayoutInflater;
         import android.view.View;
         import android.view.ViewGroup;
+        import android.widget.CheckBox;
         import android.widget.ImageButton;
 
         import androidx.annotation.NonNull;
@@ -17,26 +18,38 @@ package com.example.murom.Recycler;
 public class ArchiveStoryAdapter extends RecyclerView.Adapter<ArchiveStoryAdapter.ViewHolder> {
     private Context context;
     private  final ArrayList<ArchiveStoryModel> localDataSet;
+    private final ArchiveStoryCallback callback;
+    public interface ArchiveStoryCallback{
+        void handleSelectStory(String id);
+        void handleUnselectStory(String id);
+    }
     public  static class ArchiveStoryModel{
         private final String id;
         private final String imageUrl;
+        private final boolean checkboxAppear;
+        private final boolean isChecked;
 
-        public ArchiveStoryModel(String id,String imageUrl){
+        public ArchiveStoryModel(String id,String imageUrl, boolean checkboxAppear, boolean isChecked){
             this.id = id;
             this.imageUrl = imageUrl;
+            this.checkboxAppear = checkboxAppear;
+            this.isChecked = isChecked;
         }
     }
 
     public static class ViewHolder extends RecyclerView.ViewHolder{
         private final ImageButton storyImageButton;
+        private final CheckBox checkBox;
         public ViewHolder(View view){
             super(view);
             storyImageButton = view.findViewById(R.id.story_button);
+            checkBox = view.findViewById(R.id.checkbox);
         }
     }
 
-    public ArchiveStoryAdapter(ArrayList<ArchiveStoryAdapter.ArchiveStoryModel> dataSet){
+    public ArchiveStoryAdapter(ArrayList<ArchiveStoryAdapter.ArchiveStoryModel> dataSet, ArchiveStoryCallback callback){
         localDataSet = dataSet;
+        this.callback = callback;
     }
 
     @NonNull
@@ -56,6 +69,21 @@ public class ArchiveStoryAdapter extends RecyclerView.Adapter<ArchiveStoryAdapte
                 .load(data.imageUrl)
                 .centerCrop()
                 .into(viewHolder.storyImageButton);
+
+        viewHolder.checkBox.setChecked(data.isChecked);
+
+        if (data.checkboxAppear) {
+            viewHolder.checkBox.setVisibility(View.VISIBLE);
+            viewHolder.checkBox.setOnCheckedChangeListener((buttonView, isChecked) -> {
+                if (isChecked) {
+                    callback.handleSelectStory(data.id);
+                    viewHolder.checkBox.setChecked(isChecked);
+                } else {
+                    callback.handleUnselectStory(data.id);
+                    viewHolder.checkBox.setChecked(isChecked);
+                }
+            });
+        }
     }
     @Override
     public int getItemCount(){ return localDataSet.size(); }

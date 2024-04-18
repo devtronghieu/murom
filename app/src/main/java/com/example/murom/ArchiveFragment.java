@@ -6,6 +6,7 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -81,20 +82,6 @@ public class ArchiveFragment extends Fragment {
 
         storiesRecycler.setVisibility(View.GONE);
 
-        Database.getArchivedStoriesByUID(profile.id, new Database.GetStoriesByUIDCallback() {
-            @Override
-            public void onGetStoriesSuccess(ArrayList<Schema.Story> stories) {
-                HashMap<String, ArrayList<Schema.Story>> archivedStoriesMap = new HashMap<>();
-                archivedStoriesMap.put(profile.id, stories);
-                ArchivedStoryState.getInstance().updateObservableArchivedStoriesMap(archivedStoriesMap);
-            }
-
-            @Override
-            public void onGetStoriesFailure() {
-                Toast.makeText(requireContext(), "Failed to load stories", Toast.LENGTH_SHORT).show();
-            }
-        });
-
        return rootView;
     }
 
@@ -110,13 +97,29 @@ public class ArchiveFragment extends Fragment {
     }
 
     private void selectArchiveStories() {
+        Log.d("-->", "selectArchiveStories: ");
+        Database.getArchivedStoriesByUID(profile.id, new Database.GetStoriesByUIDCallback() {
+            @Override
+            public void onGetStoriesSuccess(ArrayList<Schema.Story> stories) {
+                ArchivedStoryState.getInstance().updateObservableArchivedStoriesMap(stories);
+            }
+
+            @Override
+            public void onGetStoriesFailure() {
+                Toast.makeText(requireContext(), "Failed to load stories", Toast.LENGTH_SHORT).show();
+            }
+        });
+
         myArchiveStoriesDisposable = ArchivedStoryState
                 .getInstance().getObservableArchivedStoriesMap()
-                .subscribe(archivedStoryMap -> renderMyStories(archivedStoryMap.get(profile.id)));
+                .subscribe(archivedStoryMap -> renderMyStories(archivedStoryMap));
         selectedOption.setText("Story");
         storiesRecycler.setVisibility(View.VISIBLE);
         postsRecycler.setVisibility(View.GONE);
         selectionDropdown.setVisibility(View.GONE);
+
+        Log.d("-->", "selectArchiveStories: ");
+
     }
 
     void renderMyPosts(ArrayList<Schema.Post> myPosts) {
@@ -135,10 +138,20 @@ public class ArchiveFragment extends Fragment {
         ArrayList<ArchiveStoryAdapter.ArchiveStoryModel> archiveStoryModel = new ArrayList<>();
 
         myStories.forEach(story -> {
-            archiveStoryModel.add(new ArchiveStoryAdapter.ArchiveStoryModel(story.id, story.url));
+            archiveStoryModel.add(new ArchiveStoryAdapter.ArchiveStoryModel(story.id, story.url, false, false));
         });
 
-        ArchiveStoryAdapter archiveStoryAdapter = new ArchiveStoryAdapter(archiveStoryModel);
+        ArchiveStoryAdapter archiveStoryAdapter = new ArchiveStoryAdapter(archiveStoryModel, new ArchiveStoryAdapter.ArchiveStoryCallback() {
+            @Override
+            public void handleSelectStory(String id) {
+                Log.d("-->", "handleSelectStory: " + id);
+            }
+
+            @Override
+            public void handleUnselectStory(String id) {
+                Log.d("-->", "handleSelectStory: " + id);
+            }
+        });
         storiesRecycler.setAdapter(archiveStoryAdapter);
     }
 }
