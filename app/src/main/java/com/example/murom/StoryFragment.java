@@ -20,8 +20,8 @@ import com.bumptech.glide.Glide;
 import com.example.murom.Firebase.Database;
 import com.example.murom.Firebase.Schema;
 import com.example.murom.Firebase.Storage;
-import com.example.murom.State.ProfileState;
 import com.example.murom.State.ActiveStoryState;
+import com.example.murom.State.ProfileState;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -103,7 +103,10 @@ public class StoryFragment extends Fragment {
             }
 
             username.setText(profile.username);
-            Glide.with(this).load(profile.profilePicture).into(avatar);
+            Glide.with(this)
+                    .load(profile.profilePicture)
+                    .centerCrop()
+                    .into(avatar);
 
             touchSurface.setOnClickListener(v -> {
                 if (currentStoryIndex < stories.size() - 1) {
@@ -133,17 +136,6 @@ public class StoryFragment extends Fragment {
 
     void viewCurrentStory() {
         Schema.Story story = stories.get(currentStoryIndex);
-
-        if (currentStoryIndex == stories.size() - 1) {
-            ProfileState profileState = ProfileState.getInstance();
-
-            Database.setViewedStory(profileState.profile.id, story.id, story.uid);
-
-            Schema.User newProfile = profileState.profile;
-            newProfile.viewedStories.put(newProfile.id, story.id);
-
-            ProfileState.getInstance().updateObservableProfile(newProfile);
-        }
 
         imageView.setVisibility(View.GONE);
         videoView.setVisibility(View.GONE);

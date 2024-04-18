@@ -232,7 +232,7 @@ public class NewsfeedFragment extends Fragment {
 
             StoryBubbleAdapter.StoryBubbleModel storyBubble = new StoryBubbleAdapter.StoryBubbleModel(
                     id,
-                    ownerProfile.profilePicture,
+                    stories.get(stories.size() - 1).url,
                     ownerProfile.username,
                     stories.size(),
                     Objects.equals(profile.viewedStories.get(profile.id), stories.get(stories.size() - 1).id)

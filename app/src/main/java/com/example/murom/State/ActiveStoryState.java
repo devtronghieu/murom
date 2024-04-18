@@ -4,6 +4,7 @@ import com.example.murom.Firebase.Schema;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Objects;
 
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.subjects.BehaviorSubject;
@@ -24,8 +25,15 @@ public class ActiveStoryState {
             new Schema.User("", "", "", "", "", "", new HashMap<>())
     );
     public void updateObservableActiveStoryOwner(String uid) {
-        // TODO: fetch the corresponding story owner profile
-        observableActiveStoryOwner.onNext(ProfileState.getInstance().profile);
+        ProfileState profileState = ProfileState.getInstance();
+        if (Objects.equals(profileState.profile.id, uid)) {
+            observableActiveStoryOwner.onNext(ProfileState.getInstance().profile);
+        } else {
+            Schema.User followerProfile = ProfileState.getInstance().followerProfileMap.get(uid);
+            if (followerProfile != null) {
+                observableActiveStoryOwner.onNext(followerProfile);
+            }
+        }
     }
     public Observable<Schema.User> getObservableActiveStoryOwner() {
         return observableActiveStoryOwner;

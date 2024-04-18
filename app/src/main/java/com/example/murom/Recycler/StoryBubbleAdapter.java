@@ -83,7 +83,10 @@ public class StoryBubbleAdapter extends RecyclerView.Adapter<StoryBubbleAdapter.
 
         viewHolder.storyText.setText(data.text);
 
-        Glide.with(this.context).load(data.imageUrl).into(viewHolder.storyImage);
+        Glide.with(this.context)
+                .load(data.imageUrl)
+                .centerCrop()
+                .into(viewHolder.storyImage);
 
         viewHolder.storyImage.setOnClickListener(v -> callback.handleViewStories(data.uid));
 
