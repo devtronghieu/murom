@@ -2,8 +2,32 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="640dp"
+    android:layout_height="680dp"
     android:orientation="vertical">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <View
+            android:layout_width="100dp"
+            android:layout_height="4dp"
+            android:background="@color/gray_400"
+            android:layout_marginTop="8dp"
+            style="@style/MaterialAlertDialog.Material3.Body.Text.CenterStacked"
+            />
+
+        <TextView
+            android:id="@+id/bottom_sheet_title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/app_name"
+            android:textAlignment="center"
+            style="@style/fragment_title"
+            android:layout_marginVertical="8dp"/>
+
+    </LinearLayout>
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -92,7 +116,13 @@
         </androidx.constraintlayout.widget.ConstraintLayout>
 
         <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/highlight_story_list"
+            android:id="@+id/rest_stories"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:visibility="gone"/>
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/selected_stories"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"/>
     </LinearLayout>
