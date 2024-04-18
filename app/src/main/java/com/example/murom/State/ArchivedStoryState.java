@@ -9,14 +9,14 @@ import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.subjects.BehaviorSubject;
 
 public class ArchivedStoryState {
-    public HashMap<String, ArrayList<Schema.Story>> archivedStoriesMap = new HashMap<>();
-    private final BehaviorSubject<HashMap<String, ArrayList<Schema.Story>>> observableArchivedStoriesMap = BehaviorSubject.createDefault(archivedStoriesMap);
+    public ArrayList<Schema.Story> archivedStoriesMap = new ArrayList<>();
+    private final BehaviorSubject<ArrayList<Schema.Story>> observableArchivedStoriesMap = BehaviorSubject.createDefault(archivedStoriesMap);
 
-    public void updateObservableArchivedStoriesMap(HashMap<String, ArrayList<Schema.Story>> archivedStoriesMap) {
+    public void updateObservableArchivedStoriesMap(ArrayList<Schema.Story> archivedStoriesMap) {
         this.archivedStoriesMap = archivedStoriesMap;
         observableArchivedStoriesMap.onNext(archivedStoriesMap);
     }
-    public Observable<HashMap<String, ArrayList<Schema.Story>>> getObservableArchivedStoriesMap() {
+    public Observable<ArrayList<Schema.Story>> getObservableArchivedStoriesMap() {
         return observableArchivedStoriesMap;
     }
 
