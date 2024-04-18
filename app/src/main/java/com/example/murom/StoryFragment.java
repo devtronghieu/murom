@@ -151,6 +151,11 @@ public class StoryFragment extends Fragment {
             videoView.setVisibility(View.VISIBLE);
             videoView.start();
         }
+
+        if (currentStoryIndex == stories.size() - 1) {
+            ProfileState profileState = ProfileState.getInstance();
+            Database.setViewedStory(profileState.profile.id, story.id, story.uid);
+        }
     }
 
     void showDeleteStoryButton() {
