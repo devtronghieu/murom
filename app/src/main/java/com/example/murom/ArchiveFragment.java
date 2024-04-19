@@ -6,22 +6,25 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.TextView;
+import android.widget.Toast;
 
+import com.example.murom.Firebase.Database;
 import com.example.murom.Firebase.Schema;
 import com.example.murom.Recycler.ArchiveStoryAdapter;
 import com.example.murom.Recycler.PostsProfileAdapter;
+import com.example.murom.State.ArchivedStoryState;
 import com.example.murom.State.PostState;
 import com.example.murom.State.ProfileState;
-import com.example.murom.State.StoryState;
-import com.example.murom.Utils.BitmapUtils;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 
 import io.reactivex.rxjava3.disposables.Disposable;
 
@@ -36,6 +39,7 @@ public class ArchiveFragment extends Fragment {
     View selectionDropdown;
     Button postBtn;
     Button storyBtn;
+    Schema.User profile = ProfileState.getInstance().profile;
 
     public interface ArchiveFragmentCallback{
         void onClose();
@@ -56,7 +60,6 @@ public class ArchiveFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
        View rootView = inflater.inflate(R.layout.fragment_archive, container, false);
-        Schema.User profile = ProfileState.getInstance().profile;
 
         backBtn = rootView.findViewById(R.id.back_btn);
         selectedOption = rootView.findViewById(R.id.selected_archive_option);
@@ -76,7 +79,8 @@ public class ArchiveFragment extends Fragment {
         myArchivePostsDisposable = PostState.getInstance().getObservableMyPosts().subscribe(this::renderMyPosts);
 
         storiesRecycler.setLayoutManager(new GridLayoutManager(requireContext(), 3));
-        myArchiveStoriesDisposable = StoryState.getInstance().getObservableStoriesMap().subscribe(storyMap -> renderMyStories(storyMap.get(profile.id)));
+
+        storiesRecycler.setVisibility(View.GONE);
 
        return rootView;
     }
@@ -87,33 +91,67 @@ public class ArchiveFragment extends Fragment {
 
     private void selectArchivePosts() {
         selectedOption.setText("Post");
+        postsRecycler.setVisibility(View.VISIBLE);
+        storiesRecycler.setVisibility(View.GONE);
         selectionDropdown.setVisibility(View.GONE);
     }
 
     private void selectArchiveStories() {
-        selectedOption.setText("Story");
-        selectionDropdown.setVisibility(View.GONE);
-    }
+        Log.d("-->", "selectArchiveStories: ");
+        Database.getArchivedStoriesByUID(profile.id, new Database.GetStoriesByUIDCallback() {
+            @Override
+            public void onGetStoriesSuccess(ArrayList<Schema.Story> stories) {
+                ArchivedStoryState.getInstance().updateObservableArchivedStoriesMap(stories);
+            }
 
-    private void renderMyPosts(ArrayList<Schema.Post> myPosts) {
-        ArrayList<PostsProfileAdapter.PostsProfileModel> postsProfileModel = new ArrayList<>();
-
-        myPosts.forEach(post -> {
-            postsProfileModel.add(new PostsProfileAdapter.PostsProfileModel(post.url));
+            @Override
+            public void onGetStoriesFailure() {
+                Toast.makeText(requireContext(), "Failed to load stories", Toast.LENGTH_SHORT).show();
+            }
         });
 
-        PostsProfileAdapter postsProfileAdapter = new PostsProfileAdapter(postsProfileModel);
+        myArchiveStoriesDisposable = ArchivedStoryState
+                .getInstance().getObservableArchivedStoriesMap()
+                .subscribe(archivedStoryMap -> renderMyStories(archivedStoryMap));
+        selectedOption.setText("Story");
+        storiesRecycler.setVisibility(View.VISIBLE);
+        postsRecycler.setVisibility(View.GONE);
+        selectionDropdown.setVisibility(View.GONE);
+
+        Log.d("-->", "selectArchiveStories: ");
+
+    }
+
+    void renderMyPosts(ArrayList<Schema.Post> myPosts) {
+        ArrayList<PostsProfileAdapter.PostsProfileModel> archivePostModel = new ArrayList<>();
+
+        myPosts.forEach(post -> {
+            if (!post.isArchived) return;
+            archivePostModel.add(new PostsProfileAdapter.PostsProfileModel(post.url));
+        });
+
+        PostsProfileAdapter postsProfileAdapter = new PostsProfileAdapter(archivePostModel);
         postsRecycler.setAdapter(postsProfileAdapter);
     }
 
     private void renderMyStories(ArrayList<Schema.Story> myStories) {
         ArrayList<ArchiveStoryAdapter.ArchiveStoryModel> archiveStoryModel = new ArrayList<>();
 
-        myStories.forEach(post -> {
-            archiveStoryModel.add(new ArchiveStoryAdapter.ArchiveStoryModel(post.url));
+        myStories.forEach(story -> {
+            archiveStoryModel.add(new ArchiveStoryAdapter.ArchiveStoryModel(story.id, story.url, false, false));
         });
 
-        ArchiveStoryAdapter archiveStoryAdapter = new ArchiveStoryAdapter(archiveStoryModel);
-        postsRecycler.setAdapter(archiveStoryAdapter);
+        ArchiveStoryAdapter archiveStoryAdapter = new ArchiveStoryAdapter(archiveStoryModel, new ArchiveStoryAdapter.ArchiveStoryCallback() {
+            @Override
+            public void handleSelectStory(String id) {
+                Log.d("-->", "handleSelectStory: " + id);
+            }
+
+            @Override
+            public void handleUnselectStory(String id) {
+                Log.d("-->", "handleSelectStory: " + id);
+            }
+        });
+        storiesRecycler.setAdapter(archiveStoryAdapter);
     }
 }

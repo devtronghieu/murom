@@ -3,6 +3,7 @@ package com.example.murom;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.ProgressBar;
 import android.widget.Toast;
@@ -16,16 +17,27 @@ import com.example.murom.Firebase.Auth;
 import com.example.murom.Firebase.Database;
 import com.example.murom.Firebase.Schema;
 import com.example.murom.State.ProfileState;
-import com.example.murom.State.StoryState;
+import com.example.murom.State.ActiveStoryState;
 import com.example.murom.databinding.ActivityMainBinding;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Objects;
+
+import io.reactivex.rxjava3.disposables.Disposable;
 
 public class MainActivity extends AppCompatActivity {
     FloatingActionButton home;
     View fragmentContainer;
     View fullscreenFragmentContainer;
     BottomNavigationView bottomMenu;
+
+    // State
+    Disposable profileDisposable;
+    Disposable followerIDsDisposable;
+    boolean isReadyToFetchFollowers = false;
 
     // Fragments
     FragmentManager fragmentManager;
@@ -55,7 +67,6 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onGetUserSuccess(Schema.User user) {
                 profileState.updateObservableProfile(user);
-                launchNewsFeedFragmentOnStartup();
             }
 
             @Override
@@ -64,6 +75,54 @@ public class MainActivity extends AppCompatActivity {
                 handleSignOut();
             }
         });
+
+        profileDisposable = ProfileState.getInstance().getObservableProfile().subscribe(profile -> {
+            if (!Objects.equals(profile.id, "")) {
+                Database.getFollowersByUID(profile.id, new Database.GetFollowersByUIDCallback() {
+                    @Override
+                    public void onGetFollowersByUIDSuccess(ArrayList<String> followerIDs) {
+                        isReadyToFetchFollowers = true;
+                        ProfileState.getInstance().updateObservableFollowerIDs(followerIDs);
+                    }
+
+                    @Override
+                    public void onGetFollowersByUIDFailure() {
+                        Log.d("-->", "failed to get follower ids");
+                    }
+                });
+            }
+        });
+
+        followerIDsDisposable = ProfileState.getInstance().getObservableFollowerIDs().subscribe(ids -> {
+            if (isReadyToFetchFollowers) {
+                Database.getProfiles(ids, new Database.GetProfilesCallback() {
+                    @Override
+                    public void onGetProfilesSuccess(HashMap<String, Schema.User> profileMap) {
+                        profileMap.put(profileState.profile.id, profileState.profile);
+                        ProfileState.getInstance().updateObservableFollowerProfileMap(profileMap);
+                        launchNewsFeedFragmentOnStartup();
+                    }
+
+                    @Override
+                    public void onGetProfilesFailure() {
+                        Toast.makeText(MainActivity.this, "Failed to fetch followers' data", Toast.LENGTH_SHORT).show();
+                    }
+                });
+            }
+        });
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+
+        if (!profileDisposable.isDisposed()) {
+            profileDisposable.dispose();
+        }
+
+        if (!followerIDsDisposable.isDisposed()) {
+            followerIDsDisposable.dispose();
+        }
     }
 
     private void setupFragments() {
@@ -137,7 +196,6 @@ public class MainActivity extends AppCompatActivity {
     private void replaceFragment(Fragment fragment) {
         fullscreenFragmentContainer.setVisibility(View.GONE);
         toggleBottomMenu(true);
-
         FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
         fragmentTransaction.replace(R.id.main_layout_fragment, fragment);
         fragmentTransaction.commit();
@@ -175,7 +233,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void handleViewStory(String uid) {
-        StoryState.getInstance().updateObservableStoryOwner(uid);
+        ActiveStoryState.getInstance().updateObservableActiveStoryOwner(uid);
         storyFragment = new StoryFragment(() -> removeFullscreenFragment(storyFragment));
         addFullscreenFragment(storyFragment);
     }

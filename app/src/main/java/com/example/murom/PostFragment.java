@@ -2,6 +2,7 @@ package com.example.murom;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
@@ -11,19 +12,18 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ProgressBar;
-import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.VideoView;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.PickVisualMediaRequest;
 import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.annotation.NonNull;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.fragment.app.Fragment;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
 
 import com.canhub.cropper.CropImageView;
 import com.example.murom.Firebase.Database;
@@ -32,12 +32,24 @@ import com.example.murom.Firebase.Storage;
 import com.example.murom.State.PostState;
 import com.example.murom.State.ProfileState;
 import com.example.murom.Utils.BitmapUtils;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.Task;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.firebase.Timestamp;
 import com.google.firebase.storage.StorageReference;
+import com.google.mlkit.vision.common.InputImage;
+import com.google.mlkit.vision.label.ImageLabel;
+import com.google.mlkit.vision.label.ImageLabeler;
+import com.google.mlkit.vision.label.ImageLabeling;
+import com.google.mlkit.vision.label.defaults.ImageLabelerOptions;
+import com.gowtham.library.utils.TrimType;
+import com.gowtham.library.utils.TrimVideo;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -64,9 +76,13 @@ public class PostFragment extends Fragment {
 
     Context context;
 
-    public LinearLayoutManager imagesLayoutManager = new LinearLayoutManager(getContext(), RecyclerView.HORIZONTAL, false);
+    Button addPostButton;
+
 
     // Initialize edit buttons containers
+    ConstraintLayout imageEditToolsContainer;
+    ConstraintLayout videoEditToolsContainer;
+
     public ConstraintLayout flipContainer;
     public ConstraintLayout cropContainer;
     public ConstraintLayout rotateContainer;
@@ -80,14 +96,20 @@ public class PostFragment extends Fragment {
     public ImageButton rotateButton;
     public ImageButton rotateLeftButton;
     public ImageButton rotateRightButton;
-    public ImageButton addButton;
+
+    ImageButton imageToolsAddButton;
+
+    ImageButton videoToolsAddButton;
+    ImageButton videoToolsCropButton;
+    ImageButton videoToolsTrimButton;
+
+    TextInputEditText captionInput;
 
     // Initialize edit options
     public ConstraintLayout flipOptions;
     public ConstraintLayout rotateOptions;
     public ImageButton closeButton;
 
-    public TextView addPostText;
     public ImageButton uploadButton;
 
     ActivityResultLauncher<PickVisualMediaRequest> launcher =
@@ -100,18 +122,37 @@ public class PostFragment extends Fragment {
                     postUri = uri;
                     isEdited = false;
                     uploadButton.setEnabled(true);
+                    addPostButton.setVisibility(View.GONE);
 
                     if (Objects.equals(type, "image")) {
-                        postImage.setVisibility(View.VISIBLE);
-                        postVideo.setVisibility(View.GONE);
                         postImage.setImageUriAsync(uri);
+                        InputImage image;
+                        try{
+                            image = InputImage.fromFilePath(context,uri);
+                            generateHashtagSuggestions(image);
+                        }catch (IOException e) {
+                            e.printStackTrace();
+                        }
                     } else {
-                        postImage.setVisibility(View.GONE);
-                        postVideo.setVisibility(View.VISIBLE);
                         postVideo.setVideoPath(uri.toString());
                         postVideo.start();
                     }
+
+                    showComponentsByType(type);
                 }
+            });
+
+    ActivityResultLauncher<Intent> trimForResult = registerForActivityResult(
+            new ActivityResultContracts.StartActivityForResult(),
+            result -> {
+                if (result.getResultCode() == Activity.RESULT_OK &&
+                        result.getData() != null) {
+                    postUri = Uri.parse(TrimVideo.getTrimmedVideoPath(result.getData()));
+                    Log.d("-->", "trimmed uri: " + postUri.toString());
+                    postVideo.setVideoPath(postUri.toString());
+                    postVideo.start();
+                } else
+                    Log.d("-->", "videoTrimResultLauncher data is null");
             });
 
     public PostFragment() {
@@ -145,7 +186,11 @@ public class PostFragment extends Fragment {
 
         loadingBar = rootView.findViewById(R.id.post_fragment_add_post_loading);
 
-        addPostText = rootView.findViewById(R.id.text_add_post);
+        addPostButton = rootView.findViewById(R.id.add_post_button);
+        addPostButton.setOnClickListener(v -> { selectMediaResource(); });
+
+        imageEditToolsContainer = rootView.findViewById(R.id.post_image_edit_tools_container);
+        videoEditToolsContainer = rootView.findViewById(R.id.post_video_edit_tools_container);
 
         uploadButton = rootView.findViewById(R.id.upload_button);
         uploadButton.setEnabled(false);
@@ -153,7 +198,7 @@ public class PostFragment extends Fragment {
         postImage = rootView.findViewById(R.id.post_images);
         postVideo = rootView.findViewById(R.id.post_video);
 
-        TextInputEditText captionInput = rootView.findViewById(R.id.caption_input);
+        captionInput = rootView.findViewById(R.id.caption_input);
 
         // Set container for edit buttons
         flipContainer = rootView.findViewById(R.id.flip_button);
@@ -174,7 +219,35 @@ public class PostFragment extends Fragment {
         rotateButton = rootView.findViewById(R.id.rotate_icon);
         rotateLeftButton = rootView.findViewById(R.id.rotate_left_button);
         rotateRightButton = rootView.findViewById(R.id.rotate_right_button);
-        addButton = rootView.findViewById(R.id.add_icon);
+
+        imageToolsAddButton = rootView.findViewById(R.id.add_icon);
+        imageToolsAddButton.setOnClickListener(v -> {
+            setEditOptionsNone();
+            setEditButtonActive(addContainer);
+            selectMediaResource();
+        });
+
+        videoToolsAddButton = rootView.findViewById(R.id.post_video_edit_tools_add_icon);
+        videoToolsAddButton.setOnClickListener(v -> {
+            setEditOptionsNone();
+            selectMediaResource();
+        });
+
+        videoToolsCropButton = rootView.findViewById(R.id.post_video_edit_tools_crop_icon);
+        videoToolsCropButton.setOnClickListener(v -> {
+            setEditOptionsNone();
+        });
+
+        videoToolsTrimButton = rootView.findViewById(R.id.post_video_edit_tools_trim_icon);
+        videoToolsTrimButton.setOnClickListener(v -> {
+            setEditOptionsNone();
+            isEdited = true;
+
+            TrimVideo.activity(String.valueOf(postUri))
+                    .setTrimType(TrimType.MIN_MAX_DURATION)
+                    .setMinToMax(1, 15)
+                    .start(this, trimForResult);
+        });
 
         flipButton.setOnClickListener(v -> {
             setEditOptionsNone();
@@ -210,11 +283,7 @@ public class PostFragment extends Fragment {
         rotateLeftButton.setOnClickListener(v -> postImage.rotateImage(90));
         rotateRightButton.setOnClickListener(v -> postImage.rotateImage(-90));
 
-        addButton.setOnClickListener(v -> {
-            setEditOptionsNone();
-            setEditButtonActive(addContainer);
-            selectMediaResource();
-        });
+
 
         closeButton.setOnClickListener(v -> {
             setEditOptionsNone();
@@ -235,12 +304,38 @@ public class PostFragment extends Fragment {
             }
         });
 
+        showComponentsByType(type);
 
         return rootView;
     }
 
+    void showComponentsByType(String type) {
+        if (Objects.equals(type, "image")) {
+            postVideo.setVisibility(View.GONE);
+            postImage.setVisibility(View.VISIBLE);
+            videoEditToolsContainer.setVisibility(View.GONE);
+            imageEditToolsContainer.setVisibility(View.VISIBLE);
+        } else if (Objects.equals(type, "video")) {
+            postImage.setVisibility(View.GONE);
+            postVideo.setVisibility(View.VISIBLE);
+            imageEditToolsContainer.setVisibility(View.GONE);
+            videoEditToolsContainer.setVisibility(View.VISIBLE);
+        } else {
+            postImage.setVisibility(View.GONE);
+            postVideo.setVisibility(View.GONE);
+            imageEditToolsContainer.setVisibility(View.GONE);
+            videoEditToolsContainer.setVisibility(View.GONE);
+            addPostButton.setVisibility(View.VISIBLE);
+        }
+    }
+
     private void setEditButtonActive(ConstraintLayout button) {
         button.setBackgroundColor(getResources().getColor(R.color.primary_100, null));
+
+        if (button.getId() != R.id.crop_button) {
+            isCropping = false;
+            postImage.setShowCropOverlay(false);
+        }
     }
 
     private void setEditOptionsNone() {
@@ -248,7 +343,6 @@ public class PostFragment extends Fragment {
         cropContainer.setBackgroundColor(getResources().getColor(R.color.white, null));
         rotateContainer.setBackgroundColor(getResources().getColor(R.color.white, null));
         addContainer.setBackgroundColor(getResources().getColor(R.color.white, null));
-        closeButton.setVisibility(View.GONE);
 
         flipOptions.setVisibility(View.GONE);
         rotateOptions.setVisibility(View.GONE);
@@ -257,7 +351,6 @@ public class PostFragment extends Fragment {
 
     private void selectMediaResource() {
         launcher.launch(new PickVisualMediaRequest.Builder().setMediaType(ActivityResultContracts.PickVisualMedia.ImageAndVideo.INSTANCE).build());
-        addPostText.setVisibility(View.GONE);
         setEditOptionsNone();
     }
 
@@ -267,6 +360,7 @@ public class PostFragment extends Fragment {
         Date currentDate = new Date();
         Timestamp createdAt = new Timestamp(currentDate);
         String storagePath = "post/" + postID;
+
 
         if (Objects.equals(type, "image")) {
             Bitmap bitmap = postImage.getCroppedImage();
@@ -281,7 +375,7 @@ public class PostFragment extends Fragment {
                     StorageReference postRef = Storage.getRef(storagePath);
                     postRef.getDownloadUrl()
                             .addOnSuccessListener(postURI -> {
-                                Schema.Post post = new Schema.Post(postID, profile.id, postURI.toString(), type, caption, createdAt);
+                                Schema.Post post = new Schema.Post(postID, profile.id, postURI.toString(), type, caption, new ArrayList<>(), false, createdAt);
                                 Database.addPost(post);
 
                                 PostState postState = PostState.getInstance();
@@ -293,7 +387,12 @@ public class PostFragment extends Fragment {
 
                                 postImage.setImageBitmap(null);
                                 postVideo.setVideoURI(null);
-                                addPostText.setText(R.string.add_a_new_post);
+                                captionInput.setText("");
+
+                                setEditOptionsNone();
+
+                                type = "";
+                                showComponentsByType(type);
 
                                 Toast.makeText(context, "Uploaded!", Toast.LENGTH_SHORT).show();
                             })
@@ -324,5 +423,29 @@ public class PostFragment extends Fragment {
                 Toast.makeText(context, "SecurityException: Lack of permissions to delete " + postUri, Toast.LENGTH_SHORT).show();
             }
         }
+    }
+
+    private void generateHashtagSuggestions(InputImage image) {
+        List<String> Hashtag = new ArrayList<>();
+        final StringBuilder hashtagBuilder = new StringBuilder();
+        String res ="";
+        // Sử dụng cùng logic như trước để lấy nhãn hình ảnh
+        ImageLabelerOptions options =
+                new ImageLabelerOptions.Builder().setConfidenceThreshold(0.8f).build();
+        ImageLabeler labeler = ImageLabeling.getClient(options);
+
+        Task<List<ImageLabel>> result = labeler.process(image)
+                .addOnSuccessListener(new OnSuccessListener<List<ImageLabel>>() {
+                    @Override
+                    public void onSuccess(List<ImageLabel> labels) {
+                        for (ImageLabel label : labels) {
+                            //Hashtag.add("#"+label.getText());
+                            Log.d("tét", label.getText());
+                            hashtagBuilder.append("#").append(label.getText()).append(" ");
+                        }
+                        String temp = hashtagBuilder.toString().trim();
+                        captionInput.setText(temp);
+                    }
+                });
     }
 }

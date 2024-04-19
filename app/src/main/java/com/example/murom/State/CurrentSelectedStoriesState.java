@@ -1,38 +1,31 @@
 package com.example.murom.State;
 
-import android.util.Log;
-
 import com.example.murom.Firebase.Schema;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.subjects.BehaviorSubject;
 
-public class StoryState {
+public class CurrentSelectedStoriesState {
     public ArrayList<Schema.Story> stories = new ArrayList<>();
     private final BehaviorSubject<ArrayList<Schema.Story>> observableStoriesMap = BehaviorSubject.createDefault(stories);
     public void updateObservableStoriesMap(ArrayList<Schema.Story> stories) {
         this.stories = stories;
         observableStoriesMap.onNext(stories);
-
-        observableStoriesMap.getValue().forEach(story -> {
-            Log.d("--> update", "updateObservableStoriesMap: " + story.id);
-        });
     }
     public Observable<ArrayList<Schema.Story>> getObservableStoriesMap() {
         return observableStoriesMap;
     }
 
     // Singleton
-    private static StoryState instance = null;
+    private static CurrentSelectedStoriesState instance = null;
 
-    private StoryState() {}
+    private CurrentSelectedStoriesState() {}
 
-    public static StoryState getInstance() {
+    public static CurrentSelectedStoriesState getInstance() {
         if (instance == null) {
-            instance = new StoryState();
+            instance = new CurrentSelectedStoriesState();
         }
         return instance;
     }

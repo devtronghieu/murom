@@ -53,6 +53,8 @@ dependencies {
     implementation("io.reactivex.rxjava3:rxjava:3.1.8")
     implementation("com.vanniktech:android-image-cropper:4.5.0")
     implementation("androidx.swiperefreshlayout:swiperefreshlayout:1.1.0")
+    implementation("com.github.a914-gowtham:android-video-trimmer:1.7.19")
+    implementation("com.google.mlkit:image-labeling:17.0.8")
 
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.1.5")

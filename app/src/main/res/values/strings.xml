@@ -29,4 +29,10 @@
     <string name="post_edit">post_edit</string>
     <string name="archive">Archive</string>
     <string name="delete">Delete</string>
+    <string name="add">Add</string>
+    <string name="add_icon">Add icon</string>
+    <string name="type_something_here">Type something here...</string>
+    <string name="crop">Crop</string>
+    <string name="post">Post</string>
+    <string name="trim">Trim</string>
 </resources>

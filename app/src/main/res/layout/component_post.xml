@@ -86,7 +86,7 @@
                 android:layout_marginEnd="12dp"
                 android:background="@null"
                 android:contentDescription="@string/notification_icon"
-                android:src="@drawable/murom_love"
+                android:src="@drawable/murom_ic_love"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />

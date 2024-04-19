@@ -2,6 +2,7 @@ package com.example.murom.Firebase;
 
 import com.google.firebase.Timestamp;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 
 public class Schema {
@@ -55,15 +56,19 @@ public class Schema {
         public String url;
         public String type;
         public String caption;
+        public ArrayList<String> lovedByUIDs;
         public Timestamp createdAt;
+        public boolean isArchived;
 
-        public Post(String id, String userId, String url, String type, String caption, Timestamp createdAt) {
+        public Post(String id, String userId, String url, String type, String caption, ArrayList<String> lovedByUIDs,  boolean isArchived, Timestamp createdAt) {
             this.id = id;
             this.userId = userId;
             this.url = url;
             this.type = type;
             this.caption = caption;
+            this.lovedByUIDs = lovedByUIDs;
             this.createdAt = createdAt;
+            this.isArchived = isArchived;
         }
     }
 

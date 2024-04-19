@@ -20,8 +20,8 @@ import com.bumptech.glide.Glide;
 import com.example.murom.Firebase.Database;
 import com.example.murom.Firebase.Schema;
 import com.example.murom.Firebase.Storage;
+import com.example.murom.State.ActiveStoryState;
 import com.example.murom.State.ProfileState;
-import com.example.murom.State.StoryState;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -88,18 +88,14 @@ public class StoryFragment extends Fragment {
             handleDeleteStory();
         });
 
-        StoryState storyState = StoryState.getInstance();
+        ActiveStoryState activeStoryState = ActiveStoryState.getInstance();
 
-        storyOwnerDisposable = storyState.getObservableStoryOwner().subscribe(profile -> {
-            stories = storyState.storiesMap.get(profile.id);
+        storyOwnerDisposable = activeStoryState.getObservableActiveStoryOwner().subscribe(profile -> {
+            stories = activeStoryState.activeStoriesMap.get(profile.id);
 
             if (stories == null || stories.size() == 0) {
                 Toast.makeText(requireContext(), "No stories found!", Toast.LENGTH_SHORT).show();
                 return;
-            }
-
-            for (int i = 0; i < stories.size(); i++) {
-                Log.d("-->", "story: " + stories.get(i).id);
             }
 
             if (Objects.equals(profile.id, ProfileState.getInstance().profile.id)) {
@@ -107,7 +103,10 @@ public class StoryFragment extends Fragment {
             }
 
             username.setText(profile.username);
-            Glide.with(this).load(profile.profilePicture).into(avatar);
+            Glide.with(this)
+                    .load(profile.profilePicture)
+                    .centerCrop()
+                    .into(avatar);
 
             touchSurface.setOnClickListener(v -> {
                 if (currentStoryIndex < stories.size() - 1) {
@@ -138,17 +137,6 @@ public class StoryFragment extends Fragment {
     void viewCurrentStory() {
         Schema.Story story = stories.get(currentStoryIndex);
 
-        if (currentStoryIndex == stories.size() - 1) {
-            ProfileState profileState = ProfileState.getInstance();
-
-            Database.setViewedStory(profileState.profile.id, story.id, story.uid);
-
-            Schema.User newProfile = profileState.profile;
-            newProfile.viewedStories.put(newProfile.id, story.id);
-
-            ProfileState.getInstance().updateObservableProfile(newProfile);
-        }
-
         imageView.setVisibility(View.GONE);
         videoView.setVisibility(View.GONE);
         progressBar.setVisibility(View.VISIBLE);
@@ -162,6 +150,11 @@ public class StoryFragment extends Fragment {
             videoView.setOnPreparedListener(mediaPlayer -> progressBar.setVisibility(View.GONE));
             videoView.setVisibility(View.VISIBLE);
             videoView.start();
+        }
+
+        if (currentStoryIndex == stories.size() - 1) {
+            ProfileState profileState = ProfileState.getInstance();
+            Database.setViewedStory(profileState.profile.id, story.id, story.uid);
         }
     }
 
@@ -184,8 +177,8 @@ public class StoryFragment extends Fragment {
         Database.deleteStory(story.id, new Database.DeleteStoryCallback() {
             @Override
             public void onDeleteStorySuccess(String storyID) {
-                StoryState instance = StoryState.getInstance();
-                HashMap<String, ArrayList<Schema.Story>> storiesMap = instance.storiesMap;
+                ActiveStoryState instance = ActiveStoryState.getInstance();
+                HashMap<String, ArrayList<Schema.Story>> storiesMap = instance.activeStoriesMap;
                 String uid = ProfileState.getInstance().profile.id;
 
                 String storagePath = "story/" + uid + "/" + story.createdAt;
@@ -195,7 +188,7 @@ public class StoryFragment extends Fragment {
                                 Objects.requireNonNull(storiesMap.get(uid)).remove(currentStoryIndex);
                             }
 
-                            instance.updateObservableStoriesMap(storiesMap);
+                            instance.updateObservableActiveStoriesMap(storiesMap);
 
                             if (stories.size() == 0) {
                                 callback.onClose();

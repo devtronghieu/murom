@@ -35,7 +35,6 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.ViewHolder> {
         private final ArrayList<String> images;
         private final String caption;
         private final ArrayList<String> lovedByUsers;
-        private final boolean loved;
 
         public PostModel(
                 String postID,
@@ -43,8 +42,7 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.ViewHolder> {
                 String username,
                 ArrayList<String> images,
                 String caption,
-                ArrayList<String> lovedByUsers,
-                boolean loved
+                ArrayList<String> lovedByUsers
         ) {
             this.postID = postID;
             this.avatarUrl = avatarUrl;
@@ -52,7 +50,6 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.ViewHolder> {
             this.images = images;
             this.caption = caption;
             this.lovedByUsers = lovedByUsers;
-            this.loved = loved;
         }
     }
 
@@ -69,6 +66,7 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.ViewHolder> {
         private final LinearLayout editContainer;
         private final Button deleteButton;
         private final Button archiveButton;
+
 
         public ViewHolder(View view) {
             super(view);
@@ -109,9 +107,24 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.ViewHolder> {
 
         viewHolder.username.setText(data.username);
 
-        Glide.with(this.context).load(data.avatarUrl).into(viewHolder.avatar);
+        Glide.with(this.context).load(data.avatarUrl).centerCrop().into(viewHolder.avatar);
 
         Glide.with(this.context).load(data.images.get(0)).into(viewHolder.image);
+
+        String uid = ProfileState.getInstance().profile.id;
+        boolean isLoved = data.lovedByUsers.contains(uid);
+        if (isLoved) {
+            viewHolder.loveBtn.setImageResource(R.drawable.murom_ic_love_active);
+        }
+        viewHolder.loveBtn.setOnClickListener(v -> {
+            if (isLoved) {
+                data.lovedByUsers.remove(uid);
+            } else {
+                data.lovedByUsers.add(uid);
+            }
+            Database.updatePostLovedBy(data.postID, data.lovedByUsers);
+            notifyItemChanged(viewHolder.getAdapterPosition());
+        });
 
         String loveText = "";
         loveText += data.lovedByUsers.size();
@@ -144,8 +157,11 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.ViewHolder> {
                         for (int i = 0; i < instance.myPosts.size(); i++) {
                             if (Objects.equals(instance.myPosts.get(i).id, postID)) {
                                 instance.myPosts.remove(i);
+                                break;
                             }
                         }
+                        localDataSet.remove(viewHolder.getAdapterPosition());
+                        notifyItemRemoved(viewHolder.getAdapterPosition());
                         instance.updateObservableMyPosts(instance.myPosts);
                         Toast.makeText(context, "Deleted", Toast.LENGTH_SHORT).show();
                     }
@@ -156,7 +172,34 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.ViewHolder> {
                     }
                 });
             });
+            
+            viewHolder.archiveButton.setOnClickListener(v -> {
+                Database.archivePost(data.postID);
+                viewHolder.editContainer.setVisibility(View.GONE);
+                
+            });
         }
+    }
+
+    private void deletePost(String id) {
+        Database.deletePost(id, new Database.DeletePostCallback() {
+            @Override
+            public void onDeleteSuccess(String postID) {
+                PostState instance = PostState.getInstance();
+
+                for (int i = 0; i < instance.myPosts.size(); i++) {
+                    if (Objects.equals(instance.myPosts.get(i).id, postID)) {
+                        instance.myPosts.remove(i);
+                    }
+                }
+                instance.updateObservableMyPosts(instance.myPosts);
+            }
+
+            @Override
+            public void onDeleteFailure() {
+                Toast.makeText(context, "Failed to delete post", Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
     @Override
