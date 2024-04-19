@@ -27,6 +27,7 @@ public class Database {
     private static final FirebaseFirestore db = FirebaseFirestore.getInstance();
 
     public static final CollectionReference userCollection = db.collection("User");
+    public static final CollectionReference followCollection = db.collection("Follower");
 
     public interface GetUserCallback {
         void onGetUserSuccess(Schema.User user);
@@ -427,10 +428,12 @@ public class Database {
     public interface GetPostsByUIDCallback {
         void onGetPostsSuccess(ArrayList<Schema.Post> posts);
         void onGetPostsFailure();
+        void onPostCountRetrieved(int postCount);
     }
     public static void getPostsByUID(String uid, GetPostsByUIDCallback callback) {
         postCollection
                 .whereEqualTo("user_id", uid)
+                .whereEqualTo("is_archived", false)
                 .orderBy("created_at", Query.Direction.DESCENDING)
                 .get()
                 .addOnCompleteListener(task -> {
@@ -470,6 +473,9 @@ public class Database {
                         }
 
                         callback.onGetPostsSuccess(posts);
+                        int postCount = 0;
+                        postCount = snap.size();
+                        callback.onPostCountRetrieved(postCount);
                     } else {
                         Exception exception = task.getException();
                         if (exception != null) {
@@ -788,5 +794,50 @@ public class Database {
                         "\nmyid: " + myId);
             }
         });
+    }
+    public static void countFollowing(String userId, CountFollowingCallback callback) {
+        followCollection
+                .whereEqualTo("user_id", userId)
+                .get()
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        QuerySnapshot snapshot = task.getResult();
+                        if (snapshot != null) {
+                            int followingCount = snapshot.size();
+                            callback.onCountFollowingSuccess(followingCount);
+                        } else {
+                            callback.onCountFollowingFailure("Snapshot is null");
+                        }
+                    } else {
+                        callback.onCountFollowingFailure(task.getException().getMessage());
+                    }
+                });
+    }
+    public interface CountFollowingCallback {
+        void onCountFollowingSuccess(int count);
+        void onCountFollowingFailure(String errorMessage);
+    }
+
+    public static void countFollower(String userId, CountFollowerCallback callback) {
+        followCollection
+                .whereEqualTo("following_user_id", userId)
+                .get()
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        QuerySnapshot snapshot = task.getResult();
+                        if (snapshot != null) {
+                            int followingCount = snapshot.size();
+                            callback.onCountFollowerSuccess(followingCount);
+                        } else {
+                            callback.onCountFollowerFailure("Snapshot is null");
+                        }
+                    } else {
+                        callback.onCountFollowerFailure(task.getException().getMessage());
+                    }
+                });
+    }
+    public interface CountFollowerCallback {
+        void onCountFollowerSuccess(int count);
+        void onCountFollowerFailure(String errorMessage);
     }
 }

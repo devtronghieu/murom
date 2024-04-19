@@ -94,7 +94,17 @@ public class OtherProfileFragment extends Fragment {
 
 
         View rootView = inflater.inflate(R.layout.fragment_other_profile, container, false);
+        avatar = rootView.findViewById(R.id.other_profile_avatar);
+        TextView post = rootView.findViewById(R.id.other_profile_post);
+        TextView post_num = rootView.findViewById(R.id.other_num_post);
+        TextView follower = rootView.findViewById(R.id.other_profile_follower);
+        TextView follower_num = rootView.findViewById(R.id.other_num_follower);
+        TextView following = rootView.findViewById(R.id.other_profile_following);
+        TextView following_num = rootView.findViewById(R.id.other_num_following);
 
+        username = rootView.findViewById(R.id.other_profile_username);
+        bio = rootView.findViewById(R.id.other_profile_bio);
+        Button followBtn = rootView.findViewById(R.id.other_profile_follow_btn);
         Database.getUser(userId, new Database.GetUserCallback() {
             @Override
             public void onGetUserSuccess(Schema.User user) {
@@ -104,6 +114,7 @@ public class OtherProfileFragment extends Fragment {
                 Glide.with(avatar.getContext())
                         .load(otherProfileState.profile.profilePicture)
                         .into(avatar);
+                Database.isFollowing(userId, followBtn);
                 Database.getPostsByUID(userId, new Database.GetPostsByUIDCallback() {
                     @Override
                     public void onGetPostsSuccess(ArrayList<Schema.Post> posts) {
@@ -121,6 +132,33 @@ public class OtherProfileFragment extends Fragment {
                     public void onGetPostsFailure() {
 
                     }
+
+                    @Override
+                    public void onPostCountRetrieved(int postCount) {
+                        post_num.setText(String.valueOf(postCount));
+                    }
+                });
+                Database.countFollower(userId, new Database.CountFollowerCallback() {
+                    @Override
+                    public void onCountFollowerSuccess(int count) {
+                        follower_num.setText(String.valueOf(count));
+                    }
+
+                    @Override
+                    public void onCountFollowerFailure(String errorMessage) {
+
+                    }
+                });
+                Database.countFollowing(userId, new Database.CountFollowingCallback() {
+                    @Override
+                    public void onCountFollowingSuccess(int count) {
+                        following_num.setText(String.valueOf(count));
+                    }
+
+                    @Override
+                    public void onCountFollowingFailure(String errorMessage) {
+
+                    }
                 });
             }
 
@@ -128,43 +166,25 @@ public class OtherProfileFragment extends Fragment {
             public void onGetUserFailure() {
             }
         });
-        avatar = rootView.findViewById(R.id.other_profile_avatar);
-        TextView post = rootView.findViewById(R.id.other_profile_post);
-        TextView post_num = rootView.findViewById(R.id.other_num_post);
-        TextView follower = rootView.findViewById(R.id.other_profile_follower);
-        TextView follower_num = rootView.findViewById(R.id.other_num_follower);
-        TextView following = rootView.findViewById(R.id.other_profile_following);
-        TextView following_num = rootView.findViewById(R.id.other_num_following);
-
-        username = rootView.findViewById(R.id.other_profile_username);
-        bio = rootView.findViewById(R.id.other_profile_bio);
-        Button followBtn = rootView.findViewById(R.id.other_profile_follow_btn);
-
-        ImageView picture = rootView.findViewById(R.id.other_profile_imageView);
-        TextView photo = rootView.findViewById(R.id.other_profile_phototext);
 
 
-        RecyclerView highlightsRecycler = rootView.findViewById(R.id.other_highlights_recycler);
+        /*RecyclerView highlightsRecycler = rootView.findViewById(R.id.other_highlights_recycler);
         highlightsRecycler.setLayoutManager(new LinearLayoutManager(getContext(),RecyclerView.HORIZONTAL, false));
         highlightsRecycler.addItemDecoration(new SpacingItemDecoration(40, 0 ));
 
         ArrayList<HighlightBubbleAdapter.HighlightBubbleModel> highlights = new ArrayList<>();
 
-        /*highlights.add(new HighlightBubbleAdapter.HighlightBubbleModel("", "", "New"));
+        highlights.add(new HighlightBubbleAdapter.HighlightBubbleModel("", "", "New"));
 
         highlightBubbleAdapter = new HighlightBubbleAdapter(highlights, new HighlightBubbleAdapter.HighlightBubbleCallback() {
-            @Override
-            public void handleDeleteHighlight(String highlightId) {
-                // delete highlight
-            }
 
             @Override
             public void handleEditHighlight(String highlightId) {
-                // get highlight by Id -> create new highlight with the highlight model
+
             }
 
             @Override
-            public void handleAddHighlight() {
+            public void handleDeleteHighlight(String highlightId) {
 
             }
 
@@ -172,47 +192,20 @@ public class OtherProfileFragment extends Fragment {
             public void handleViewHighlight(String uid) {
                 // view highlight
             }
+
+            @Override
+            public void handleAddHighlight() {
+
+            }
         });
         highlightsRecycler.setAdapter(highlightBubbleAdapter);*/
 
 
-        // My Posts
+        //Posts
         postsRecycler = rootView.findViewById(R.id.other_profile_posts_recycler);
         postsRecycler.setLayoutManager(new GridLayoutManager(requireContext(),3));
-
 
         return rootView;
     }
 
-    private void fetchUserProfile(String userId) {
-
-        Database.getUser(userId, new Database.GetUserCallback() {
-            @Override
-            public void onGetUserSuccess(Schema.User user) {
-                updateProfileUI(user);
-
-            }
-
-            @Override
-            public void onGetUserFailure() {
-                Log.d("-->", "Failed to fetch user profile");
-            }
-        });
-    }
-
-    private void updateProfileUI(Schema.User user) {
-        username.setText(user.username);
-        bio.setText(user.bio);
-        StorageReference avatarRef = Storage.getRef("avatar/" + user.email);
-        avatarRef.getDownloadUrl()
-                .addOnSuccessListener(uri -> {
-                    String imageUrl = uri.toString();
-                    Glide.with(avatar.getContext())
-                            .load(imageUrl)
-                            .into(avatar);
-                })
-                .addOnFailureListener(e -> {
-                    Log.d("-->", "failed to get avatar: " + e);
-                });
-    }
 }

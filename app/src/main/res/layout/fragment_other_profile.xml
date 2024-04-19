@@ -189,15 +189,14 @@
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
-    <ToggleButton
+    <Button
         android:id="@+id/other_profile_follow_btn"
         android:layout_marginHorizontal="12dp"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginVertical="8dp"
         android:backgroundTint="@color/primary_100"
-        android:textOff="Follow"
-        android:textOn="Following"
+        android:text="Follow"
         android:checked="false"
         android:textColor="@color/secondary_500"
         app:layout_constraintEnd_toEndOf="parent"
