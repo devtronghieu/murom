@@ -128,6 +128,7 @@ public class Database {
     }
 
     public static final CollectionReference storyCollection = db.collection("Story");
+    public static final CollectionReference highlightCollection = db.collection("Highlight");
 
     public static void addStory(Schema.Story story) {
         Map<String, Object> documentData = new HashMap<>();
@@ -146,6 +147,88 @@ public class Database {
     public interface GetStoriesByUIDCallback {
         void onGetStoriesSuccess(ArrayList<Schema.Story> stories);
         void onGetStoriesFailure();
+    }
+
+    public static void addHighlight(Schema.HighlightStory highlightStory) {
+        Map<String, Object> documentData = new HashMap<>();
+        documentData.put("user_id", highlightStory.userId);
+        documentData.put("name", highlightStory.name);
+        documentData.put("cover_url", highlightStory.coverUrl);
+        documentData.put("stories_id", highlightStory.storiesID);
+        documentData.put("last_edited_time", highlightStory.lastEditedTime);
+
+        highlightCollection
+                .document(highlightStory.id)
+                .set(documentData)
+                .addOnSuccessListener(documentReference -> Log.d("--> add highlight", "addHighlight: " + highlightStory.id))
+                .addOnFailureListener(e -> Log.d("--> add highlight", "addHighlight: " + e));
+    }
+    public static void deleteHighlight(String highlightId) {
+        highlightCollection.document(highlightId).delete()
+                .addOnSuccessListener(runnable -> {
+                    String path = "highlight/" + highlightId;
+                    Storage.getRef(path).delete().addOnFailureListener(e -> {
+                        Log.d("--> delete", "Failed to delete assets: " + path);
+                    });
+                })
+                .addOnFailureListener(e -> {
+                    Log.d("--> delete", "Failed to delete highlight: " + highlightId);
+                });
+    }
+
+    public static ArrayList<Schema.HighlightStory> getHighlightsByUID(String userId, GetHighlightsCallback callback) {
+        ArrayList<Schema.HighlightStory> highlights = new ArrayList<>();
+
+        highlightCollection
+                .whereEqualTo("user_id", userId)
+                .orderBy("last_edited_time", Query.Direction.DESCENDING)
+                .get()
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        QuerySnapshot snap = task.getResult();
+                        List<DocumentSnapshot> docs = snap.getDocuments();
+
+                        for (int i = 0 ; i < docs.size(); i++) {
+                            DocumentSnapshot doc = docs.get(i);
+                            Schema.HighlightStory newHighlight = new Schema.HighlightStory(
+                                    "",
+                                    userId,
+                                    "",
+                                    "",
+                                    new ArrayList<>(),
+                                    Timestamp.now()
+                            );
+
+                            newHighlight.id = doc.getId();
+                            newHighlight.name = doc.getString("name");
+                            newHighlight.coverUrl = doc.getString("cover_url");
+
+                            ArrayList<String> storiesID = (ArrayList<String>) doc.get("stories_id");
+                            newHighlight.storiesID = storiesID;
+                            newHighlight.lastEditedTime = doc.getTimestamp("last_edited_time");
+
+                            highlights.add(newHighlight);
+                        }
+
+                        callback.handleGetSuccessfully(highlights);
+                    } else {
+                        if (!task.getException().getMessage().contains("offline")) {
+                            Log.d("--> getHighlightsByUID", "getHighlightsByUID: " + task.getException().getMessage());
+                        } else {
+                            Log.d("--> getHighlightsByUID", "getHighlightsByUID: not success");
+                        }
+                    }
+                })
+                .addOnFailureListener(v -> {
+                    callback.handleGetFail();
+                });
+
+        return highlights;
+    }
+
+    public interface GetHighlightsCallback {
+        void handleGetSuccessfully(ArrayList<Schema.HighlightStory> highlights);
+        void handleGetFail();
     }
 
     public interface GetActiveStoriesCallback {
@@ -330,7 +413,6 @@ public class Database {
                     Log.d("-->", "getStoriesByStoriesID failed ");
                     callback.onGetStoriesFailure();
                 }
-
             });
         });
 
@@ -422,7 +504,6 @@ public class Database {
     public static void archivePost(String postID) {
         postCollection.document(postID).update("is_archived", true);
     }
-
 
     public interface GetPostsByUIDCallback {
         void onGetPostsSuccess(ArrayList<Schema.Post> posts);
@@ -546,13 +627,11 @@ public class Database {
                     }
                 });
     }
-
     public static void updatePostLovedBy(String postID, ArrayList<String> lovedBy) {
         Map<String, Object> updates = new HashMap<>();
         updates.put("loved_by", lovedBy);
         postCollection.document(postID).update(updates);
     }
-
     public interface DeletePostCallback {
         void onDeleteSuccess(String postID);
         void onDeleteFailure();
