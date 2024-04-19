@@ -89,13 +89,15 @@ public class Schema {
         public String postID;
         public String userID;
         public String content;
+        public ArrayList<String> lovedBy;
         public Timestamp timestamp;
 
-        public Comment(String id, String postID, String userID, String content, Timestamp timestamp) {
+        public Comment(String id, String postID, String userID, String content, ArrayList<String> lovedBy, Timestamp timestamp) {
             this.id = id;
             this.postID = postID;
             this.userID = userID;
             this.content = content;
+            this.lovedBy = lovedBy;
             this.timestamp = timestamp;
         }
     }

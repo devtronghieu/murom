@@ -12,8 +12,10 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
+import com.example.murom.Firebase.Database;
 import com.example.murom.Firebase.Schema;
 import com.example.murom.R;
+import com.example.murom.State.CommentState;
 import com.example.murom.State.ProfileState;
 
 import java.text.SimpleDateFormat;
@@ -29,10 +31,9 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.ViewHold
         boolean isLoved;
         int loveCount;
 
-        public  CommentAdapterModel(Schema.Comment comment, boolean isLoved, int loveCount) {
+        public  CommentAdapterModel(Schema.Comment comment, boolean isLoved) {
             this.comment = comment;
             this.isLoved = isLoved;
-            this.loveCount = loveCount;
         }
     }
 
@@ -76,6 +77,7 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.ViewHold
 
         Schema.Comment comment = commentAdapterModel.comment;
 
+        Schema.User myProfile = ProfileState.getInstance().profile;
         Schema.User profile = ProfileState.getInstance().followerProfileMap.get(comment.userID);
         if (profile == null) return;
 
@@ -95,7 +97,17 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.ViewHold
         if (commentAdapterModel.isLoved) {
             viewHolder.loveBtn.setImageResource(R.drawable.murom_ic_love_active);
         }
-        viewHolder.loveBtn.setOnClickListener(v -> {});
+        viewHolder.loveBtn.setOnClickListener(v -> {
+            if (comment.lovedBy.contains(myProfile.id)) {
+                comment.lovedBy.remove(myProfile.id);
+            } else {
+                comment.lovedBy.add(myProfile.id);
+            }
+            CommentState.getInstance().updateObservableCommentsMap(CommentState.getInstance().commentsMap);
+            Database.updateCommentLovedBy(comment.id, comment.lovedBy);
+        });
+
+        viewHolder.loveCount.setText(String.valueOf(comment.lovedBy.size()));
     }
 
     @Override

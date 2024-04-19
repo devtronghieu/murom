@@ -789,4 +789,82 @@ public class Database {
             }
         });
     }
+
+    public interface CreateCommentCallback {
+        void onCreateCommentSuccess(String commentID);
+        void onCreateCommentFailure();
+    }
+    public static void createComment(String postID, String content, CreateCommentCallback callback) {
+        CollectionReference commentCollection = FirebaseFirestore.getInstance().collection("Comment");
+        Map<String, Object> commentData = new HashMap<>();
+        commentData.put("content", content);
+        commentData.put("love_count", 0);
+        commentData.put("post_id", postID);
+        commentData.put("user_id", ProfileState.getInstance().profile.id);
+        commentData.put("timestamp", Timestamp.now());
+        commentCollection.add(commentData)
+                .addOnSuccessListener(documentReference -> {
+                    callback.onCreateCommentSuccess(documentReference.getId());
+                })
+                .addOnFailureListener(e -> {
+                    Log.e("-->", "Error creating comment: " + e.getMessage());
+                    callback.onCreateCommentFailure();
+                });
+    }
+
+    public interface GetCommentsByPostIDCallback {
+        void onGetCommentsSuccess(ArrayList<Schema.Comment> comments);
+        void onGetCommentsFailure();
+    }
+    public static void getCommentsByPostID(String postID, GetCommentsByPostIDCallback callback) {
+        CollectionReference commentCollection = db.collection("Comment");
+        commentCollection
+                .whereEqualTo("post_id", postID)
+                .orderBy("timestamp", Query.Direction.DESCENDING)
+                .get()
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        ArrayList<Schema.Comment> comments = new ArrayList<>();
+
+                        QuerySnapshot snap = task.getResult();
+                        List<DocumentSnapshot> docs = snap.getDocuments();
+
+                        for (int i = 0; i < docs.size(); i++) {
+                            DocumentSnapshot doc = docs.get(i);
+
+                            Schema.Comment comment = new Schema.Comment(
+                                    doc.getId(),
+                                    doc.getString("post_id"),
+                                    doc.getString("user_id"),
+                                    doc.getString("content"),
+                                    new ArrayList<>(),
+                                    doc.getTimestamp("timestamp")
+                            );
+                            ArrayList<String> lovedBy = (ArrayList<String>)doc.get("loved_by");
+                            if (lovedBy != null) {
+                                comment.lovedBy = lovedBy;
+                            }
+
+                            comments.add(comment);
+                        }
+
+                        callback.onGetCommentsSuccess(comments);
+                    } else {
+                        Exception exception = task.getException();
+                        if (exception != null) {
+                            Log.e("-->", "Failed to get comments:", exception);
+                        } else {
+                            Log.e("-->", "Failed to get comments: Unknown reason");
+                        }
+                        callback.onGetCommentsFailure();
+                    }
+                });
+    }
+
+    public static void updateCommentLovedBy(String commentID, ArrayList<String> lovedBy) {
+        CollectionReference commentCollection = db.collection("Comment");
+        Map<String, Object> updates = new HashMap<>();
+        updates.put("loved_by", lovedBy);
+        commentCollection.document(commentID).update(updates);
+    }
 }

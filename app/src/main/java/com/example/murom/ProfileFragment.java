@@ -144,6 +144,7 @@ public class ProfileFragment extends Fragment {
                     String imageUrl = uri.toString();
                     Glide.with(avatar.getContext())
                             .load(imageUrl)
+                            .centerCrop()
                             .into(avatar);
                 })
                 .addOnFailureListener(e -> {
