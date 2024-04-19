@@ -19,12 +19,14 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 import com.example.murom.Firebase.Database;
 import com.example.murom.Firebase.Schema;
 import com.example.murom.Firebase.Storage;
+import com.example.murom.Recycler.CommentAdapter;
 import com.example.murom.Recycler.PostAdapter;
 import com.example.murom.Recycler.SpacingItemDecoration;
 import com.example.murom.Recycler.StoryBubbleAdapter;
 import com.example.murom.State.ActiveStoryState;
 import com.example.murom.State.PostState;
 import com.example.murom.State.ProfileState;
+import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.firebase.Timestamp;
 import com.google.firebase.storage.StorageReference;
 
@@ -41,16 +43,15 @@ public class NewsfeedFragment extends Fragment {
     ActivityResultLauncher<PickVisualMediaRequest> launcher;
 
     // AppState
-    Disposable storiesMapDisposable;
-    Disposable socialPostsDisposable;
+    Disposable storiesMapDisposable, socialPostsDisposable;
 
     int offset = 0;
     int limit = 20;
 
     // Components
-    RecyclerView storiesRecycler;
-    RecyclerView postRecycler;
+    RecyclerView storiesRecycler, postRecycler;
     SwipeRefreshLayout swipeRefreshLayout;
+    BottomSheetDialog commentBottomSheet;
 
     public interface  NewsfeedFragmentCallback {
         void onViewStory(String uid);
@@ -128,6 +129,8 @@ public class NewsfeedFragment extends Fragment {
         View rootView = inflater.inflate(R.layout.fragment_newsfeed, container, false);
 
         activity = getActivity();
+
+        commentBottomSheet = new BottomSheetDialog(this.getContext());
 
         // Stories
         storiesRecycler = rootView.findViewById(R.id.stories_recycler);
@@ -259,7 +262,30 @@ public class NewsfeedFragment extends Fragment {
     }
 
     void setNewsfeeds(ArrayList<PostAdapter.PostModel> newsfeeds) {
-        PostAdapter postAdapter = new PostAdapter(newsfeeds);
+        PostAdapter postAdapter = new PostAdapter(newsfeeds, this::showCommentBottomSheet);
         postRecycler.setAdapter(postAdapter);
+    }
+
+    void showCommentBottomSheet(String postID) {
+        View view = getLayoutInflater().inflate(R.layout.component_comment_bottom_sheet, null, false);
+
+        RecyclerView commentRecyclerView = view.findViewById(R.id.comment_recycler);
+        commentRecyclerView.setLayoutManager(new LinearLayoutManager(getContext(), RecyclerView.VERTICAL, false));
+        commentRecyclerView.addItemDecoration(new SpacingItemDecoration(0, 20));
+        ArrayList<CommentAdapter.CommentAdapterModel> commentAdapterModels = new ArrayList<>();
+
+        for (int i = 0; i < 4; i++) {
+            commentAdapterModels.add(new CommentAdapter.CommentAdapterModel(
+                    new Schema.Comment("id" + i, "post" + i, ProfileState.getInstance().profile.id, "hello " + i, Timestamp.now()),
+                    true,
+                    20
+            ));
+        }
+
+        CommentAdapter commentAdapter = new CommentAdapter(commentAdapterModels);
+        commentRecyclerView.setAdapter(commentAdapter);
+
+        commentBottomSheet.setContentView(view);
+        commentBottomSheet.show();
     }
 }

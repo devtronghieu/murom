@@ -63,7 +63,6 @@
         app:layout_constraintEnd_toEndOf="@+id/main_layout_fragment"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="@+id/main_layout_fragment" />
-
 </androidx.constraintlayout.widget.ConstraintLayout>
 
 

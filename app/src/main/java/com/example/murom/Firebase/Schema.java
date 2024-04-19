@@ -83,4 +83,20 @@ public class Schema {
             this.userId = userId;
         }
     }
+
+    public static class Comment {
+        public String id;
+        public String postID;
+        public String userID;
+        public String content;
+        public Timestamp timestamp;
+
+        public Comment(String id, String postID, String userID, String content, Timestamp timestamp) {
+            this.id = id;
+            this.postID = postID;
+            this.userID = userID;
+            this.content = content;
+            this.timestamp = timestamp;
+        }
+    }
 }
