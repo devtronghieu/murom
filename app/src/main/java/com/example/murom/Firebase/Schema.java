@@ -84,6 +84,24 @@ public class Schema {
         }
     }
 
+    public static class HighlightStory {
+        public String id;
+        public String userId;
+        public String name;
+        public String coverUrl;
+        public ArrayList<String> storiesID;
+        public Timestamp lastEditedTime;
+
+        public HighlightStory(String id, String userId, String name, String coverUrl, ArrayList<String> storiesID, Timestamp lastEditedTime) {
+            this.id = id;
+            this.userId = userId;
+            this.name = name;
+            this.coverUrl = coverUrl;
+            this.storiesID = storiesID;
+            this.lastEditedTime = lastEditedTime;
+        }
+    }
+
     public static class Comment {
         public String id;
         public String postID;
