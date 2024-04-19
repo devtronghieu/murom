@@ -23,7 +23,7 @@ public class HighlightBubbleAdapter extends RecyclerView.Adapter<HighlightBubble
     private final HighlightBubbleCallback callback;
 
     public interface HighlightBubbleCallback {
-        void handleEditHighlight(String highlightId);
+        void handleEditHighlight(String highlightId, String url, String name, ArrayList<String> stories);
         void handleDeleteHighlight(String highlightId);
         void handleViewHighlight(String highlightId);
         void handleAddHighlight();
@@ -32,12 +32,14 @@ public class HighlightBubbleAdapter extends RecyclerView.Adapter<HighlightBubble
     public static class HighlightBubbleModel {
         private final String highlightId;
         private final String imageUrl;
-        private final String text;
+        private final String name;
+        private final ArrayList<String> stories;
 
-        public HighlightBubbleModel(String highlightId, String imageUrl, String text) {
+        public HighlightBubbleModel(String highlightId, String imageUrl, String name, ArrayList<String> stories) {
             this.highlightId = highlightId;
             this.imageUrl = imageUrl;
-            this.text = text;
+            this.name = name;
+            this.stories = stories;
         }
     }
 
@@ -74,14 +76,19 @@ public class HighlightBubbleAdapter extends RecyclerView.Adapter<HighlightBubble
     @Override
     public void onBindViewHolder(ViewHolder viewHolder, final int position){
         HighlightBubbleModel data = localDataSet.get(position);
-        viewHolder.highlightText.setText(data.text);
+        viewHolder.highlightText.setText(data.name);
         Glide.with(this.context).load(data.imageUrl).into(viewHolder.highlightImage);
-        viewHolder.editHighlight.setOnClickListener(v -> callback.handleEditHighlight(data.highlightId));
-        viewHolder.deleteHighlight.setOnClickListener(v -> callback.handleDeleteHighlight(data.highlightId));
+        viewHolder.editHighlight.setOnClickListener(v -> callback.handleEditHighlight(data.highlightId, data.imageUrl, data.name, data.stories));
+        viewHolder.deleteHighlight.setOnClickListener(v -> {
+            callback.handleDeleteHighlight(data.highlightId);
+            viewHolder.buttonsContainer.setVisibility(View.GONE);
+
+        });
 
         viewHolder.highlightImage.setOnClickListener(v -> callback.handleViewHighlight(data.highlightId));
         viewHolder.highlightImage.setOnLongClickListener(v -> {
             viewHolder.buttonsContainer.setVisibility(View.VISIBLE);
+            viewHolder.buttonsContainer.setElevation(12);
             return true;
         });
 
