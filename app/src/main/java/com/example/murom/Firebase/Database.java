@@ -3,6 +3,7 @@ package com.example.murom.Firebase;
 import android.util.Log;
 import android.widget.Button;
 
+import com.example.murom.Recycler.PostImageAdapter;
 import com.example.murom.State.ProfileState;
 import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.CollectionReference;
@@ -22,6 +23,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class Database {
     private static final FirebaseFirestore db = FirebaseFirestore.getInstance();
@@ -686,6 +689,57 @@ public class Database {
                 .addOnFailureListener(e -> {
                     Log.d("-->", "Error searching user accounts: ", e);
                     listener.onSearchUserFailed(e.getMessage());
+                });
+    }
+
+    public interface OnSearchPostCompleteListener {
+        void onSearchPostComplete(ArrayList<PostImageAdapter.PostImageModel> searchResult);
+        void onSearchPostFailed(String errorMessage);
+        void onNoPostFound();
+    }
+
+    public static void searchPostByHashtag(String hashtag, OnSearchPostCompleteListener listener) {
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+
+        db.collection("Post")
+                .whereGreaterThanOrEqualTo("caption", hashtag)
+                .whereLessThanOrEqualTo("caption", hashtag + "\uf8ff")
+                .whereEqualTo("is_archived", false)
+                .orderBy("created_at", Query.Direction.DESCENDING)
+                .get()
+                .addOnSuccessListener(queryDocumentSnapshots -> {
+
+                    ArrayList<PostImageAdapter.PostImageModel> postImageModels = new ArrayList<>();
+
+                    for (QueryDocumentSnapshot document : queryDocumentSnapshots) {
+                        String caption = document.getString("caption");
+                        if (caption != null) {
+                            String[] words = caption.split("\\s+");
+
+                            for (String word : words) {
+                                if (word.startsWith("#")) {
+                                    String foundHashtag = word.substring(1);
+                                    if (foundHashtag.equalsIgnoreCase(hashtag)) {
+                                        String imageUrl = document.getString("url");
+                                        if (imageUrl != null) {
+                                            postImageModels.add(new PostImageAdapter.PostImageModel(imageUrl));
+                                            break; // Exit the loop since we found a match
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    if (postImageModels.isEmpty()) {
+                        listener.onNoPostFound();
+                    } else {
+                        listener.onSearchPostComplete(postImageModels);
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    Log.d("-->", "Error searching posts: ", e);
+                    listener.onSearchPostFailed(e.getMessage());
                 });
     }
 

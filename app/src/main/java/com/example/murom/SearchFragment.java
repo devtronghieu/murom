@@ -36,6 +36,7 @@ import java.util.Random;
  * create an instance of this fragment.
  */
 public class SearchFragment extends Fragment implements SearchUserAdapter.OnUserItemClickListener {
+    TextView popularPosts;
     public interface SearchFragmentCallback {
         void onSearchUserItemClick(String userId);
     }
@@ -58,7 +59,7 @@ public class SearchFragment extends Fragment implements SearchUserAdapter.OnUser
         EditText searchEditText = rootView.findViewById(R.id.searchEditText);
         TextView keyword = rootView.findViewById(R.id.keyword);
         TextView postsCount = rootView.findViewById(R.id.posts_count);
-        TextView popularPosts = rootView.findViewById(R.id.popular_posts);
+        popularPosts = rootView.findViewById(R.id.popular_posts);
         RecyclerView resultRecycler = rootView.findViewById(R.id.result_recycler);
 
         resultRecycler.addItemDecoration(new GridSpacingItemDecoration(5));
@@ -89,21 +90,31 @@ public class SearchFragment extends Fragment implements SearchUserAdapter.OnUser
         return rootView;
     }
 
-    private void searchKeyword(String query, TextView keyword, TextView postsCount, RecyclerView postImageRecycler) {
-        Random rand = new Random();
+    private void searchKeyword(String hashtag, TextView keyword, TextView postsCount, RecyclerView postImageRecycler) {
+        keyword.setText(hashtag);
+        Database.searchPostByHashtag(hashtag, new Database.OnSearchPostCompleteListener() {
+            @Override
+            public void onSearchPostComplete(ArrayList<PostImageAdapter.PostImageModel> searchResult) {
+                PostImageAdapter postImageAdapter = new PostImageAdapter(searchResult);
+                postImageRecycler.setAdapter(postImageAdapter);
+                postsCount.setText(MessageFormat.format("{0} posts", searchResult.size()));
+                Log.d("-->", "Search complete with " + searchResult.size() + " results");
+            }
 
-        keyword.setText(query);
+            @Override
+            public void onSearchPostFailed(String errorMessage) {
+                postImageRecycler.setAdapter(null);
+                Log.d("-->", "Error searching post" + errorMessage);
+            }
 
-        ArrayList<PostImageAdapter.PostImageModel> search_result = new ArrayList<>();
+            @Override
+            public void onNoPostFound() {
+                postsCount.setText(MessageFormat.format("0 posts", 0));
+                postImageRecycler.setAdapter(null);
+                popularPosts.setVisibility(View.GONE);
+            }
+        });
 
-        for (int i = 0; i < rand.nextInt(5) + 5; i++) {
-            search_result.add(new PostImageAdapter.PostImageModel(
-                    "https://picsum.photos/200"
-            ));
-        }
-        PostImageAdapter postImageAdapter = new PostImageAdapter(search_result);
-        postImageRecycler.setAdapter(postImageAdapter);
-        postsCount.setText(MessageFormat.format("{0} posts", search_result.size()));
     }
 
     private void searchUsername(String query, TextView keyword, TextView postsCount, RecyclerView userRecycler) {
