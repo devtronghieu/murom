@@ -42,7 +42,7 @@
         >
 
         <com.google.android.material.imageview.ShapeableImageView
-            android:id="@+id/profile_avatar"
+            android:id="@+id/other_profile_avatar"
             android:layout_width="80dp"
             android:layout_height="80dp"
             android:background="@color/primary_500"
@@ -61,7 +61,7 @@
             android:paddingHorizontal="20dp"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toEndOf="@+id/profile_avatar"
+            app:layout_constraintStart_toEndOf="@+id/other_profile_avatar"
             app:layout_constraintTop_toTopOf="parent">
 
 
@@ -75,7 +75,7 @@
                 app:layout_constraintTop_toTopOf="parent">
 
                 <TextView
-                    android:id="@+id/num_post"
+                    android:id="@+id/other_num_post"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="10"
@@ -84,13 +84,13 @@
                     app:layout_constraintTop_toTopOf="parent" />
 
                 <TextView
-                    android:id="@+id/profile_post"
+                    android:id="@+id/other_profile_post"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Posts"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toBottomOf="@+id/num_post" />
+                    app:layout_constraintTop_toBottomOf="@+id/other_num_post" />
 
             </androidx.constraintlayout.widget.ConstraintLayout>
 
@@ -105,7 +105,7 @@
                 app:layout_constraintTop_toTopOf="parent">
 
                 <TextView
-                    android:id="@+id/num_follower"
+                    android:id="@+id/other_num_follower"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="100"
@@ -114,13 +114,13 @@
                     app:layout_constraintTop_toTopOf="parent" />
 
                 <TextView
-                    android:id="@+id/profile_follower"
+                    android:id="@+id/other_profile_follower"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Followers"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toBottomOf="@+id/num_follower" />
+                    app:layout_constraintTop_toBottomOf="@+id/other_num_follower" />
 
             </androidx.constraintlayout.widget.ConstraintLayout>
 
@@ -134,7 +134,7 @@
                 app:layout_constraintTop_toTopOf="parent">
 
                 <TextView
-                    android:id="@+id/num_following"
+                    android:id="@+id/other_num_following"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="100"
@@ -143,13 +143,13 @@
                     app:layout_constraintTop_toTopOf="parent" />
 
                 <TextView
-                    android:id="@+id/profile_following"
+                    android:id="@+id/other_profile_following"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Following"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toBottomOf="@+id/num_following" />
+                    app:layout_constraintTop_toBottomOf="@+id/other_num_following" />
 
             </androidx.constraintlayout.widget.ConstraintLayout>
 
@@ -165,7 +165,7 @@
 
 
         <TextView
-            android:id="@+id/profile_username"
+            android:id="@+id/other_profile_username"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="16dp"
@@ -176,7 +176,7 @@
             app:layout_constraintTop_toTopOf="parent" />
 
         <TextView
-            android:id="@+id/profile_bio"
+            android:id="@+id/other_profile_bio"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="16dp"
@@ -185,12 +185,12 @@
             android:text="bio"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/profile_username" />
+            app:layout_constraintTop_toBottomOf="@+id/other_profile_username" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
     <ToggleButton
-        android:id="@+id/profile_follow_btn"
+        android:id="@+id/other_profile_follow_btn"
         android:layout_marginHorizontal="12dp"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -203,16 +203,16 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.491"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/profile_bio" />
+        app:layout_constraintTop_toBottomOf="@+id/other_profile_bio" />
 
     <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/highlights_recycler"
+        android:id="@+id/other_highlights_recycler"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="16dp"
         android:paddingHorizontal="12dp"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/profile_edit_btn" />
+        app:layout_constraintTop_toBottomOf="@+id/other_profile_follow_btn" />
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
@@ -221,7 +221,7 @@
         android:paddingVertical="12dp">
 
         <ImageView
-            android:id="@+id/profile_imageView"
+            android:id="@+id/other_profile_imageView"
             android:layout_width="29dp"
             android:layout_height="28dp"
             android:src="@drawable/photo_icon"
@@ -229,25 +229,25 @@
             app:layout_constraintStart_toStartOf="parent"/>
 
         <TextView
-            android:id="@+id/profile_phototext"
+            android:id="@+id/other_profile_phototext"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/profile_posts_grid_view_title"
             android:textSize="20sp"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toEndOf="@+id/profile_imageView"
+            app:layout_constraintStart_toEndOf="@+id/other_profile_imageView"
             app:layout_constraintTop_toTopOf="parent" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
     <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/profile_posts_recycler"
+        android:id="@+id/other_profile_posts_recycler"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="10dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/profile_imageView" />
+        app:layout_constraintTop_toBottomOf="@+id/other_profile_imageView" />
 
 </LinearLayout>
