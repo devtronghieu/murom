@@ -28,6 +28,13 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.ViewHolder> {
 
     private final ArrayList<PostModel> localDataSet;
 
+
+    public interface PostModelCallback {
+        void showCommentBottomSheet(String postID);
+    }
+
+    PostModelCallback callback;
+
     public static class PostModel {
         private final String postID;
         private final String avatarUrl;
@@ -67,7 +74,6 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.ViewHolder> {
         private final Button deleteButton;
         private final Button archiveButton;
 
-
         public ViewHolder(View view) {
             super(view);
 
@@ -86,8 +92,9 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.ViewHolder> {
         }
     }
 
-    public PostAdapter(ArrayList<PostModel> dataSet) {
+    public PostAdapter(ArrayList<PostModel> dataSet, PostModelCallback callback) {
         localDataSet = dataSet;
+        this.callback = callback;
     }
 
     @NonNull
@@ -130,6 +137,10 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.ViewHolder> {
         loveText += data.lovedByUsers.size();
         loveText += " likes";
         viewHolder.loveText.setText(loveText);
+
+        viewHolder.commentBtn.setOnClickListener(v -> {
+            callback.showCommentBottomSheet(data.postID);
+        });
 
         viewHolder.caption.setText(data.caption);
 
@@ -176,30 +187,8 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.ViewHolder> {
             viewHolder.archiveButton.setOnClickListener(v -> {
                 Database.archivePost(data.postID);
                 viewHolder.editContainer.setVisibility(View.GONE);
-                
             });
         }
-    }
-
-    private void deletePost(String id) {
-        Database.deletePost(id, new Database.DeletePostCallback() {
-            @Override
-            public void onDeleteSuccess(String postID) {
-                PostState instance = PostState.getInstance();
-
-                for (int i = 0; i < instance.myPosts.size(); i++) {
-                    if (Objects.equals(instance.myPosts.get(i).id, postID)) {
-                        instance.myPosts.remove(i);
-                    }
-                }
-                instance.updateObservableMyPosts(instance.myPosts);
-            }
-
-            @Override
-            public void onDeleteFailure() {
-                Toast.makeText(context, "Failed to delete post", Toast.LENGTH_SHORT).show();
-            }
-        });
     }
 
     @Override

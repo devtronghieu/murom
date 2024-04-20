@@ -35,4 +35,11 @@
     <string name="crop">Crop</string>
     <string name="post">Post</string>
     <string name="trim">Trim</string>
+    <string name="comments">Comments</string>
+    <string name="type_in_something">Type in something...</string>
+    <string name="send_token">Send token</string>
+    <string name="love">love</string>
+    <string name="username">username</string>
+    <string name="comment_content">Comment content</string>
+    <string name="comment_timestamp">Comment timestamp</string>
 </resources>

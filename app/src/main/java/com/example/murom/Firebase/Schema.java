@@ -13,6 +13,7 @@ public class Schema {
         public String passwordHash;
         public String profilePicture;
         public String username;
+        public String status;
         public HashMap<String, String> viewedStories;
 
         public User(
@@ -22,6 +23,7 @@ public class Schema {
                 String passwordHash,
                 String profilePicture,
                 String username,
+                String status,
                 HashMap<String, String> viewedStories
         ) {
             this.id = id;
@@ -30,6 +32,7 @@ public class Schema {
             this.passwordHash = passwordHash;
             this.profilePicture = profilePicture;
             this.username = username;
+            this.status = status;
             this.viewedStories = viewedStories;
         }
     }
@@ -81,6 +84,42 @@ public class Schema {
             this.avatarUrl = avatarUrl;
             this.username = username;
             this.userId = userId;
+        }
+    }
+
+    public static class HighlightStory {
+        public String id;
+        public String userId;
+        public String name;
+        public String coverUrl;
+        public ArrayList<String> storiesID;
+        public Timestamp lastEditedTime;
+
+        public HighlightStory(String id, String userId, String name, String coverUrl, ArrayList<String> storiesID, Timestamp lastEditedTime) {
+            this.id = id;
+            this.userId = userId;
+            this.name = name;
+            this.coverUrl = coverUrl;
+            this.storiesID = storiesID;
+            this.lastEditedTime = lastEditedTime;
+        }
+    }
+
+    public static class Comment {
+        public String id;
+        public String postID;
+        public String userID;
+        public String content;
+        public ArrayList<String> lovedBy;
+        public Timestamp timestamp;
+
+        public Comment(String id, String postID, String userID, String content, ArrayList<String> lovedBy, Timestamp timestamp) {
+            this.id = id;
+            this.postID = postID;
+            this.userID = userID;
+            this.content = content;
+            this.lovedBy = lovedBy;
+            this.timestamp = timestamp;
         }
     }
 }

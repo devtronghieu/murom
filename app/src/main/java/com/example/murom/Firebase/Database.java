@@ -54,6 +54,7 @@ public class Database {
                             "",
                             "",
                             "",
+                            "",
                             new HashMap<>()
                     );
 
@@ -63,6 +64,7 @@ public class Database {
                     user.passwordHash = document.getString("password");
                     user.profilePicture = document.getString("profile_picture");
                     user.username = document.getString("username");
+                    user.status = document.getString("status");
                     HashMap<String, String> viewedStories = (HashMap<String, String>) document.get("viewed_stories");
                     if (viewedStories != null) {
                         user.viewedStories = viewedStories;
@@ -106,6 +108,7 @@ public class Database {
                                 "",
                                 "",
                                 "",
+                                "",
                                 new HashMap<>()
                         );
 
@@ -115,6 +118,7 @@ public class Database {
                         profile.passwordHash = doc.getString("password");
                         profile.profilePicture = doc.getString("profile_picture");
                         profile.username = doc.getString("username");
+                        profile.status = doc.getString("status");
                         HashMap<String, String> viewedStories = (HashMap<String, String>) doc.get("viewed_stories");
                         if (viewedStories != null) {
                             profile.viewedStories = viewedStories;
@@ -132,6 +136,7 @@ public class Database {
     }
 
     public static final CollectionReference storyCollection = db.collection("Story");
+    public static final CollectionReference highlightCollection = db.collection("Highlight");
 
     public static void addStory(Schema.Story story) {
         Map<String, Object> documentData = new HashMap<>();
@@ -150,6 +155,88 @@ public class Database {
     public interface GetStoriesByUIDCallback {
         void onGetStoriesSuccess(ArrayList<Schema.Story> stories);
         void onGetStoriesFailure();
+    }
+
+    public static void addHighlight(Schema.HighlightStory highlightStory) {
+        Map<String, Object> documentData = new HashMap<>();
+        documentData.put("user_id", highlightStory.userId);
+        documentData.put("name", highlightStory.name);
+        documentData.put("cover_url", highlightStory.coverUrl);
+        documentData.put("stories_id", highlightStory.storiesID);
+        documentData.put("last_edited_time", highlightStory.lastEditedTime);
+
+        highlightCollection
+                .document(highlightStory.id)
+                .set(documentData)
+                .addOnSuccessListener(documentReference -> Log.d("--> add highlight", "addHighlight: " + highlightStory.id))
+                .addOnFailureListener(e -> Log.d("--> add highlight", "addHighlight: " + e));
+    }
+    public static void deleteHighlight(String highlightId) {
+        highlightCollection.document(highlightId).delete()
+                .addOnSuccessListener(runnable -> {
+                    String path = "highlight/" + highlightId;
+                    Storage.getRef(path).delete().addOnFailureListener(e -> {
+                        Log.d("--> delete", "Failed to delete assets: " + path);
+                    });
+                })
+                .addOnFailureListener(e -> {
+                    Log.d("--> delete", "Failed to delete highlight: " + highlightId);
+                });
+    }
+
+    public static ArrayList<Schema.HighlightStory> getHighlightsByUID(String userId, GetHighlightsCallback callback) {
+        ArrayList<Schema.HighlightStory> highlights = new ArrayList<>();
+
+        highlightCollection
+                .whereEqualTo("user_id", userId)
+                .orderBy("last_edited_time", Query.Direction.DESCENDING)
+                .get()
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        QuerySnapshot snap = task.getResult();
+                        List<DocumentSnapshot> docs = snap.getDocuments();
+
+                        for (int i = 0 ; i < docs.size(); i++) {
+                            DocumentSnapshot doc = docs.get(i);
+                            Schema.HighlightStory newHighlight = new Schema.HighlightStory(
+                                    "",
+                                    userId,
+                                    "",
+                                    "",
+                                    new ArrayList<>(),
+                                    Timestamp.now()
+                            );
+
+                            newHighlight.id = doc.getId();
+                            newHighlight.name = doc.getString("name");
+                            newHighlight.coverUrl = doc.getString("cover_url");
+
+                            ArrayList<String> storiesID = (ArrayList<String>) doc.get("stories_id");
+                            newHighlight.storiesID = storiesID;
+                            newHighlight.lastEditedTime = doc.getTimestamp("last_edited_time");
+
+                            highlights.add(newHighlight);
+                        }
+
+                        callback.handleGetSuccessfully(highlights);
+                    } else {
+                        if (!task.getException().getMessage().contains("offline")) {
+                            Log.d("--> getHighlightsByUID", "getHighlightsByUID: " + task.getException().getMessage());
+                        } else {
+                            Log.d("--> getHighlightsByUID", "getHighlightsByUID: not success");
+                        }
+                    }
+                })
+                .addOnFailureListener(v -> {
+                    callback.handleGetFail();
+                });
+
+        return highlights;
+    }
+
+    public interface GetHighlightsCallback {
+        void handleGetSuccessfully(ArrayList<Schema.HighlightStory> highlights);
+        void handleGetFail();
     }
 
     public interface GetActiveStoriesCallback {
@@ -334,7 +421,6 @@ public class Database {
                     Log.d("-->", "getStoriesByStoriesID failed ");
                     callback.onGetStoriesFailure();
                 }
-
             });
         });
 
@@ -426,7 +512,6 @@ public class Database {
     public static void archivePost(String postID) {
         postCollection.document(postID).update("is_archived", true);
     }
-
 
     public interface GetPostsByUIDCallback {
         void onGetPostsSuccess(ArrayList<Schema.Post> posts);
@@ -555,13 +640,11 @@ public class Database {
                     }
                 });
     }
-
     public static void updatePostLovedBy(String postID, ArrayList<String> lovedBy) {
         Map<String, Object> updates = new HashMap<>();
         updates.put("loved_by", lovedBy);
         postCollection.document(postID).update(updates);
     }
-
     public interface DeletePostCallback {
         void onDeleteSuccess(String postID);
         void onDeleteFailure();
@@ -588,7 +671,7 @@ public class Database {
         void onSaveFailure(String errorMessage);
     }
 
-    public static void updateUserProfile( String uid, String newUsername, String newDescription, UpdateUserProfileCallback callback){
+    public static void updateUserProfile( String uid, String newUsername, String newDescription, String newStatus, UpdateUserProfileCallback callback){
         DocumentReference docRef = userCollection.document(uid);
         ProfileState profileState = ProfileState.getInstance();
         if (newUsername.equals(""))
@@ -596,9 +679,12 @@ public class Database {
         if (newDescription.equals("") )
             newDescription = profileState.profile.bio;
         Map<String, Object> updates = new HashMap<>();
+        Log.d("test",newStatus);
         updates.put("username", newUsername);
         updates.put("bio", newDescription);
+        updates.put("status",newStatus);
         Schema.User user = new Schema.User(
+                "",
                 "",
                 "",
                 "",
@@ -613,6 +699,7 @@ public class Database {
         user.passwordHash = profileState.profile.passwordHash;
         user.profilePicture = profileState.profile.profilePicture;
         user.username = newUsername;
+        user.status = newStatus;
         docRef.set(updates, SetOptions.merge())
                 .addOnSuccessListener(aVoid -> {
                     callback.onSaveSuccess(user);
@@ -893,5 +980,83 @@ public class Database {
     public interface CountFollowerCallback {
         void onCountFollowerSuccess(int count);
         void onCountFollowerFailure(String errorMessage);
+    }
+
+    public interface CreateCommentCallback {
+        void onCreateCommentSuccess(String commentID);
+        void onCreateCommentFailure();
+    }
+    public static void createComment(String postID, String content, CreateCommentCallback callback) {
+        CollectionReference commentCollection = FirebaseFirestore.getInstance().collection("Comment");
+        Map<String, Object> commentData = new HashMap<>();
+        commentData.put("content", content);
+        commentData.put("love_count", 0);
+        commentData.put("post_id", postID);
+        commentData.put("user_id", ProfileState.getInstance().profile.id);
+        commentData.put("timestamp", Timestamp.now());
+        commentCollection.add(commentData)
+                .addOnSuccessListener(documentReference -> {
+                    callback.onCreateCommentSuccess(documentReference.getId());
+                })
+                .addOnFailureListener(e -> {
+                    Log.e("-->", "Error creating comment: " + e.getMessage());
+                    callback.onCreateCommentFailure();
+                });
+    }
+
+    public interface GetCommentsByPostIDCallback {
+        void onGetCommentsSuccess(ArrayList<Schema.Comment> comments);
+        void onGetCommentsFailure();
+    }
+    public static void getCommentsByPostID(String postID, GetCommentsByPostIDCallback callback) {
+        CollectionReference commentCollection = db.collection("Comment");
+        commentCollection
+                .whereEqualTo("post_id", postID)
+                .orderBy("timestamp", Query.Direction.DESCENDING)
+                .get()
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        ArrayList<Schema.Comment> comments = new ArrayList<>();
+
+                        QuerySnapshot snap = task.getResult();
+                        List<DocumentSnapshot> docs = snap.getDocuments();
+
+                        for (int i = 0; i < docs.size(); i++) {
+                            DocumentSnapshot doc = docs.get(i);
+
+                            Schema.Comment comment = new Schema.Comment(
+                                    doc.getId(),
+                                    doc.getString("post_id"),
+                                    doc.getString("user_id"),
+                                    doc.getString("content"),
+                                    new ArrayList<>(),
+                                    doc.getTimestamp("timestamp")
+                            );
+                            ArrayList<String> lovedBy = (ArrayList<String>)doc.get("loved_by");
+                            if (lovedBy != null) {
+                                comment.lovedBy = lovedBy;
+                            }
+
+                            comments.add(comment);
+                        }
+
+                        callback.onGetCommentsSuccess(comments);
+                    } else {
+                        Exception exception = task.getException();
+                        if (exception != null) {
+                            Log.e("-->", "Failed to get comments:", exception);
+                        } else {
+                            Log.e("-->", "Failed to get comments: Unknown reason");
+                        }
+                        callback.onGetCommentsFailure();
+                    }
+                });
+    }
+
+    public static void updateCommentLovedBy(String commentID, ArrayList<String> lovedBy) {
+        CollectionReference commentCollection = db.collection("Comment");
+        Map<String, Object> updates = new HashMap<>();
+        updates.put("loved_by", lovedBy);
+        commentCollection.document(commentID).update(updates);
     }
 }

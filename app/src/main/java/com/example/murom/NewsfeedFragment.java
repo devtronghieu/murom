@@ -6,6 +6,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageButton;
 import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
@@ -19,12 +20,16 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 import com.example.murom.Firebase.Database;
 import com.example.murom.Firebase.Schema;
 import com.example.murom.Firebase.Storage;
+import com.example.murom.Recycler.CommentAdapter;
 import com.example.murom.Recycler.PostAdapter;
 import com.example.murom.Recycler.SpacingItemDecoration;
 import com.example.murom.Recycler.StoryBubbleAdapter;
 import com.example.murom.State.ActiveStoryState;
+import com.example.murom.State.CommentState;
 import com.example.murom.State.PostState;
 import com.example.murom.State.ProfileState;
+import com.google.android.material.bottomsheet.BottomSheetDialog;
+import com.google.android.material.textfield.TextInputEditText;
 import com.google.firebase.Timestamp;
 import com.google.firebase.storage.StorageReference;
 
@@ -41,16 +46,15 @@ public class NewsfeedFragment extends Fragment {
     ActivityResultLauncher<PickVisualMediaRequest> launcher;
 
     // AppState
-    Disposable storiesMapDisposable;
-    Disposable socialPostsDisposable;
+    Disposable storiesMapDisposable, socialPostsDisposable;
 
     int offset = 0;
     int limit = 20;
 
     // Components
-    RecyclerView storiesRecycler;
-    RecyclerView postRecycler;
+    RecyclerView storiesRecycler, postRecycler;
     SwipeRefreshLayout swipeRefreshLayout;
+    BottomSheetDialog commentBottomSheet;
 
     public interface  NewsfeedFragmentCallback {
         void onViewStory(String uid);
@@ -128,6 +132,8 @@ public class NewsfeedFragment extends Fragment {
         View rootView = inflater.inflate(R.layout.fragment_newsfeed, container, false);
 
         activity = getActivity();
+
+        commentBottomSheet = new BottomSheetDialog(this.getContext());
 
         // Stories
         storiesRecycler = rootView.findViewById(R.id.stories_recycler);
@@ -259,7 +265,90 @@ public class NewsfeedFragment extends Fragment {
     }
 
     void setNewsfeeds(ArrayList<PostAdapter.PostModel> newsfeeds) {
-        PostAdapter postAdapter = new PostAdapter(newsfeeds);
+        PostAdapter postAdapter = new PostAdapter(newsfeeds, this::showCommentBottomSheet);
         postRecycler.setAdapter(postAdapter);
+    }
+
+    void showCommentBottomSheet(String postID) {
+        View view = getLayoutInflater().inflate(R.layout.component_comment_bottom_sheet, null, false);
+
+        RecyclerView commentRecyclerView = view.findViewById(R.id.comment_recycler);
+        commentRecyclerView.setLayoutManager(new LinearLayoutManager(getContext(), RecyclerView.VERTICAL, false));
+        commentRecyclerView.addItemDecoration(new SpacingItemDecoration(0, 20));
+
+        CommentState commentState = CommentState.getInstance();
+
+        Database.getCommentsByPostID(postID, new Database.GetCommentsByPostIDCallback() {
+            @Override
+            public void onGetCommentsSuccess(ArrayList<Schema.Comment> comments) {
+                HashMap<String, ArrayList<Schema.Comment>> commentsMap = commentState.commentsMap;
+                commentsMap.put(postID, comments);
+                commentState.updateObservableCommentsMap(commentsMap);
+            }
+
+            @Override
+            public void onGetCommentsFailure() {
+                Toast.makeText(activity, "Failed to get comments", Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        TextInputEditText inputEditText = view.findViewById(R.id.comment_input);
+        ImageButton sendBtn = view.findViewById(R.id.comment_send_btn);
+        sendBtn.setOnClickListener(v -> {
+            String content = inputEditText.getText() != null ? inputEditText.getText().toString() : "";
+            if (content.length() > 0) {
+                Database.createComment(postID, content, new Database.CreateCommentCallback() {
+                    @Override
+                    public void onCreateCommentSuccess(String commentID) {
+                        Schema.Comment comment = new Schema.Comment(
+                                commentID,
+                                postID,
+                                ProfileState.getInstance().profile.id,
+                                content,
+                                new ArrayList<>(),
+                                Timestamp.now()
+                        );
+                        HashMap<String, ArrayList<Schema.Comment>> commentsMap = commentState.commentsMap;
+                        ArrayList<Schema.Comment> comments = commentsMap.get(postID);
+                        if (comments == null) {
+                            comments = new ArrayList<>();
+                        }
+                        comments.add(0, comment);
+                        commentState.updateObservableCommentsMap(commentsMap);
+
+                        inputEditText.setText("");
+                    }
+
+                    @Override
+                    public void onCreateCommentFailure() {
+                        Toast.makeText(activity, "Failed to comment", Toast.LENGTH_SHORT).show();
+                    }
+                });
+            }
+        });
+
+        Disposable commentsDisposable = commentState.getObservableCommentsMap().subscribe(commentsMap -> {
+            ArrayList<Schema.Comment> comments = commentsMap.get(postID);
+            if (comments == null) return;
+
+            ArrayList<CommentAdapter.CommentAdapterModel> commentAdapterModels = new ArrayList<>();
+            for (int i = 0; i < comments.size(); i++) {
+                Schema.Comment comment = comments.get(i);
+                commentAdapterModels.add(new CommentAdapter.CommentAdapterModel(
+                        new Schema.Comment(comment.id, comment.postID, comment.userID, comment.content, comment.lovedBy, comment.timestamp),
+                        comment.lovedBy.contains(ProfileState.getInstance().profile.id)
+                ));
+            }
+            CommentAdapter commentAdapter = new CommentAdapter(commentAdapterModels);
+            commentRecyclerView.setAdapter(commentAdapter);
+        });
+
+        commentBottomSheet.setContentView(view);
+        commentBottomSheet.setOnCancelListener(dialogInterface -> {
+            if (!commentsDisposable.isDisposed()) {
+                commentsDisposable.dispose();
+            }
+        });
+        commentBottomSheet.show();
     }
 }

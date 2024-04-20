@@ -36,6 +36,16 @@
         android:orientation="vertical"
         >
 
+        <Button
+            android:id="@+id/save_highlight_btn"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="12dp"
+            android:backgroundTint="@color/primary_500"
+            android:text="Save"
+            android:paddingVertical="4dp"
+            android:paddingHorizontal="4dp"/>
+
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -44,16 +54,20 @@
 
             <com.google.android.material.imageview.ShapeableImageView
                 android:id="@+id/highlight_photo"
-                android:layout_width="80dp"
-                android:layout_height="80dp"
+                android:layout_width="100dp"
+                android:layout_height="100dp"
+                app:shapeAppearanceOverlay="@style/circular"
                 />
 
         </LinearLayout>
 
         <Button
+            android:id="@+id/edit_cover_btn"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Edit image" />
+            android:text="Edit cover"
+            android:background="@color/transparent"
+            android:textColor="@color/black"/>
 
     </LinearLayout>
 
