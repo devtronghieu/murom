@@ -13,6 +13,7 @@ public class Schema {
         public String passwordHash;
         public String profilePicture;
         public String username;
+        public String status;
         public HashMap<String, String> viewedStories;
 
         public User(
@@ -22,6 +23,7 @@ public class Schema {
                 String passwordHash,
                 String profilePicture,
                 String username,
+                String status,
                 HashMap<String, String> viewedStories
         ) {
             this.id = id;
@@ -30,6 +32,7 @@ public class Schema {
             this.passwordHash = passwordHash;
             this.profilePicture = profilePicture;
             this.username = username;
+            this.status = status;
             this.viewedStories = viewedStories;
         }
     }

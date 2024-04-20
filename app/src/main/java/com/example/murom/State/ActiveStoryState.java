@@ -22,7 +22,7 @@ public class ActiveStoryState {
 
     // Story Owner
     private final BehaviorSubject<Schema.User> observableActiveStoryOwner = BehaviorSubject.createDefault(
-            new Schema.User("", "", "", "", "", "", new HashMap<>())
+            new Schema.User("", "", "", "", "", "","", new HashMap<>())
     );
     public void updateObservableActiveStoryOwner(String uid) {
         ProfileState profileState = ProfileState.getInstance();
