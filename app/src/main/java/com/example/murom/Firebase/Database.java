@@ -50,6 +50,7 @@ public class Database {
                             "",
                             "",
                             "",
+                            "",
                             new HashMap<>()
                     );
 
@@ -59,6 +60,7 @@ public class Database {
                     user.passwordHash = document.getString("password");
                     user.profilePicture = document.getString("profile_picture");
                     user.username = document.getString("username");
+                    user.status = document.getString("status");
                     HashMap<String, String> viewedStories = (HashMap<String, String>) document.get("viewed_stories");
                     if (viewedStories != null) {
                         user.viewedStories = viewedStories;
@@ -102,6 +104,7 @@ public class Database {
                                 "",
                                 "",
                                 "",
+                                "",
                                 new HashMap<>()
                         );
 
@@ -111,6 +114,7 @@ public class Database {
                         profile.passwordHash = doc.getString("password");
                         profile.profilePicture = doc.getString("profile_picture");
                         profile.username = doc.getString("username");
+                        profile.status = doc.getString("status");
                         HashMap<String, String> viewedStories = (HashMap<String, String>) doc.get("viewed_stories");
                         if (viewedStories != null) {
                             profile.viewedStories = viewedStories;
@@ -658,7 +662,7 @@ public class Database {
         void onSaveFailure(String errorMessage);
     }
 
-    public static void updateUserProfile( String uid, String newUsername, String newDescription, UpdateUserProfileCallback callback){
+    public static void updateUserProfile( String uid, String newUsername, String newDescription, String newStatus, UpdateUserProfileCallback callback){
         DocumentReference docRef = userCollection.document(uid);
         ProfileState profileState = ProfileState.getInstance();
         if (newUsername.equals(""))
@@ -666,9 +670,12 @@ public class Database {
         if (newDescription.equals("") )
             newDescription = profileState.profile.bio;
         Map<String, Object> updates = new HashMap<>();
+        Log.d("test",newStatus);
         updates.put("username", newUsername);
         updates.put("bio", newDescription);
+        updates.put("status",newStatus);
         Schema.User user = new Schema.User(
+                "",
                 "",
                 "",
                 "",
@@ -683,6 +690,7 @@ public class Database {
         user.passwordHash = profileState.profile.passwordHash;
         user.profilePicture = profileState.profile.profilePicture;
         user.username = newUsername;
+        user.status = newStatus;
         docRef.set(updates, SetOptions.merge())
                 .addOnSuccessListener(aVoid -> {
                     callback.onSaveSuccess(user);

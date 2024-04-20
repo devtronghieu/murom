@@ -22,7 +22,7 @@ public class ArchivedStoryState {
 
     // Story Owner
     private final BehaviorSubject<Schema.User> observableStoryOwner = BehaviorSubject.createDefault(
-            new Schema.User("", "", "", "", "", "", new HashMap<>())
+            new Schema.User("", "", "", "", "", "","", new HashMap<>())
     );
     public void updateObservableStoryOwner(String uid) {
         // TODO: fetch the corresponding story owner profile

@@ -90,11 +90,11 @@ public class EditProfileFragment extends Fragment {
         EditText username = rootView.findViewById(R.id.edit_profile_username);
         EditText description = rootView.findViewById(R.id.edit_profile_description);
         TextView privacyText = rootView.findViewById(R.id.edit_profile_privacy_text);
-        saveChangeBtn.setOnClickListener(view -> saveChanges(username.getText().toString(), description.getText().toString()));
 
         privacy = rootView.findViewById(R.id.edit_profile_privacy);
         initSpinnerFooter();
 
+        saveChangeBtn.setOnClickListener(view -> saveChanges(username.getText().toString(), description.getText().toString(),privacy.getSelectedItem().toString()));
         Button logoutBtn = rootView.findViewById(R.id.log_out_btn);
         logoutBtn.setOnClickListener(this::handleSignOut);
 
@@ -118,6 +118,13 @@ public class EditProfileFragment extends Fragment {
         String[] items = new String[]{"Public", "Private"};
         ArrayAdapter<String> adapter = new ArrayAdapter<String>(requireContext(), android.R.layout.simple_spinner_item, items);
         privacy.setAdapter(adapter);
+        privacy.setDropDownWidth(500);
+        for (int index = 0; index < items.length; index++){
+            if (items[index] == profileState.profile.status){
+                privacy.setSelection(index);
+            }
+        }
+
     }
 
     private void setupImagePicker(ImageView imageView) {
@@ -131,8 +138,9 @@ public class EditProfileFragment extends Fragment {
         startActivity(i);
     }
 
-    private void saveChanges(String newUsername, String newDescription) {
-        Database.updateUserProfile( currentUserUid, newUsername, newDescription, new Database.UpdateUserProfileCallback() {
+    private void saveChanges(String newUsername, String newDescription, String newStatus) {
+        Log.d("--->",newStatus);
+        Database.updateUserProfile( currentUserUid, newUsername, newDescription, newStatus, new Database.UpdateUserProfileCallback() {
             @Override
             public void onSaveSuccess(Schema.User user) {
                 profileState.updateObservableProfile(user);
