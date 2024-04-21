@@ -37,6 +37,7 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.storage.StorageReference;
 
 import java.util.ArrayList;
+import java.util.Objects;
 import java.util.Random;
 
 import io.reactivex.rxjava3.disposables.Disposable;
@@ -101,10 +102,16 @@ public class OtherProfileFragment extends Fragment {
         TextView follower_num = rootView.findViewById(R.id.other_num_follower);
         TextView following = rootView.findViewById(R.id.other_profile_following);
         TextView following_num = rootView.findViewById(R.id.other_num_following);
-
+        ImageView photo_icon = rootView.findViewById(R.id.other_profile_imageView);
+        TextView posts_label = rootView.findViewById(R.id.other_profile_phototext);
+        ImageView private_icon = rootView.findViewById(R.id.other_profile_private_icon);
+        TextView private_text = rootView.findViewById(R.id.other_profile_private_text);
         username = rootView.findViewById(R.id.other_profile_username);
         bio = rootView.findViewById(R.id.other_profile_bio);
         Button followBtn = rootView.findViewById(R.id.other_profile_follow_btn);
+        //Posts
+        postsRecycler = rootView.findViewById(R.id.other_profile_posts_recycler);
+        postsRecycler.setLayoutManager(new GridLayoutManager(requireContext(),3));
         Database.getUser(userId, new Database.GetUserCallback() {
             @Override
             public void onGetUserSuccess(Schema.User user) {
@@ -160,6 +167,16 @@ public class OtherProfileFragment extends Fragment {
 
                     }
                 });
+                if (Objects.equals(otherProfileState.profile.status, "Private")) {
+                    post.setVisibility(View.GONE);
+                    posts_label.setVisibility(View.GONE);
+                    postsRecycler.setVisibility(View.GONE);
+                    photo_icon.setVisibility(View.GONE);
+                }
+                else {
+                    private_text.setVisibility(View.GONE);
+                    private_icon.setVisibility(View.GONE);
+                }
             }
 
             @Override
@@ -199,11 +216,6 @@ public class OtherProfileFragment extends Fragment {
             }
         });
         highlightsRecycler.setAdapter(highlightBubbleAdapter);*/
-
-
-        //Posts
-        postsRecycler = rootView.findViewById(R.id.other_profile_posts_recycler);
-        postsRecycler.setLayoutManager(new GridLayoutManager(requireContext(),3));
 
         return rootView;
     }

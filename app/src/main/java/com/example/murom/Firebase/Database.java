@@ -769,7 +769,9 @@ public class Database {
                     for (QueryDocumentSnapshot document : queryDocumentSnapshots) {
                         String username = document.getString("username");
                         String avatarUrl = document.getString("profile_picture");
-                        searchResult.add(new Schema.SearchUser(avatarUrl, username, document.getId()));
+                        if (!document.getId().equals(Auth.getUser().getUid())) {
+                            searchResult.add(new Schema.SearchUser(avatarUrl, username, document.getId()));
+                        }
                     }
                     listener.onSearchUserComplete(searchResult);
                 })
@@ -789,24 +791,19 @@ public class Database {
         FirebaseFirestore db = FirebaseFirestore.getInstance();
 
         db.collection("Post")
-                .whereGreaterThanOrEqualTo("caption", hashtag)
-                .whereLessThanOrEqualTo("caption", hashtag + "\uf8ff")
                 .whereEqualTo("is_archived", false)
                 .orderBy("created_at", Query.Direction.DESCENDING)
                 .get()
                 .addOnSuccessListener(queryDocumentSnapshots -> {
 
                     ArrayList<PostImageAdapter.PostImageModel> postImageModels = new ArrayList<>();
-
                     for (QueryDocumentSnapshot document : queryDocumentSnapshots) {
                         String caption = document.getString("caption");
                         if (caption != null) {
                             String[] words = caption.split("\\s+");
-
                             for (String word : words) {
                                 if (word.startsWith("#")) {
-                                    String foundHashtag = word.substring(1);
-                                    if (foundHashtag.equalsIgnoreCase(hashtag)) {
+                                    if (word.equalsIgnoreCase(hashtag)) {
                                         String imageUrl = document.getString("url");
                                         if (imageUrl != null) {
                                             postImageModels.add(new PostImageAdapter.PostImageModel(imageUrl));

@@ -37,6 +37,9 @@ import java.util.Random;
  */
 public class SearchFragment extends Fragment implements SearchUserAdapter.OnUserItemClickListener {
     TextView popularPosts;
+    private ArrayList<PostImageAdapter.PostImageModel> previousPostSearchResult;
+    private ArrayList<Schema.SearchUser> previousUserSearchResult;
+    private String previousSearchQuery;
     public interface SearchFragmentCallback {
         void onSearchUserItemClick(String userId);
     }
@@ -62,6 +65,23 @@ public class SearchFragment extends Fragment implements SearchUserAdapter.OnUser
         popularPosts = rootView.findViewById(R.id.popular_posts);
         RecyclerView resultRecycler = rootView.findViewById(R.id.result_recycler);
 
+        if (previousPostSearchResult != null) {
+            PostImageAdapter postImageAdapter = new PostImageAdapter(previousPostSearchResult);
+            resultRecycler.setAdapter(postImageAdapter);
+            keyword.setText(previousSearchQuery);
+            postsCount.setText(MessageFormat.format("{0} posts", previousPostSearchResult.size()));
+            popularPosts.setText("Popular Posts");
+            resultRecycler.setLayoutManager(new GridLayoutManager(getContext(), 3));
+        } else if (previousUserSearchResult != null) {
+            SearchUserAdapter searchUserAdapter = new SearchUserAdapter(previousUserSearchResult, userId -> {
+                onSearchUserItemClick(userId);
+            });
+            resultRecycler.setAdapter(searchUserAdapter);
+            keyword.setText(previousSearchQuery);
+            postsCount.setText(MessageFormat.format("{0} accounts", previousUserSearchResult.size()));
+            resultRecycler.setLayoutManager(new GridLayoutManager(getContext(), 1));
+            popularPosts.setText("Most Related Accounts");
+        }
         resultRecycler.addItemDecoration(new GridSpacingItemDecoration(5));
         searchEditText.setOnEditorActionListener(new TextView.OnEditorActionListener() {
             @Override
@@ -98,6 +118,8 @@ public class SearchFragment extends Fragment implements SearchUserAdapter.OnUser
                 PostImageAdapter postImageAdapter = new PostImageAdapter(searchResult);
                 postImageRecycler.setAdapter(postImageAdapter);
                 postsCount.setText(MessageFormat.format("{0} posts", searchResult.size()));
+                previousPostSearchResult = searchResult;
+                previousSearchQuery = hashtag;
                 Log.d("-->", "Search complete with " + searchResult.size() + " results");
             }
 
@@ -127,6 +149,8 @@ public class SearchFragment extends Fragment implements SearchUserAdapter.OnUser
                 });
                 userRecycler.setAdapter(searchUserAdapter);
                 postsCount.setText(MessageFormat.format("{0} accounts", searchResult.size()));
+                previousUserSearchResult = searchResult;
+                previousSearchQuery = query;
             }
 
             @Override
@@ -134,6 +158,7 @@ public class SearchFragment extends Fragment implements SearchUserAdapter.OnUser
                 Log.d("-->", "Error searching user" + errorMessage);
             }
         });
+
     }
 
     @Override

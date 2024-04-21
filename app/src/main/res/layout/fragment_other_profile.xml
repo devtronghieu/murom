@@ -204,6 +204,25 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/other_profile_bio" />
 
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center">
+
+        <ImageView
+            android:id="@+id/other_profile_private_icon"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@drawable/murom_ic_lock"
+            android:paddingEnd="20dp"/>
+
+        <TextView
+            android:id="@+id/other_profile_private_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="This account is private\nFollow to see their photos." />
+    </LinearLayout>
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/other_highlights_recycler"
         android:layout_width="wrap_content"

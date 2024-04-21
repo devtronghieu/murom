@@ -8,7 +8,7 @@ import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.subjects.BehaviorSubject;
 
 public class OtherProfileState {
-    public Schema.User profile = new Schema.User("", "", "", "", "", "", new HashMap<>());
+    public Schema.User profile = new Schema.User("", "", "", "", "", "","", new HashMap<>());
     private final BehaviorSubject<Schema.User> observableProfile = BehaviorSubject.createDefault(profile);
     public void updateObservableProfile(Schema.User profile) {
         this.profile = profile;
