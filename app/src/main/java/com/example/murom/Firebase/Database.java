@@ -868,7 +868,10 @@ public class Database {
     public interface FollowStatusUpdateCallback {
         void onFollowRequestAdded();
     }
-    public static void isFollowing(String userId, Button button) {
+    public interface OnIsFollowingResultListener {
+        void onIsFollowingResult(boolean isFollowing);
+    }
+    public static void isFollowing(String userId, Button button, OnIsFollowingResultListener listener) {
         String myId = Auth.getUser().getUid();
         Query query = followCollection.whereEqualTo("user_id", myId)
                 .whereEqualTo("following_user_id", userId);
@@ -877,6 +880,9 @@ public class Database {
         query.addSnapshotListener((snapshot, error) -> {
             if (error != null) {
                 Log.e("FollowStatus", "Error listening for follow status: " + error.getMessage());
+                if (listener != null) {
+                    listener.onIsFollowingResult(false);
+                }
                 return;
             }
 
@@ -885,6 +891,9 @@ public class Database {
                 button.setOnClickListener(view -> {
                     unfollowUser(userId);
                 });
+                if (listener != null) {
+                    listener.onIsFollowingResult(true);
+                }
             } else {
                 requestQuery.get().addOnSuccessListener(queryDocumentSnapshots -> {
                     if (!queryDocumentSnapshots.isEmpty()) {
@@ -892,11 +901,17 @@ public class Database {
                         button.setOnClickListener(view -> {
                             unrequestUser(userId, button);
                         });
+                        if (listener != null) {
+                            listener.onIsFollowingResult(false);
+                        }
                     } else {
                         button.setText("Follow");
                         button.setOnClickListener(view -> {
-                            followUser(userId, () -> isFollowing(userId, button));
+                            followUser(userId, () -> isFollowing(userId, button, null));
                         });
+                        if (listener != null) {
+                            listener.onIsFollowingResult(false);
+                        }
                     }
                 });
             }
@@ -978,7 +993,7 @@ public class Database {
                             Log.d("Unrequest", "Document successfully deleted!");
                             button.setText("Follow");
                             button.setOnClickListener(view -> {
-                                followUser(userId, () -> isFollowing(userId, button));
+                                followUser(userId, () -> isFollowing(userId, button, null));
                             });
                         })
                         .addOnFailureListener(e -> {

@@ -29,6 +29,7 @@ import com.example.murom.Firebase.Storage;
 import com.example.murom.Recycler.HighlightBubbleAdapter;
 import com.example.murom.Recycler.PostsProfileAdapter;
 import com.example.murom.Recycler.SpacingItemDecoration;
+import com.example.murom.State.HighlightState;
 import com.example.murom.State.OtherProfileState;
 import com.example.murom.State.PostState;
 import com.example.murom.State.ProfileState;
@@ -46,7 +47,7 @@ import io.reactivex.rxjava3.disposables.Disposable;
 public class OtherProfileFragment extends Fragment {
     Disposable profileDisposable;
     Schema.User profile;
-    RecyclerView postsRecycler;
+    RecyclerView postsRecycler, highlightsRecycler;
     OtherProfileState otherProfileState = OtherProfileState.getInstance();
     HighlightBubbleAdapter highlightBubbleAdapter;
     Disposable myPostsDisposable;
@@ -112,6 +113,10 @@ public class OtherProfileFragment extends Fragment {
         //Posts
         postsRecycler = rootView.findViewById(R.id.other_profile_posts_recycler);
         postsRecycler.setLayoutManager(new GridLayoutManager(requireContext(),3));
+        //Highlights
+        highlightsRecycler = rootView.findViewById((R.id.other_highlights_recycler));
+        highlightsRecycler.setLayoutManager(new LinearLayoutManager(getContext(),RecyclerView.HORIZONTAL, false));
+        highlightsRecycler.addItemDecoration(new SpacingItemDecoration(40, 0 ));
         Database.getUser(userId, new Database.GetUserCallback() {
             @Override
             public void onGetUserSuccess(Schema.User user) {
@@ -120,6 +125,7 @@ public class OtherProfileFragment extends Fragment {
                 bio.setText(otherProfileState.profile.bio);
                 Glide.with(avatar.getContext())
                         .load(otherProfileState.profile.profilePicture)
+                        .centerCrop()
                         .into(avatar);
                 if (Objects.equals(otherProfileState.profile.status, "Private")) {
                     posts_label.setVisibility(View.GONE);
@@ -130,7 +136,7 @@ public class OtherProfileFragment extends Fragment {
                     private_text.setVisibility(View.GONE);
                     private_icon.setVisibility(View.GONE);
                 }
-                Database.isFollowing(userId, followBtn);
+                Database.isFollowing(userId, followBtn, null);
 
                 Database.countFollower(userId, new Database.CountFollowerCallback() {
                     @Override
@@ -176,6 +182,44 @@ public class OtherProfileFragment extends Fragment {
                     @Override
                     public void onPostCountRetrieved(int postCount) {
                         post_num.setText(String.valueOf(postCount));
+                    }
+                });
+                Database.getHighlightsByUID(userId, new Database.GetHighlightsCallback() {
+                    @Override
+                    public void handleGetSuccessfully(ArrayList<Schema.HighlightStory> highlightStories) {
+                        ArrayList<HighlightBubbleAdapter.HighlightBubbleModel> highlights = new ArrayList<>();
+
+                        highlightStories.forEach(highlight -> {
+                            highlights.add(new HighlightBubbleAdapter.HighlightBubbleModel(highlight.id, highlight.coverUrl, highlight.name, highlight.storiesID));
+                        });
+
+                        highlightBubbleAdapter = new HighlightBubbleAdapter(highlights, new HighlightBubbleAdapter.HighlightBubbleCallback() {
+                            @Override
+                            public void handleEditHighlight(String highlightId, String url, String name, ArrayList<String> stories) {
+
+                            }
+
+                            @Override
+                            public void handleDeleteHighlight(String highlightId) {
+
+                            }
+
+                            @Override
+                            public void handleViewHighlight(String highlightId) {
+
+                            }
+
+                            @Override
+                            public void handleAddHighlight() {
+
+                            }
+                        });
+                        highlightsRecycler.setAdapter(highlightBubbleAdapter);
+                    }
+
+                    @Override
+                    public void handleGetFail() {
+
                     }
                 });
             }
