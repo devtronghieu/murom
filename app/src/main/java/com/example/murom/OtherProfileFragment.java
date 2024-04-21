@@ -121,7 +121,40 @@ public class OtherProfileFragment extends Fragment {
                 Glide.with(avatar.getContext())
                         .load(otherProfileState.profile.profilePicture)
                         .into(avatar);
+                if (Objects.equals(otherProfileState.profile.status, "Private")) {
+                    posts_label.setVisibility(View.GONE);
+                    postsRecycler.setVisibility(View.GONE);
+                    photo_icon.setVisibility(View.GONE);
+                }
+                else {
+                    private_text.setVisibility(View.GONE);
+                    private_icon.setVisibility(View.GONE);
+                }
                 Database.isFollowing(userId, followBtn);
+
+                Database.countFollower(userId, new Database.CountFollowerCallback() {
+                    @Override
+                    public void onCountFollowerSuccess(int count) {
+                        follower_num.setText(String.valueOf(count));
+                    }
+
+                    @Override
+                    public void onCountFollowerFailure(String errorMessage) {
+
+                    }
+                });
+                Database.countFollowing(userId, new Database.CountFollowingCallback() {
+                    @Override
+                    public void onCountFollowingSuccess(int count) {
+                        following_num.setText(String.valueOf(count));
+                    }
+
+                    @Override
+                    public void onCountFollowingFailure(String errorMessage) {
+
+                    }
+                });
+
                 Database.getPostsByUID(userId, new Database.GetPostsByUIDCallback() {
                     @Override
                     public void onGetPostsSuccess(ArrayList<Schema.Post> posts) {
@@ -145,38 +178,6 @@ public class OtherProfileFragment extends Fragment {
                         post_num.setText(String.valueOf(postCount));
                     }
                 });
-                Database.countFollower(userId, new Database.CountFollowerCallback() {
-                    @Override
-                    public void onCountFollowerSuccess(int count) {
-                        follower_num.setText(String.valueOf(count));
-                    }
-
-                    @Override
-                    public void onCountFollowerFailure(String errorMessage) {
-
-                    }
-                });
-                Database.countFollowing(userId, new Database.CountFollowingCallback() {
-                    @Override
-                    public void onCountFollowingSuccess(int count) {
-                        following_num.setText(String.valueOf(count));
-                    }
-
-                    @Override
-                    public void onCountFollowingFailure(String errorMessage) {
-
-                    }
-                });
-                if (Objects.equals(otherProfileState.profile.status, "Private")) {
-                    post.setVisibility(View.GONE);
-                    posts_label.setVisibility(View.GONE);
-                    postsRecycler.setVisibility(View.GONE);
-                    photo_icon.setVisibility(View.GONE);
-                }
-                else {
-                    private_text.setVisibility(View.GONE);
-                    private_icon.setVisibility(View.GONE);
-                }
             }
 
             @Override

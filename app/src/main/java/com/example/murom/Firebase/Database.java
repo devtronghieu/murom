@@ -31,6 +31,7 @@ public class Database {
 
     public static final CollectionReference userCollection = db.collection("User");
     public static final CollectionReference followCollection = db.collection("Follower");
+    public static final CollectionReference followRequestCollection = db.collection("FollowRequest");
 
     public interface GetUserCallback {
         void onGetUserSuccess(Schema.User user);
@@ -833,7 +834,6 @@ public class Database {
     }
 
     public static void getFollowersByUID(String uid, GetFollowersByUIDCallback callback) {
-        CollectionReference followCollection = db.collection("Follower");
         followCollection
                 .whereEqualTo("user_id", uid)
                 .get()
@@ -865,13 +865,15 @@ public class Database {
                 });
     }
 
+    public interface FollowStatusUpdateCallback {
+        void onFollowRequestAdded();
+    }
     public static void isFollowing(String userId, Button button) {
         String myId = Auth.getUser().getUid();
-        CollectionReference followCollection = db.collection("Follower");
-
         Query query = followCollection.whereEqualTo("user_id", myId)
                 .whereEqualTo("following_user_id", userId);
-
+        Query requestQuery = followRequestCollection.whereEqualTo("user_id", myId)
+                .whereEqualTo("follow_user_id", userId);
         query.addSnapshotListener((snapshot, error) -> {
             if (error != null) {
                 Log.e("FollowStatus", "Error listening for follow status: " + error.getMessage());
@@ -884,36 +886,66 @@ public class Database {
                     unfollowUser(userId);
                 });
             } else {
-                button.setText("Follow");
-                button.setOnClickListener(view -> {
-                    followUser(userId);
+                requestQuery.get().addOnSuccessListener(queryDocumentSnapshots -> {
+                    if (!queryDocumentSnapshots.isEmpty()) {
+                        button.setText("Requested");
+                        button.setOnClickListener(view -> {
+                            unrequestUser(userId, button);
+                        });
+                    } else {
+                        button.setText("Follow");
+                        button.setOnClickListener(view -> {
+                            followUser(userId, () -> isFollowing(userId, button));
+                        });
+                    }
                 });
             }
         });
     }
-    private static void followUser(String userId) {
+    private static void followUser(String userId, FollowStatusUpdateCallback callback) {
         String myId = Auth.getUser().getUid();
-        CollectionReference followCollection = FirebaseFirestore.getInstance().collection("Follower");
         LocalDateTime currentDateTime = LocalDateTime.now();
         Date currentDate = Date.from(currentDateTime.atZone(ZoneId.systemDefault()).toInstant());
-        
-        Map<String, Object> followData = new HashMap<>();
-        followData.put("user_id", myId);
-        followData.put("following_user_id", userId);
-        followData.put("datetime_added", currentDate);
-        followCollection.add(followData)
-                .addOnSuccessListener(documentReference -> {
-                    Log.d("Follow", "Document added with ID: " + documentReference.getId());
+        userCollection.document(userId).get()
+                .addOnSuccessListener(documentSnapshot -> {
+                    String userStatus = documentSnapshot.getString("status");
+                    if (userStatus != null && userStatus.equals("Private")) {
+                        Map<String, Object> requestData = new HashMap<>();
+                        requestData.put("user_id", myId);
+                        requestData.put("follow_user_id", userId);
+                        requestData.put("datetime_added", currentDate);
+                        followRequestCollection.add(requestData)
+                                .addOnSuccessListener(documentReference -> {
+                                    Log.d("Follow", "Document added with ID: " + documentReference.getId());
+                                    // Notify callback that follow request is added
+                                    callback.onFollowRequestAdded();
+                                })
+                                .addOnFailureListener(e -> {
+                                    Log.e("Follow", "Error adding document: " + e.getMessage());
+                                });
+                    } else {
+                        Map<String, Object> followData = new HashMap<>();
+                        followData.put("user_id", myId);
+                        followData.put("following_user_id", userId);
+                        followData.put("datetime_added", currentDate);
+                        followCollection.add(followData)
+                                .addOnSuccessListener(documentReference -> {
+                                    Log.d("Follow", "Document added with ID: " + documentReference.getId());
+                                    // Notify callback that follow request is added
+                                    callback.onFollowRequestAdded();
+                                })
+                                .addOnFailureListener(e -> {
+                                    Log.e("Follow", "Error adding document: " + e.getMessage());
+                                });
+                    }
                 })
                 .addOnFailureListener(e -> {
-                    Log.e("Follow", "Error adding document: " + e.getMessage());
+                    Log.e("FollowUser", "Error getting user status: " + e.getMessage());
                 });
     }
     public static void unfollowUser(String userId) {
         String myId = Auth.getUser().getUid();
-        CollectionReference followCollection = FirebaseFirestore.getInstance().collection("Follower");
 
-        // Create a query to find the document to delete
         Query query = followCollection.whereEqualTo("user_id", myId)
                 .whereEqualTo("following_user_id", userId);
         query.get().addOnSuccessListener(queryDocumentSnapshots -> {
@@ -928,6 +960,32 @@ public class Database {
                         });
             } else {
                 Log.d("Unfollow", "Document not found, nothing to delete!" +
+                        "\nuid: " + userId +
+                        "\nmyid: " + myId);
+            }
+        });
+    }
+    public static void unrequestUser(String userId, Button button) {
+        String myId = Auth.getUser().getUid();
+
+        Query query = followRequestCollection.whereEqualTo("user_id", myId)
+                .whereEqualTo("follow_user_id", userId);
+        query.get().addOnSuccessListener(queryDocumentSnapshots -> {
+            if (!queryDocumentSnapshots.isEmpty()) {
+                DocumentSnapshot documentSnapshot = queryDocumentSnapshots.getDocuments().get(0);
+                documentSnapshot.getReference().delete()
+                        .addOnSuccessListener(aVoid -> {
+                            Log.d("Unrequest", "Document successfully deleted!");
+                            button.setText("Follow");
+                            button.setOnClickListener(view -> {
+                                followUser(userId, () -> isFollowing(userId, button));
+                            });
+                        })
+                        .addOnFailureListener(e -> {
+                            Log.e("Unrequest", "Error deleting document: " + e.getMessage());
+                        });
+            } else {
+                Log.d("Unrequest", "Document not found, nothing to delete!" +
                         "\nuid: " + userId +
                         "\nmyid: " + myId);
             }
