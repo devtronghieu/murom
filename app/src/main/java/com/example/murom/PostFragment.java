@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
@@ -21,7 +22,6 @@ import android.widget.VideoView;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.PickVisualMediaRequest;
 import androidx.activity.result.contract.ActivityResultContracts;
-import androidx.annotation.NonNull;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.fragment.app.Fragment;
 
@@ -32,9 +32,6 @@ import com.example.murom.Firebase.Storage;
 import com.example.murom.State.PostState;
 import com.example.murom.State.ProfileState;
 import com.example.murom.Utils.BitmapUtils;
-import com.google.android.gms.tasks.OnFailureListener;
-import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.android.gms.tasks.Task;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.firebase.Timestamp;
 import com.google.firebase.storage.StorageReference;
@@ -46,10 +43,13 @@ import com.google.mlkit.vision.label.defaults.ImageLabelerOptions;
 import com.gowtham.library.utils.TrimType;
 import com.gowtham.library.utils.TrimVideo;
 
+import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -100,7 +100,6 @@ public class PostFragment extends Fragment {
     ImageButton imageToolsAddButton;
 
     ImageButton videoToolsAddButton;
-    ImageButton videoToolsCropButton;
     ImageButton videoToolsTrimButton;
 
     TextInputEditText captionInput;
@@ -112,48 +111,26 @@ public class PostFragment extends Fragment {
 
     public ImageButton uploadButton;
 
-    ActivityResultLauncher<PickVisualMediaRequest> launcher =
-            registerForActivityResult(new ActivityResultContracts.PickVisualMedia(), uri -> {
-                if (uri == null) {
-                    Toast.makeText(context, "No image/video selected!", Toast.LENGTH_SHORT).show();
-                } else {
-                    String mimeType = activity.getContentResolver().getType(uri);
-                    type = mimeType != null && mimeType.startsWith("image/") ? "image" : "video";
-                    postUri = uri;
-                    isEdited = false;
-                    uploadButton.setEnabled(true);
-                    addPostButton.setVisibility(View.GONE);
+    ActivityResultLauncher<PickVisualMediaRequest> launcher;
 
-                    if (Objects.equals(type, "image")) {
-                        postImage.setImageUriAsync(uri);
-                        InputImage image;
-                        try{
-                            image = InputImage.fromFilePath(context,uri);
-                            generateHashtagSuggestions(image);
-                        }catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                    } else {
-                        postVideo.setVideoPath(uri.toString());
-                        postVideo.start();
-                    }
+    ActivityResultLauncher<Intent> trimForResult;
 
-                    showComponentsByType(type);
-                }
-            });
-
-    ActivityResultLauncher<Intent> trimForResult = registerForActivityResult(
-            new ActivityResultContracts.StartActivityForResult(),
-            result -> {
-                if (result.getResultCode() == Activity.RESULT_OK &&
-                        result.getData() != null) {
-                    postUri = Uri.parse(TrimVideo.getTrimmedVideoPath(result.getData()));
-                    Log.d("-->", "trimmed uri: " + postUri.toString());
-                    postVideo.setVideoPath(postUri.toString());
-                    postVideo.start();
-                } else
-                    Log.d("-->", "videoTrimResultLauncher data is null");
-            });
+    interface MoveCompletionListener {
+        void onMoveComplete(Uri destinationUri);
+    }
+    private void moveFile(Uri sourceUri, File destinationFile, MoveCompletionListener listener) {
+        new Thread(() -> {
+            try {
+                Files.move(Paths.get(sourceUri.getPath()), destinationFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+                activity.runOnUiThread(() -> {
+                    listener.onMoveComplete(Uri.fromFile(destinationFile));
+                });
+            } catch (IOException e) {
+                e.printStackTrace();
+                Log.d("-->", "move error: " + e);
+            }
+        }).start();
+    }
 
     public PostFragment() {
         // Required empty public constructor
@@ -165,6 +142,53 @@ public class PostFragment extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        launcher = registerForActivityResult(new ActivityResultContracts.PickVisualMedia(), uri -> {
+            if (uri == null) {
+                Toast.makeText(context, "No image/video selected!", Toast.LENGTH_SHORT).show();
+            } else {
+                String mimeType = activity.getContentResolver().getType(uri);
+                type = mimeType != null && mimeType.startsWith("image/") ? "image" : "video";
+                postUri = uri;
+                isEdited = false;
+                uploadButton.setEnabled(true);
+                addPostButton.setVisibility(View.GONE);
+
+                showComponentsByType(type);
+            }
+        });
+
+        trimForResult = registerForActivityResult(
+                new ActivityResultContracts.StartActivityForResult(),
+                result -> {
+                    if (result.getResultCode() == Activity.RESULT_OK &&
+                            result.getData() != null) {
+                        postUri = Uri.parse(TrimVideo.getTrimmedVideoPath(result.getData()));
+                        Log.d("-->", "trimmed video: " + postUri.toString());
+
+                        // Test
+                        File downloadsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
+                        File destFile = new File(downloadsDir, "instamurom_trimmed_video.mp4");
+                        moveFile(postUri, destFile, new MoveCompletionListener() {
+                            @Override
+                            public void onMoveComplete(Uri destinationUri) {
+                                // Update the URI to the destination file
+                                postUri = destinationUri;
+                                isEdited = true;
+                                Log.d("-->", "move to: " + postUri);
+
+                                // Continue with your code here
+                                postVideo.setVideoPath(postUri.toString());
+                                postVideo.start();
+                            }
+                        });
+                        // End of test
+
+                        postVideo.setVideoPath(postUri.toString());
+                        postVideo.start();
+                    } else
+                        Log.d("-->", "videoTrimResultLauncher data is null");
+                });
     }
 
     @Override
@@ -233,17 +257,12 @@ public class PostFragment extends Fragment {
             selectMediaResource();
         });
 
-        videoToolsCropButton = rootView.findViewById(R.id.post_video_edit_tools_crop_icon);
-        videoToolsCropButton.setOnClickListener(v -> {
-            setEditOptionsNone();
-        });
-
         videoToolsTrimButton = rootView.findViewById(R.id.post_video_edit_tools_trim_icon);
         videoToolsTrimButton.setOnClickListener(v -> {
             setEditOptionsNone();
             isEdited = true;
 
-            TrimVideo.activity(String.valueOf(postUri))
+            TrimVideo.activity(postUri.toString())
                     .setTrimType(TrimType.MIN_MAX_DURATION)
                     .setMinToMax(1, 15)
                     .start(this, trimForResult);
@@ -283,8 +302,6 @@ public class PostFragment extends Fragment {
         rotateLeftButton.setOnClickListener(v -> postImage.rotateImage(90));
         rotateRightButton.setOnClickListener(v -> postImage.rotateImage(-90));
 
-
-
         closeButton.setOnClickListener(v -> {
             setEditOptionsNone();
         });
@@ -315,11 +332,22 @@ public class PostFragment extends Fragment {
             postImage.setVisibility(View.VISIBLE);
             videoEditToolsContainer.setVisibility(View.GONE);
             imageEditToolsContainer.setVisibility(View.VISIBLE);
+
+            postImage.setImageUriAsync(postUri);
+            try{
+                InputImage image = InputImage.fromFilePath(context, postUri);
+                generateHashtagSuggestions(image);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         } else if (Objects.equals(type, "video")) {
             postImage.setVisibility(View.GONE);
             postVideo.setVisibility(View.VISIBLE);
             imageEditToolsContainer.setVisibility(View.GONE);
             videoEditToolsContainer.setVisibility(View.VISIBLE);
+
+            postVideo.setVideoPath(postUri.toString());
+            postVideo.start();
         } else {
             postImage.setVisibility(View.GONE);
             postVideo.setVisibility(View.GONE);
@@ -415,37 +443,34 @@ public class PostFragment extends Fragment {
     void removeFileIfItIsEdited() {
         if (isEdited) {
             try {
-                int rowsDeleted = context.getContentResolver().delete(postUri, null, null);
-                if (rowsDeleted == 0) {
-                    Toast.makeText(context, "Failed to delete edited file", Toast.LENGTH_SHORT).show();
+                File fileToDelete = new File(Objects.requireNonNull(postUri.getPath()));
+                if (fileToDelete.exists()) {
+                    if (fileToDelete.delete()) {
+                        Log.d("-->", "File deleted successfully");
+                    } else {
+                        Log.d("-->", "Failed to delete file");
+                    }
+                } else {
+                    Log.d("-->", "File does not exist");
                 }
-            } catch (SecurityException e) {
-                Toast.makeText(context, "SecurityException: Lack of permissions to delete " + postUri, Toast.LENGTH_SHORT).show();
+            } catch (Error e) {
+                Log.d("-->", "failed to delete edited file: " + e);
             }
         }
     }
 
     private void generateHashtagSuggestions(InputImage image) {
-        List<String> Hashtag = new ArrayList<>();
         final StringBuilder hashtagBuilder = new StringBuilder();
-        String res ="";
-        // Sử dụng cùng logic như trước để lấy nhãn hình ảnh
         ImageLabelerOptions options =
                 new ImageLabelerOptions.Builder().setConfidenceThreshold(0.8f).build();
         ImageLabeler labeler = ImageLabeling.getClient(options);
-
-        Task<List<ImageLabel>> result = labeler.process(image)
-                .addOnSuccessListener(new OnSuccessListener<List<ImageLabel>>() {
-                    @Override
-                    public void onSuccess(List<ImageLabel> labels) {
-                        for (ImageLabel label : labels) {
-                            //Hashtag.add("#"+label.getText());
-                            Log.d("tét", label.getText());
-                            hashtagBuilder.append("#").append(label.getText()).append(" ");
-                        }
-                        String temp = hashtagBuilder.toString().trim();
-                        captionInput.setText(temp);
+        labeler.process(image)
+                .addOnSuccessListener(labels -> {
+                    for (ImageLabel label : labels) {
+                        hashtagBuilder.append("#").append(label.getText()).append(" ");
                     }
+                    String temp = hashtagBuilder.toString().trim();
+                    captionInput.setText(temp);
                 });
     }
 }

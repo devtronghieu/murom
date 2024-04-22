@@ -1,7 +1,6 @@
 package com.example.murom;
 
 import android.content.res.Resources;
-import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -14,7 +13,6 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.activity.result.ActivityResultCallback;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.PickVisualMediaRequest;
 import androidx.activity.result.contract.ActivityResultContracts;
@@ -82,28 +80,24 @@ public class ProfileFragment extends Fragment {
         super.onCreate(savedInstanceState);
 
         launcher =
-                registerForActivityResult(new ActivityResultContracts.PickVisualMedia(), new ActivityResultCallback<Uri>() {
-                    @Override
-                    public void onActivityResult(Uri uri) {
-                        if (uri == null) {
-                            Toast.makeText(requireContext(), "No image selected!", Toast.LENGTH_SHORT).show();
-                            return;
-                        }
-
-                        currentHighlightCoverUrl = uri.toString();
-                        Glide.with(requireContext()).load(uri).into(pickedImageView);
-                        String highlightPath = "highlight/" + currentHighlightId;
-                        Storage.uploadAsset(uri, highlightPath);
-
-                        Storage.getRef(highlightPath).putFile(uri)
-                                .addOnSuccessListener(taskSnapshot -> {
-                                    StorageReference storyRef = Storage.getRef(highlightPath);
-                                    storyRef.getDownloadUrl().addOnSuccessListener(highlightURI -> {
-                                        currentHighlightCoverUrl = highlightURI.toString();
-                                    });
-                                });
-
+                registerForActivityResult(new ActivityResultContracts.PickVisualMedia(), uri -> {
+                    if (uri == null) {
+                        Toast.makeText(requireContext(), "No image selected!", Toast.LENGTH_SHORT).show();
+                        return;
                     }
+
+                    currentHighlightCoverUrl = uri.toString();
+                    Glide.with(requireContext()).load(uri).into(pickedImageView);
+                    String highlightPath = "highlight/" + currentHighlightId;
+                    Storage.uploadAsset(uri, highlightPath);
+
+                    Storage.getRef(highlightPath).putFile(uri)
+                            .addOnSuccessListener(taskSnapshot -> {
+                                StorageReference storyRef = Storage.getRef(highlightPath);
+                                storyRef.getDownloadUrl().addOnSuccessListener(highlightURI -> {
+                                    currentHighlightCoverUrl = highlightURI.toString();
+                                });
+                            });
                 });
     }
 
