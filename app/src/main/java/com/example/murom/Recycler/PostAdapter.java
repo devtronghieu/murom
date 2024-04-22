@@ -15,6 +15,7 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.example.murom.Firebase.Database;
 import com.example.murom.R;
 import com.example.murom.State.ProfileState;
@@ -124,7 +125,7 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.ViewHolder> {
 
         viewHolder.username.setText(data.username);
 
-        Glide.with(this.context).load(data.avatarUrl).centerCrop().into(viewHolder.avatar);
+        Glide.with(this.context).load(data.avatarUrl).centerCrop().diskCacheStrategy(DiskCacheStrategy.NONE).skipMemoryCache(true).into(viewHolder.avatar);
 
         Glide.with(this.context).load(data.images.get(0)).into(viewHolder.image);
 

@@ -21,6 +21,7 @@ import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.bumptech.glide.Glide;
 import com.example.murom.Firebase.Database;
 import com.example.murom.Firebase.Schema;
@@ -35,6 +36,7 @@ import com.example.murom.State.PostState;
 import com.example.murom.State.ProfileState;
 import com.example.murom.State.StoryState;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
+import com.example.murom.Firebase.Auth;
 import com.google.firebase.Timestamp;
 import com.google.firebase.storage.StorageReference;
 
@@ -154,10 +156,38 @@ public class ProfileFragment extends Fragment {
 
         username.setText(profileState.profile.username);
         bio.setText(profileState.profile.bio);
+
+        post_num.setText(String.valueOf(PostState.getInstance().myPosts.size()));
+        Database.countFollower(Auth.getUser().getUid(), new Database.CountFollowerCallback() {
+            @Override
+            public void onCountFollowerSuccess(int count) {
+                follower_num.setText(String.valueOf(count));
+            }
+
+            @Override
+            public void onCountFollowerFailure(String errorMessage) {
+
+            }
+        });
+        Database.countFollowing(Auth.getUser().getUid(), new Database.CountFollowingCallback() {
+            @Override
+            public void onCountFollowingSuccess(int count) {
+                following_num.setText(String.valueOf(count));
+            }
+
+            @Override
+            public void onCountFollowingFailure(String errorMessage) {
+
+            }
+        });
+
         Glide.with(avatar.getContext())
                 .load(profile.profilePicture)
                 .centerCrop()
+                .diskCacheStrategy(DiskCacheStrategy.NONE)
+                .skipMemoryCache(true)
                 .into(avatar);
+
 
         highlightsRecycler.setLayoutManager(new LinearLayoutManager(getContext(),RecyclerView.HORIZONTAL, false));
         highlightsRecycler.addItemDecoration(new SpacingItemDecoration(40, 0 ));
@@ -174,7 +204,13 @@ public class ProfileFragment extends Fragment {
             }
         });
 
+
+        highlighgtsDisposable = HighlightState.getInstance().getObservableHighlights().subscribe(highlightStories -> {
+            handleRenderHighlightBubbles(highlightStories);
+        });
+
         highlighgtsDisposable = HighlightState.getInstance().getObservableHighlights().subscribe(this::handleRenderHighlightBubbles);
+
 
         // My Posts
         postsRecycler = rootView.findViewById(R.id.profile_posts_recycler);
