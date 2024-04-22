@@ -173,6 +173,29 @@ public class ProfileFragment extends Fragment {
 
         username.setText(profileState.profile.username);
         bio.setText(profileState.profile.bio);
+        post_num.setText(String.valueOf(PostState.getInstance().myPosts.size()));
+        Database.countFollower(Auth.getUser().getUid(), new Database.CountFollowerCallback() {
+            @Override
+            public void onCountFollowerSuccess(int count) {
+                follower_num.setText(String.valueOf(count));
+            }
+
+            @Override
+            public void onCountFollowerFailure(String errorMessage) {
+
+            }
+        });
+        Database.countFollowing(Auth.getUser().getUid(), new Database.CountFollowingCallback() {
+            @Override
+            public void onCountFollowingSuccess(int count) {
+                following_num.setText(String.valueOf(count));
+            }
+
+            @Override
+            public void onCountFollowingFailure(String errorMessage) {
+
+            }
+        });
 
         highlightsRecycler.setLayoutManager(new LinearLayoutManager(getContext(),RecyclerView.HORIZONTAL, false));
         highlightsRecycler.addItemDecoration(new SpacingItemDecoration(40, 0 ));
@@ -192,7 +215,6 @@ public class ProfileFragment extends Fragment {
         highlighgtsDisposable = HighlightState.getInstance().getObservableHighlights().subscribe(highlightStories -> {
             handleRenderHighlightBubbles(highlightStories);
         });
-
         // My Posts
         postsRecycler = rootView.findViewById(R.id.profile_posts_recycler);
         postsRecycler.setLayoutManager(new GridLayoutManager(requireContext(),3));
