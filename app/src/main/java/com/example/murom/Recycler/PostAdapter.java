@@ -36,12 +36,13 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.ViewHolder> {
     PostModelCallback callback;
 
     public static class PostModel {
-        private final String postOnwerID;
+        private final String postOwnerID;
         private final String postID;
         private final String avatarUrl;
         private final String username;
         private final ArrayList<String> images;
         private final String caption;
+        private final String date;
         private final ArrayList<String> lovedByUsers;
 
         public PostModel(
@@ -51,14 +52,16 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.ViewHolder> {
                 String username,
                 ArrayList<String> images,
                 String caption,
+                String date,
                 ArrayList<String> lovedByUsers
         ) {
-            this.postOnwerID = postOwnerID;
+            this.postOwnerID = postOwnerID;
             this.postID = postID;
             this.avatarUrl = avatarUrl;
             this.username = username;
             this.images = images;
             this.caption = caption;
+            this.date = date;
             this.lovedByUsers = lovedByUsers;
         }
     }
@@ -72,6 +75,7 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.ViewHolder> {
         private final ImageButton commentBtn;
         private final TextView loveText;
         private final TextView caption;
+        private final TextView date;
 
         private final ImageButton editButton;
         private final LinearLayout editContainer;
@@ -89,6 +93,7 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.ViewHolder> {
             commentBtn = view.findViewById(R.id.post_comment_icon);
             loveText = view.findViewById(R.id.post_love_text);
             caption = view.findViewById(R.id.post_desc);
+            date = view.findViewById(R.id.post_date);
 
             editButton = view.findViewById(R.id.post_edit_button);
             editContainer = view.findViewById(R.id.post_edit_container);
@@ -144,14 +149,20 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.ViewHolder> {
         viewHolder.loveText.setText(loveText);
 
         viewHolder.dataContainer.setOnClickListener(v -> {
-            callback.showProfile(data.postOnwerID);
+            callback.showProfile(data.postOwnerID);
         });
 
         viewHolder.commentBtn.setOnClickListener(v -> {
             callback.showCommentBottomSheet(data.postID);
         });
 
-        viewHolder.caption.setText(data.caption);
+        if (Objects.equals(data.caption, "")) {
+            viewHolder.caption.setVisibility(View.GONE);
+        } else {
+            viewHolder.caption.setText(data.caption);
+        }
+
+        viewHolder.date.setText(data.date);
 
         // Edit: Delete / Archive
         if (Objects.equals(data.username, ProfileState.getInstance().profile.username)) {
