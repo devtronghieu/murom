@@ -3,6 +3,7 @@ package com.example.murom;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.provider.ContactsContract;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -28,11 +29,13 @@ import com.example.murom.Firebase.Database;
 import com.example.murom.Firebase.Schema;
 import com.example.murom.Firebase.Storage;
 import com.example.murom.State.ProfileState;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.SetOptions;
 import com.google.firebase.storage.StorageReference;
 
 import java.util.HashMap;
+import java.util.SortedMap;
 
 
 public class EditProfileFragment extends Fragment {
@@ -40,6 +43,7 @@ public class EditProfileFragment extends Fragment {
     ProfileState profileState = ProfileState.getInstance();
     String currentUserUid = profileState.profile.id;
     Spinner privacy;
+    String imageURL ="";
     ImageView pickedImageView;
     ActivityResultLauncher<PickVisualMediaRequest> launcher =
             registerForActivityResult(new ActivityResultContracts.PickVisualMedia(), new ActivityResultCallback<Uri>() {
@@ -50,6 +54,7 @@ public class EditProfileFragment extends Fragment {
                     } else {
                         Glide.with(requireContext()).load(uri).into(pickedImageView);
                         Storage.uploadAsset(uri, "avatar/" + Auth.getUser().getEmail());
+
                     }
                 }
             });
@@ -104,6 +109,7 @@ public class EditProfileFragment extends Fragment {
                     String imageUrl = uri.toString();
                     Glide.with(avatar.getContext())
                             .load(imageUrl)
+                            .centerCrop()
                             .into(avatar);
                 })
                 .addOnFailureListener(e -> {
@@ -139,7 +145,6 @@ public class EditProfileFragment extends Fragment {
     }
 
     private void saveChanges(String newUsername, String newDescription, String newStatus) {
-        Log.d("--->",newStatus);
         Database.updateUserProfile( currentUserUid, newUsername, newDescription, newStatus, new Database.UpdateUserProfileCallback() {
             @Override
             public void onSaveSuccess(Schema.User user) {
