@@ -26,8 +26,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class Database {
     private static final FirebaseFirestore db = FirebaseFirestore.getInstance();
@@ -513,8 +511,14 @@ public class Database {
                 .addOnFailureListener(e -> Log.d("-->", "Failed to add Story doc: " + e));;
     }
 
-    public static void archivePost(String postID) {
-        postCollection.document(postID).update("is_archived", true);
+    public interface ArchivePostCallback {
+        void onArchivePostSuccess();
+        void onArchivePostFailure();
+    }
+    public static void archivePost(String postID, ArchivePostCallback callback) {
+        postCollection.document(postID).update("is_archived", true)
+                .addOnSuccessListener(runnable -> callback.onArchivePostSuccess())
+                .addOnFailureListener(e -> callback.onArchivePostFailure());
     }
 
     public interface GetPostsByUIDCallback {
@@ -525,7 +529,6 @@ public class Database {
     public static void getPostsByUID(String uid, GetPostsByUIDCallback callback) {
         postCollection
                 .whereEqualTo("user_id", uid)
-                .whereEqualTo("is_archived", false)
                 .orderBy("created_at", Query.Direction.DESCENDING)
                 .get()
                 .addOnCompleteListener(task -> {

@@ -33,9 +33,11 @@ import com.google.android.material.textfield.TextInputEditText;
 import com.google.firebase.Timestamp;
 import com.google.firebase.storage.StorageReference;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -58,6 +60,7 @@ public class NewsfeedFragment extends Fragment {
 
     public interface  NewsfeedFragmentCallback {
         void onViewStory(String uid);
+        void onViewProfile(String uid);
     }
 
     NewsfeedFragmentCallback callback;
@@ -170,6 +173,7 @@ public class NewsfeedFragment extends Fragment {
 
         // Social Posts state
         PostState postState = PostState.getInstance();
+        SimpleDateFormat dateFormat = new SimpleDateFormat("MMMM d'th', yyyy", Locale.ENGLISH);
         socialPostsDisposable = postState.getObservableSocialPosts().subscribe(posts -> {
             ArrayList<PostAdapter.PostModel> postModels = new ArrayList<>();
             posts.forEach(post -> {
@@ -179,11 +183,13 @@ public class NewsfeedFragment extends Fragment {
                     ArrayList<String> images = new ArrayList<>();
                     images.add(post.url);
                     postModels.add(new PostAdapter.PostModel(
+                            post.userId,
                             post.id,
                             postOwnerProfile.profilePicture,
                             postOwnerProfile.username,
                             images,
                             post.caption,
+                            dateFormat.format(post.createdAt.toDate()),
                             post.lovedByUIDs
                     ));
                 }
@@ -191,7 +197,9 @@ public class NewsfeedFragment extends Fragment {
             this.setNewsfeeds(postModels);
         });
 
-        PostState.getInstance().constructObservableSocialPosts(offset, limit);
+        if (postState.socialPosts.size() == 0) {
+            postState.constructObservableSocialPosts(offset, limit);
+        }
 
         return rootView;
     }
@@ -265,7 +273,17 @@ public class NewsfeedFragment extends Fragment {
     }
 
     void setNewsfeeds(ArrayList<PostAdapter.PostModel> newsfeeds) {
-        PostAdapter postAdapter = new PostAdapter(newsfeeds, this::showCommentBottomSheet);
+        PostAdapter postAdapter = new PostAdapter(newsfeeds, new PostAdapter.PostModelCallback() {
+            @Override
+            public void showCommentBottomSheet(String postID) {
+                NewsfeedFragment.this.showCommentBottomSheet(postID);
+            }
+
+            @Override
+            public void showProfile(String uid) {
+                callback.onViewProfile(uid);
+            }
+        });
         postRecycler.setAdapter(postAdapter);
     }
 

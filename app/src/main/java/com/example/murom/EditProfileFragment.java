@@ -3,8 +3,6 @@ package com.example.murom;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
-import android.provider.ContactsContract;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -14,7 +12,6 @@ import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.Spinner;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultCallback;
@@ -29,13 +26,8 @@ import com.example.murom.Firebase.Database;
 import com.example.murom.Firebase.Schema;
 import com.example.murom.Firebase.Storage;
 import com.example.murom.State.ProfileState;
-import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.SetOptions;
-import com.google.firebase.storage.StorageReference;
 
-import java.util.HashMap;
-import java.util.SortedMap;
+import java.util.Objects;
 
 
 public class EditProfileFragment extends Fragment {
@@ -80,42 +72,38 @@ public class EditProfileFragment extends Fragment {
         // Inflate the layout for this fragment
         View rootView =  inflater.inflate(R.layout.fragment_edit_profile, container, false);
 
+        Schema.User profile = ProfileState.getInstance().profile;
+
         ImageButton backBtn = rootView.findViewById(R.id.back_btn);
         backBtn.setOnClickListener(v -> callback.onClose());
 
-        TextView editProfileText = rootView.findViewById(R.id.edit_profile_text);
         ImageView avatar = rootView.findViewById(R.id.edit_profile_avatar);
         Button saveChangeBtn = rootView.findViewById(R.id.save_edit_profile_button);
 
         Button changeBtn = rootView.findViewById(R.id.change_avatar_button);
         changeBtn.setOnClickListener(view -> setupImagePicker(avatar));
 
-        TextView usernameText = rootView.findViewById(R.id.edit_profile_username_text);
-        TextView descriptionText = rootView.findViewById(R.id.edit_profile_description_text);
         EditText username = rootView.findViewById(R.id.edit_profile_username);
+        username.setText(profile.username);
+
         EditText description = rootView.findViewById(R.id.edit_profile_description);
-        TextView privacyText = rootView.findViewById(R.id.edit_profile_privacy_text);
+        description.setText(profile.bio);
 
         privacy = rootView.findViewById(R.id.edit_profile_privacy);
         initSpinnerFooter();
 
-        saveChangeBtn.setOnClickListener(view -> saveChanges(username.getText().toString(), description.getText().toString(),privacy.getSelectedItem().toString()));
+        saveChangeBtn.setOnClickListener(view -> saveChanges(
+                username.getText().toString(),
+                description.getText().toString(),
+                privacy.getSelectedItem().toString())
+        );
         Button logoutBtn = rootView.findViewById(R.id.log_out_btn);
         logoutBtn.setOnClickListener(this::handleSignOut);
 
-        StorageReference avatarRef = Storage.getRef("avatar/" + Auth.getUser().getEmail());
-        avatarRef.getDownloadUrl()
-                .addOnSuccessListener(uri -> {
-                    String imageUrl = uri.toString();
-                    Glide.with(avatar.getContext())
-                            .load(imageUrl)
-                            .centerCrop()
-                            .into(avatar);
-                })
-                .addOnFailureListener(e -> {
-                    Log.d("-->", "failed to get avatar: " + e);
-                });
-
+        Glide.with(avatar.getContext())
+                .load(profile.profilePicture)
+                .centerCrop()
+                .into(avatar);
 
         return rootView;
     }
@@ -126,7 +114,7 @@ public class EditProfileFragment extends Fragment {
         privacy.setAdapter(adapter);
         privacy.setDropDownWidth(500);
         for (int index = 0; index < items.length; index++){
-            if (items[index] == profileState.profile.status){
+            if (Objects.equals(items[index], profileState.profile.status)){
                 privacy.setSelection(index);
             }
         }

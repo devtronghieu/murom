@@ -17,7 +17,6 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
 import com.example.murom.Firebase.Database;
 import com.example.murom.R;
-import com.example.murom.State.PostState;
 import com.example.murom.State.ProfileState;
 
 import java.util.ArrayList;
@@ -31,36 +30,44 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.ViewHolder> {
 
     public interface PostModelCallback {
         void showCommentBottomSheet(String postID);
+        void showProfile(String uid);
     }
 
     PostModelCallback callback;
 
     public static class PostModel {
+        private final String postOwnerID;
         private final String postID;
         private final String avatarUrl;
         private final String username;
         private final ArrayList<String> images;
         private final String caption;
+        private final String date;
         private final ArrayList<String> lovedByUsers;
 
         public PostModel(
+                String postOwnerID,
                 String postID,
                 String avatarUrl,
                 String username,
                 ArrayList<String> images,
                 String caption,
+                String date,
                 ArrayList<String> lovedByUsers
         ) {
+            this.postOwnerID = postOwnerID;
             this.postID = postID;
             this.avatarUrl = avatarUrl;
             this.username = username;
             this.images = images;
             this.caption = caption;
+            this.date = date;
             this.lovedByUsers = lovedByUsers;
         }
     }
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
+        private final LinearLayout dataContainer;
         private final ImageView avatar;
         private final TextView username;
         private final ImageView image;
@@ -68,6 +75,7 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.ViewHolder> {
         private final ImageButton commentBtn;
         private final TextView loveText;
         private final TextView caption;
+        private final TextView date;
 
         private final ImageButton editButton;
         private final LinearLayout editContainer;
@@ -77,6 +85,7 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.ViewHolder> {
         public ViewHolder(View view) {
             super(view);
 
+            dataContainer = view.findViewById(R.id.post_user_data_container);
             avatar = view.findViewById(R.id.post_avatar);
             username = view.findViewById(R.id.post_username);
             image = view.findViewById(R.id.post_image);
@@ -84,6 +93,7 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.ViewHolder> {
             commentBtn = view.findViewById(R.id.post_comment_icon);
             loveText = view.findViewById(R.id.post_love_text);
             caption = view.findViewById(R.id.post_desc);
+            date = view.findViewById(R.id.post_date);
 
             editButton = view.findViewById(R.id.post_edit_button);
             editContainer = view.findViewById(R.id.post_edit_container);
@@ -138,11 +148,21 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.ViewHolder> {
         loveText += " likes";
         viewHolder.loveText.setText(loveText);
 
+        viewHolder.dataContainer.setOnClickListener(v -> {
+            callback.showProfile(data.postOwnerID);
+        });
+
         viewHolder.commentBtn.setOnClickListener(v -> {
             callback.showCommentBottomSheet(data.postID);
         });
 
-        viewHolder.caption.setText(data.caption);
+        if (Objects.equals(data.caption, "")) {
+            viewHolder.caption.setVisibility(View.GONE);
+        } else {
+            viewHolder.caption.setText(data.caption);
+        }
+
+        viewHolder.date.setText(data.date);
 
         // Edit: Delete / Archive
         if (Objects.equals(data.username, ProfileState.getInstance().profile.username)) {
@@ -163,17 +183,8 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.ViewHolder> {
                 Database.deletePost(data.postID, new Database.DeletePostCallback() {
                     @Override
                     public void onDeleteSuccess(String postID) {
-                        PostState instance = PostState.getInstance();
-
-                        for (int i = 0; i < instance.myPosts.size(); i++) {
-                            if (Objects.equals(instance.myPosts.get(i).id, postID)) {
-                                instance.myPosts.remove(i);
-                                break;
-                            }
-                        }
-                        localDataSet.remove(viewHolder.getAdapterPosition());
-                        notifyItemRemoved(viewHolder.getAdapterPosition());
-                        instance.updateObservableMyPosts(instance.myPosts);
+                        localDataSet.remove(viewHolder.getBindingAdapterPosition());
+                        notifyItemRemoved(viewHolder.getBindingAdapterPosition());
                         Toast.makeText(context, "Deleted", Toast.LENGTH_SHORT).show();
                     }
 
@@ -185,8 +196,19 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.ViewHolder> {
             });
             
             viewHolder.archiveButton.setOnClickListener(v -> {
-                Database.archivePost(data.postID);
-                viewHolder.editContainer.setVisibility(View.GONE);
+                Database.archivePost(data.postID, new Database.ArchivePostCallback() {
+                    @Override
+                    public void onArchivePostSuccess() {
+                        localDataSet.remove(viewHolder.getBindingAdapterPosition());
+                        notifyItemRemoved(viewHolder.getBindingAdapterPosition());
+                        Toast.makeText(context, "Archived", Toast.LENGTH_SHORT).show();
+                    }
+
+                    @Override
+                    public void onArchivePostFailure() {
+                        Toast.makeText(context, "Failed to archive post", Toast.LENGTH_SHORT).show();
+                    }
+                });
             });
         }
     }

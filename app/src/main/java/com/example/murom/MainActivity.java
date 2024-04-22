@@ -129,7 +129,17 @@ public class MainActivity extends AppCompatActivity {
         fragmentManager = getSupportFragmentManager();
         postFragment = new PostFragment();
         searchFragment = new SearchFragment(this::handleOnSearchUserClick);
-        newsfeedFragment = new NewsfeedFragment(MainActivity.this::handleViewStory);
+        newsfeedFragment = new NewsfeedFragment(new NewsfeedFragment.NewsfeedFragmentCallback() {
+            @Override
+            public void onViewStory(String uid) {
+                handleViewStory(uid);
+            }
+
+            @Override
+            public void onViewProfile(String uid) {
+                handleOnSearchUserClick(uid);
+            }
+        });
         reelsFragment = new ReelsFragment();
         profileFragment = new ProfileFragment(new ProfileFragment.ProfileFragmentCallback() {
             @Override

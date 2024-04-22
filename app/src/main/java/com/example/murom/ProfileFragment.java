@@ -1,7 +1,6 @@
 package com.example.murom;
 
 import android.content.res.Resources;
-import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -14,7 +13,6 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.activity.result.ActivityResultCallback;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.PickVisualMediaRequest;
 import androidx.activity.result.contract.ActivityResultContracts;
@@ -23,8 +21,8 @@ import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.bumptech.glide.Glide;
-import com.example.murom.Firebase.Auth;
 import com.example.murom.Firebase.Database;
 import com.example.murom.Firebase.Schema;
 import com.example.murom.Firebase.Storage;
@@ -38,6 +36,7 @@ import com.example.murom.State.PostState;
 import com.example.murom.State.ProfileState;
 import com.example.murom.State.StoryState;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
+import com.example.murom.Firebase.Auth;
 import com.google.firebase.Timestamp;
 import com.google.firebase.storage.StorageReference;
 
@@ -50,7 +49,6 @@ import io.reactivex.rxjava3.disposables.Disposable;
 public class ProfileFragment extends Fragment {
     Disposable profileDisposable;
     Schema.User profile;
-    ProfileState profileState = ProfileState.getInstance();
     RecyclerView postsRecycler, highlightsRecycler;
     ImageView pickedImageView, avatar, picture;
     BottomSheetDialog bottomSheet;
@@ -82,28 +80,24 @@ public class ProfileFragment extends Fragment {
         super.onCreate(savedInstanceState);
 
         launcher =
-                registerForActivityResult(new ActivityResultContracts.PickVisualMedia(), new ActivityResultCallback<Uri>() {
-                    @Override
-                    public void onActivityResult(Uri uri) {
-                        if (uri == null) {
-                            Toast.makeText(requireContext(), "No image selected!", Toast.LENGTH_SHORT).show();
-                            return;
-                        }
-
-                        currentHighlightCoverUrl = uri.toString();
-                        Glide.with(requireContext()).load(uri).into(pickedImageView);
-                        String highlightPath = "highlight/" + currentHighlightId;
-                        Storage.uploadAsset(uri, highlightPath);
-
-                        Storage.getRef(highlightPath).putFile(uri)
-                                .addOnSuccessListener(taskSnapshot -> {
-                                    StorageReference storyRef = Storage.getRef(highlightPath);
-                                    storyRef.getDownloadUrl().addOnSuccessListener(highlightURI -> {
-                                        currentHighlightCoverUrl = highlightURI.toString();
-                                    });
-                                });
-
+                registerForActivityResult(new ActivityResultContracts.PickVisualMedia(), uri -> {
+                    if (uri == null) {
+                        Toast.makeText(requireContext(), "No image selected!", Toast.LENGTH_SHORT).show();
+                        return;
                     }
+
+                    currentHighlightCoverUrl = uri.toString();
+                    Glide.with(requireContext()).load(uri).into(pickedImageView);
+                    String highlightPath = "highlight/" + currentHighlightId;
+                    Storage.uploadAsset(uri, highlightPath);
+
+                    Storage.getRef(highlightPath).putFile(uri)
+                            .addOnSuccessListener(taskSnapshot -> {
+                                StorageReference storyRef = Storage.getRef(highlightPath);
+                                storyRef.getDownloadUrl().addOnSuccessListener(highlightURI -> {
+                                    currentHighlightCoverUrl = highlightURI.toString();
+                                });
+                            });
                 });
     }
 
@@ -137,6 +131,8 @@ public class ProfileFragment extends Fragment {
         // Inflate the layout for this fragment
         View rootView = inflater.inflate(R.layout.fragment_profile, container, false);
 
+        ProfileState profileState = ProfileState.getInstance();
+
         avatar = rootView.findViewById(R.id.profile_avatar);
         post = rootView.findViewById(R.id.profile_post);
         post_num = rootView.findViewById(R.id.num_post);
@@ -158,21 +154,9 @@ public class ProfileFragment extends Fragment {
         editBtn.setOnClickListener(v -> callback.onEditProfile());
         burgerBtn.setOnClickListener(v -> callback.onArchiveClick());
 
-        StorageReference avatarRef = Storage.getRef("avatar/" + Auth.getUser().getEmail());
-        avatarRef.getDownloadUrl()
-                .addOnSuccessListener(uri -> {
-                    String imageUrl = uri.toString();
-                    Glide.with(avatar.getContext())
-                            .load(imageUrl)
-                            .centerCrop()
-                            .into(avatar);
-                })
-                .addOnFailureListener(e -> {
-                    Log.d("-->", "failed to get avatar: " + e);
-                });
-
         username.setText(profileState.profile.username);
         bio.setText(profileState.profile.bio);
+
         post_num.setText(String.valueOf(PostState.getInstance().myPosts.size()));
         Database.countFollower(Auth.getUser().getUid(), new Database.CountFollowerCallback() {
             @Override
@@ -197,6 +181,14 @@ public class ProfileFragment extends Fragment {
             }
         });
 
+        Glide.with(avatar.getContext())
+                .load(profile.profilePicture)
+                .centerCrop()
+                .diskCacheStrategy(DiskCacheStrategy.NONE)
+                .skipMemoryCache(true)
+                .into(avatar);
+
+
         highlightsRecycler.setLayoutManager(new LinearLayoutManager(getContext(),RecyclerView.HORIZONTAL, false));
         highlightsRecycler.addItemDecoration(new SpacingItemDecoration(40, 0 ));
 
@@ -212,13 +204,36 @@ public class ProfileFragment extends Fragment {
             }
         });
 
+
         highlighgtsDisposable = HighlightState.getInstance().getObservableHighlights().subscribe(highlightStories -> {
             handleRenderHighlightBubbles(highlightStories);
         });
+
+        highlighgtsDisposable = HighlightState.getInstance().getObservableHighlights().subscribe(this::handleRenderHighlightBubbles);
+
+
         // My Posts
         postsRecycler = rootView.findViewById(R.id.profile_posts_recycler);
         postsRecycler.setLayoutManager(new GridLayoutManager(requireContext(),3));
         myPostsDisposable = PostState.getInstance().getObservableMyPosts().subscribe(this::renderMyPosts);
+
+        // Fetch my posts
+        Database.getPostsByUID(profile.id, new Database.GetPostsByUIDCallback() {
+            @Override
+            public void onGetPostsSuccess(ArrayList<Schema.Post> posts) {
+                PostState.getInstance().updateObservableMyPosts(posts);
+            }
+
+            @Override
+            public void onGetPostsFailure() {
+                Toast.makeText(requireContext(), "Failed to get your posts", Toast.LENGTH_SHORT).show();
+            }
+
+            @Override
+            public void onPostCountRetrieved(int postCount) {
+
+            }
+        });
 
         // Fetch archive stories
         Database.getStoriesByUID(profile.id, new Database.GetStoriesByUIDCallback() {

@@ -25,8 +25,8 @@
             <com.google.android.material.imageview.ShapeableImageView
                 android:id="@+id/story_bubble_image"
                 android:background="@drawable/gradient_border"
-                android:layout_width="60dp"
-                android:layout_height="60dp"
+                android:layout_width="72dp"
+                android:layout_height="72dp"
                 app:shapeAppearanceOverlay="@style/circular" />
         </LinearLayout>
 
@@ -34,8 +34,8 @@
             android:id="@+id/story_bubble_upload"
             android:layout_width="20dp"
             android:layout_height="20dp"
-            android:layout_marginStart="48dp"
-            android:layout_marginTop="48dp"
+            android:layout_marginStart="60dp"
+            android:layout_marginTop="60dp"
             android:background="@color/primary_500"
             android:src="@drawable/baseline_add_24"
             android:visibility="gone"
