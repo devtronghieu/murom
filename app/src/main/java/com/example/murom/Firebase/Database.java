@@ -1,9 +1,12 @@
 package com.example.murom.Firebase;
 
+import android.net.Uri;
 import android.util.Log;
 import android.widget.Button;
 
+import com.example.murom.R;
 import com.example.murom.State.ProfileState;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentReference;
@@ -667,10 +670,9 @@ public class Database {
         ProfileState profileState = ProfileState.getInstance();
         if (newUsername.equals(""))
             newUsername = profileState.profile.username;
-        if (newDescription.equals("") )
+        if (newDescription.equals(""))
             newDescription = profileState.profile.bio;
         Map<String, Object> updates = new HashMap<>();
-        Log.d("test",newStatus);
         updates.put("username", newUsername);
         updates.put("bio", newDescription);
         updates.put("status",newStatus);
@@ -732,15 +734,24 @@ public class Database {
         authInfo.put("email", email);
         authInfo.put("password", password);
         authInfo.put("username", username);
-        db.collection("User")
-                .document(userId)
-                .set(authInfo)
-                .addOnSuccessListener(aVoid -> {
-                    callback.onRegistrationSuccess();
-                })
-                .addOnFailureListener(e -> {
-                    callback.onRegistrationFailure("Error adding user data to Firestore: " + e.getMessage());
-                });
+        authInfo.put("status", "Public");
+        String storagePath = "avatar/"+email;
+        Uri defaultImageUri = Uri.parse("android.resource://com.example.murom/" + R.drawable.default_avatar);
+        Storage.uploadAvatarAsset(defaultImageUri, storagePath, new OnSuccessListener<Uri>() {
+            @Override
+            public void onSuccess(Uri uri) {
+                authInfo.put("profile_picture", uri.toString());
+                db.collection("User")
+                        .document(userId)
+                        .set(authInfo)
+                        .addOnSuccessListener(aVoid -> {
+                            callback.onRegistrationSuccess();
+                        })
+                        .addOnFailureListener(e -> {
+                            callback.onRegistrationFailure("Error adding user data to Firestore: " + e.getMessage());
+                        });
+            }
+        });
     }
 
     public interface OnSearchUserCompleteListener {
