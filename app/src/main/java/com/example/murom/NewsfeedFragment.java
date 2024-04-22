@@ -57,6 +57,8 @@ public class NewsfeedFragment extends Fragment {
     RecyclerView storiesRecycler, postRecycler;
     SwipeRefreshLayout swipeRefreshLayout;
     BottomSheetDialog commentBottomSheet;
+    ImageButton notificationIcon;
+    NotificationFragment notificationDialog;
 
     public interface  NewsfeedFragmentCallback {
         void onViewStory(String uid);
@@ -200,6 +202,10 @@ public class NewsfeedFragment extends Fragment {
         if (postState.socialPosts.size() == 0) {
             postState.constructObservableSocialPosts(offset, limit);
         }
+
+        notificationIcon = rootView.findViewById(R.id.notification_icon);
+        notificationDialog = new NotificationFragment();
+        notificationIcon.setOnClickListener(v -> showNotificationDialog());
 
         return rootView;
     }
@@ -369,4 +375,9 @@ public class NewsfeedFragment extends Fragment {
         });
         commentBottomSheet.show();
     }
+
+    void showNotificationDialog() {
+        notificationDialog.show(getChildFragmentManager(), "Notification Dialog");
+    }
+
 }
