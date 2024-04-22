@@ -954,4 +954,65 @@ public class Database {
         updates.put("loved_by", lovedBy);
         commentCollection.document(commentID).update(updates);
     }
+
+    public static void getReels(int limit, GetReelsCallback callback) {
+        postCollection
+                .whereEqualTo("type", "video")
+                .orderBy("created_at", Query.Direction.DESCENDING)
+                .limit(limit)
+                .get()
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        ArrayList<Schema.Post> posts = new ArrayList<>();
+
+                        QuerySnapshot snap = task.getResult();
+                        List<DocumentSnapshot> docs = snap.getDocuments();
+
+                        for (DocumentSnapshot doc : docs) {
+
+                            Schema.Post post = new Schema.Post(
+                                    "",
+                                    "",
+                                    "",
+                                    "",
+                                    "",
+                                    new ArrayList<>(),
+                                    false,
+                                    Timestamp.now()
+                            );
+
+                            post.id = doc.getId();
+                            post.createdAt = doc.getTimestamp("created_at");
+                            post.userId = doc.getString("user_id");
+                            post.url = doc.getString("url");
+                            post.type = doc.getString("type");
+                            ArrayList<String> lovedByUIDs = (ArrayList<String>)doc.get("loved_by");
+                            if (lovedByUIDs != null) {
+                                post.lovedByUIDs = lovedByUIDs;
+                            }
+                            post.caption = doc.getString("caption");
+                            post.isArchived = Boolean.TRUE.equals(doc.getBoolean("is_archived"));
+
+                            posts.add(post);
+                        }
+
+                        callback.onGetReelsSuccess(posts);
+                    } else {
+                        Exception exception = task.getException();
+                        if (exception != null) {
+                            Log.e("-->", "Failed to get reels:", exception);
+                        } else {
+                            Log.e("-->", "Failed to get reels: Unknown reason");
+                        }
+                        callback.onGetReelsFailure(exception);
+                    }
+                });
+    }
+
+    public interface GetReelsCallback {
+        void onGetReelsSuccess(ArrayList<Schema.Post> posts);
+        void onGetReelsFailure(Exception exception);
+    }
+
+
 }

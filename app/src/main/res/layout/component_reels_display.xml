@@ -37,22 +37,34 @@
             android:gravity="center_vertical"
             android:orientation="vertical"
             android:layout_gravity="end"
-            android:layout_marginBottom="30dp">
+            android:layout_marginBottom="30dp"
+            android:layout_marginEnd="10dp">
 0
             <ImageButton
                 android:id="@+id/reels_love_icon"
                 android:layout_width="wrap_content"
-                android:layout_height="70dp"
-                android:layout_marginEnd="12dp"
+                android:layout_height="20dp"
                 android:background="@null"
+                android:layout_gravity="center"
                 android:contentDescription="@string/notification_icon"
                 android:src="@drawable/murom_ic_love"
                 android:tint="@color/white"/>
+
+            <TextView
+                android:id="@+id/reels_love_text"
+                android:layout_width="wrap_content"
+                android:layout_height="50dp"
+                android:layout_marginTop="8dp"
+                android:textColor="@color/white"
+                android:layout_gravity="center"
+                android:gravity="center_horizontal"
+                android:text="0" />
 
             <ImageButton
                 android:id="@+id/reels_comment_icon"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_gravity="center"
                 android:contentDescription="@string/notification_icon"
                 android:src="@drawable/murom_comment"
                 android:background="@null"
