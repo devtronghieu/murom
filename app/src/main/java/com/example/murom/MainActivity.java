@@ -50,7 +50,7 @@ public class MainActivity extends AppCompatActivity {
     Fragment storyFragment;
     Fragment editProfileFragment;
     Fragment archiveFragment;
-
+    Fragment otherProfileFragment;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -128,7 +128,7 @@ public class MainActivity extends AppCompatActivity {
     private void setupFragments() {
         fragmentManager = getSupportFragmentManager();
         postFragment = new PostFragment();
-        searchFragment = new SearchFragment();
+        searchFragment = new SearchFragment(this::handleOnSearchUserClick);
         newsfeedFragment = new NewsfeedFragment(MainActivity.this::handleViewStory);
         reelsFragment = new ReelsFragment();
         profileFragment = new ProfileFragment(new ProfileFragment.ProfileFragmentCallback() {
@@ -246,5 +246,19 @@ public class MainActivity extends AppCompatActivity {
     private void handleOnArchiveClick(){
         archiveFragment = new ArchiveFragment(() -> removeFullscreenFragment(archiveFragment));
         addFullscreenFragment(archiveFragment);
+    }
+
+    private void handleOnSearchUserClick(String uid) {
+        otherProfileFragment = OtherProfileFragment.newInstance(uid);
+        replaceFragmentWithBackStack(otherProfileFragment);
+    }
+    private void replaceFragmentWithBackStack(Fragment fragment) {
+        fullscreenFragmentContainer.setVisibility(View.GONE);
+        toggleBottomMenu(true);
+
+        FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+        fragmentTransaction.addToBackStack(null);
+        fragmentTransaction.replace(R.id.main_layout_fragment, fragment);
+        fragmentTransaction.commit();
     }
 }
