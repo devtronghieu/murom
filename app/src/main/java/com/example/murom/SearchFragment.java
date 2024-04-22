@@ -24,6 +24,7 @@ import com.example.murom.Firebase.Schema;
 import com.example.murom.Recycler.GridSpacingItemDecoration;
 import com.example.murom.Recycler.PostImageAdapter;
 import com.example.murom.Recycler.SearchUserAdapter;
+import com.example.murom.State.ProfileState;
 
 import java.text.MessageFormat;
 import java.util.ArrayList;
@@ -34,46 +35,24 @@ import java.util.Random;
  * Use the {@link SearchFragment#newInstance} factory method to
  * create an instance of this fragment.
  */
-public class SearchFragment extends Fragment {
-
-    // TODO: Rename parameter arguments, choose names that match
-    // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-    private static final String ARG_PARAM1 = "param1";
-    private static final String ARG_PARAM2 = "param2";
-
-    // TODO: Rename and change types of parameters
-    private String mParam1;
-    private String mParam2;
-
-    public SearchFragment() {
-        // Required empty public constructor
+public class SearchFragment extends Fragment implements SearchUserAdapter.OnUserItemClickListener {
+    TextView popularPosts;
+    private ArrayList<PostImageAdapter.PostImageModel> previousPostSearchResult;
+    private ArrayList<Schema.SearchUser> previousUserSearchResult;
+    private String previousSearchQuery;
+    public interface SearchFragmentCallback {
+        void onSearchUserItemClick(String userId);
     }
 
-    /**
-     * Use this factory method to create a new instance of
-     * this fragment using the provided parameters.
-     *
-     * @param param1 Parameter 1.
-     * @param param2 Parameter 2.
-     * @return A new instance of fragment SearchFragment.
-     */
-    // TODO: Rename and change types and number of parameters
-    public static SearchFragment newInstance(String param1, String param2) {
-        SearchFragment fragment = new SearchFragment();
-        Bundle args = new Bundle();
-        args.putString(ARG_PARAM1, param1);
-        args.putString(ARG_PARAM2, param2);
-        fragment.setArguments(args);
-        return fragment;
+    SearchFragmentCallback callback;
+    public SearchFragment(SearchFragmentCallback callback) {
+        this.callback = callback;
     }
+
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        if (getArguments() != null) {
-            mParam1 = getArguments().getString(ARG_PARAM1);
-            mParam2 = getArguments().getString(ARG_PARAM2);
-        }
     }
 
     @Override
@@ -83,9 +62,26 @@ public class SearchFragment extends Fragment {
         EditText searchEditText = rootView.findViewById(R.id.searchEditText);
         TextView keyword = rootView.findViewById(R.id.keyword);
         TextView postsCount = rootView.findViewById(R.id.posts_count);
-        TextView popularPosts = rootView.findViewById(R.id.popular_posts);
+        popularPosts = rootView.findViewById(R.id.popular_posts);
         RecyclerView resultRecycler = rootView.findViewById(R.id.result_recycler);
 
+        if (previousPostSearchResult != null) {
+            PostImageAdapter postImageAdapter = new PostImageAdapter(previousPostSearchResult);
+            resultRecycler.setAdapter(postImageAdapter);
+            keyword.setText(previousSearchQuery);
+            postsCount.setText(MessageFormat.format("{0} posts", previousPostSearchResult.size()));
+            popularPosts.setText("Popular Posts");
+            resultRecycler.setLayoutManager(new GridLayoutManager(getContext(), 3));
+        } else if (previousUserSearchResult != null) {
+            SearchUserAdapter searchUserAdapter = new SearchUserAdapter(previousUserSearchResult, userId -> {
+                onSearchUserItemClick(userId);
+            });
+            resultRecycler.setAdapter(searchUserAdapter);
+            keyword.setText(previousSearchQuery);
+            postsCount.setText(MessageFormat.format("{0} accounts", previousUserSearchResult.size()));
+            resultRecycler.setLayoutManager(new GridLayoutManager(getContext(), 1));
+            popularPosts.setText("Most Related Accounts");
+        }
         resultRecycler.addItemDecoration(new GridSpacingItemDecoration(5));
         searchEditText.setOnEditorActionListener(new TextView.OnEditorActionListener() {
             @Override
@@ -114,21 +110,33 @@ public class SearchFragment extends Fragment {
         return rootView;
     }
 
-    private void searchKeyword(String query, TextView keyword, TextView postsCount, RecyclerView postImageRecycler) {
-        Random rand = new Random();
+    private void searchKeyword(String hashtag, TextView keyword, TextView postsCount, RecyclerView postImageRecycler) {
+        keyword.setText(hashtag);
+        Database.searchPostByHashtag(hashtag, new Database.OnSearchPostCompleteListener() {
+            @Override
+            public void onSearchPostComplete(ArrayList<PostImageAdapter.PostImageModel> searchResult) {
+                PostImageAdapter postImageAdapter = new PostImageAdapter(searchResult);
+                postImageRecycler.setAdapter(postImageAdapter);
+                postsCount.setText(MessageFormat.format("{0} posts", searchResult.size()));
+                previousPostSearchResult = searchResult;
+                previousSearchQuery = hashtag;
+                Log.d("-->", "Search complete with " + searchResult.size() + " results");
+            }
 
-        keyword.setText(query);
+            @Override
+            public void onSearchPostFailed(String errorMessage) {
+                postImageRecycler.setAdapter(null);
+                Log.d("-->", "Error searching post" + errorMessage);
+            }
 
-        ArrayList<PostImageAdapter.PostImageModel> search_result = new ArrayList<>();
+            @Override
+            public void onNoPostFound() {
+                postsCount.setText(MessageFormat.format("0 posts", 0));
+                postImageRecycler.setAdapter(null);
+                popularPosts.setVisibility(View.GONE);
+            }
+        });
 
-        for (int i = 0; i < rand.nextInt(5) + 5; i++) {
-            search_result.add(new PostImageAdapter.PostImageModel(
-                    "https://picsum.photos/200"
-            ));
-        }
-        PostImageAdapter postImageAdapter = new PostImageAdapter(search_result);
-        postImageRecycler.setAdapter(postImageAdapter);
-        postsCount.setText(MessageFormat.format("{0} posts", search_result.size()));
     }
 
     private void searchUsername(String query, TextView keyword, TextView postsCount, RecyclerView userRecycler) {
@@ -137,10 +145,12 @@ public class SearchFragment extends Fragment {
             @Override
             public void onSearchUserComplete(ArrayList<Schema.SearchUser> searchResult) {
                 SearchUserAdapter searchUserAdapter = new SearchUserAdapter(searchResult, userId -> {
-
+                    onSearchUserItemClick(userId);
                 });
                 userRecycler.setAdapter(searchUserAdapter);
                 postsCount.setText(MessageFormat.format("{0} accounts", searchResult.size()));
+                previousUserSearchResult = searchResult;
+                previousSearchQuery = query;
             }
 
             @Override
@@ -148,6 +158,14 @@ public class SearchFragment extends Fragment {
                 Log.d("-->", "Error searching user" + errorMessage);
             }
         });
+
     }
 
+    @Override
+    public void onSearchUserItemClick(String userId) {
+        if (callback != null) {
+            callback.onSearchUserItemClick(userId);
+        }
+        Log.d("-->", "Click from search fragment: " + userId);
+    }
 }
