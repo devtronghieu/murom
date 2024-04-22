@@ -17,7 +17,6 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
 import com.example.murom.Firebase.Database;
 import com.example.murom.R;
-import com.example.murom.State.PostState;
 import com.example.murom.State.ProfileState;
 
 import java.util.ArrayList;
@@ -163,17 +162,8 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.ViewHolder> {
                 Database.deletePost(data.postID, new Database.DeletePostCallback() {
                     @Override
                     public void onDeleteSuccess(String postID) {
-                        PostState instance = PostState.getInstance();
-
-                        for (int i = 0; i < instance.myPosts.size(); i++) {
-                            if (Objects.equals(instance.myPosts.get(i).id, postID)) {
-                                instance.myPosts.remove(i);
-                                break;
-                            }
-                        }
-                        localDataSet.remove(viewHolder.getAdapterPosition());
-                        notifyItemRemoved(viewHolder.getAdapterPosition());
-                        instance.updateObservableMyPosts(instance.myPosts);
+                        localDataSet.remove(viewHolder.getBindingAdapterPosition());
+                        notifyItemRemoved(viewHolder.getBindingAdapterPosition());
                         Toast.makeText(context, "Deleted", Toast.LENGTH_SHORT).show();
                     }
 

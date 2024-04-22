@@ -174,14 +174,30 @@ public class ProfileFragment extends Fragment {
             }
         });
 
-        highlighgtsDisposable = HighlightState.getInstance().getObservableHighlights().subscribe(highlightStories -> {
-            handleRenderHighlightBubbles(highlightStories);
-        });
+        highlighgtsDisposable = HighlightState.getInstance().getObservableHighlights().subscribe(this::handleRenderHighlightBubbles);
 
         // My Posts
         postsRecycler = rootView.findViewById(R.id.profile_posts_recycler);
         postsRecycler.setLayoutManager(new GridLayoutManager(requireContext(),3));
         myPostsDisposable = PostState.getInstance().getObservableMyPosts().subscribe(this::renderMyPosts);
+
+        // Fetch my posts
+        Database.getPostsByUID(profile.id, new Database.GetPostsByUIDCallback() {
+            @Override
+            public void onGetPostsSuccess(ArrayList<Schema.Post> posts) {
+                PostState.getInstance().updateObservableMyPosts(posts);
+            }
+
+            @Override
+            public void onGetPostsFailure() {
+                Toast.makeText(requireContext(), "Failed to get your posts", Toast.LENGTH_SHORT).show();
+            }
+
+            @Override
+            public void onPostCountRetrieved(int postCount) {
+
+            }
+        });
 
         // Fetch archive stories
         Database.getStoriesByUID(profile.id, new Database.GetStoriesByUIDCallback() {

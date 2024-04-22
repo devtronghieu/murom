@@ -26,8 +26,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class Database {
     private static final FirebaseFirestore db = FirebaseFirestore.getInstance();
@@ -525,7 +523,6 @@ public class Database {
     public static void getPostsByUID(String uid, GetPostsByUIDCallback callback) {
         postCollection
                 .whereEqualTo("user_id", uid)
-                .whereEqualTo("is_archived", false)
                 .orderBy("created_at", Query.Direction.DESCENDING)
                 .get()
                 .addOnCompleteListener(task -> {

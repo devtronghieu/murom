@@ -191,7 +191,9 @@ public class NewsfeedFragment extends Fragment {
             this.setNewsfeeds(postModels);
         });
 
-        PostState.getInstance().constructObservableSocialPosts(offset, limit);
+        if (postState.socialPosts.size() == 0) {
+            postState.constructObservableSocialPosts(offset, limit);
+        }
 
         return rootView;
     }

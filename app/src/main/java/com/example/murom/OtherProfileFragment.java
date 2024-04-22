@@ -1,41 +1,25 @@
 package com.example.murom;
 
-import android.net.Uri;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
-import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
 
-import androidx.activity.result.ActivityResultCallback;
-import androidx.activity.result.ActivityResultLauncher;
-import androidx.activity.result.PickVisualMediaRequest;
-import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
-import com.example.murom.Firebase.Auth;
 import com.example.murom.Firebase.Database;
 import com.example.murom.Firebase.Schema;
-import com.example.murom.Firebase.Storage;
 import com.example.murom.Recycler.HighlightBubbleAdapter;
 import com.example.murom.Recycler.PostsProfileAdapter;
 import com.example.murom.Recycler.SpacingItemDecoration;
-import com.example.murom.State.HighlightState;
 import com.example.murom.State.OtherProfileState;
-import com.example.murom.State.PostState;
-import com.example.murom.State.ProfileState;
-import com.google.firebase.firestore.DocumentReference;
-import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.storage.StorageReference;
 
 import java.util.ArrayList;
 import java.util.Objects;
@@ -167,6 +151,7 @@ public class OtherProfileFragment extends Fragment {
                         ArrayList<PostsProfileAdapter.PostsProfileModel> postsProfileModel = new ArrayList<>();
 
                         posts.forEach(post -> {
+                            if (post.isArchived) return;
                             postsProfileModel.add(new PostsProfileAdapter.PostsProfileModel(post.url));
                         });
 
