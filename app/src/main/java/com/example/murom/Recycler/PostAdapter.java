@@ -30,11 +30,13 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.ViewHolder> {
 
     public interface PostModelCallback {
         void showCommentBottomSheet(String postID);
+        void showProfile(String uid);
     }
 
     PostModelCallback callback;
 
     public static class PostModel {
+        private final String postOnwerID;
         private final String postID;
         private final String avatarUrl;
         private final String username;
@@ -43,6 +45,7 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.ViewHolder> {
         private final ArrayList<String> lovedByUsers;
 
         public PostModel(
+                String postOwnerID,
                 String postID,
                 String avatarUrl,
                 String username,
@@ -50,6 +53,7 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.ViewHolder> {
                 String caption,
                 ArrayList<String> lovedByUsers
         ) {
+            this.postOnwerID = postOwnerID;
             this.postID = postID;
             this.avatarUrl = avatarUrl;
             this.username = username;
@@ -60,6 +64,7 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.ViewHolder> {
     }
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
+        private final LinearLayout dataContainer;
         private final ImageView avatar;
         private final TextView username;
         private final ImageView image;
@@ -76,6 +81,7 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.ViewHolder> {
         public ViewHolder(View view) {
             super(view);
 
+            dataContainer = view.findViewById(R.id.post_user_data_container);
             avatar = view.findViewById(R.id.post_avatar);
             username = view.findViewById(R.id.post_username);
             image = view.findViewById(R.id.post_image);
@@ -136,6 +142,10 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.ViewHolder> {
         loveText += data.lovedByUsers.size();
         loveText += " likes";
         viewHolder.loveText.setText(loveText);
+
+        viewHolder.dataContainer.setOnClickListener(v -> {
+            callback.showProfile(data.postOnwerID);
+        });
 
         viewHolder.commentBtn.setOnClickListener(v -> {
             callback.showCommentBottomSheet(data.postID);

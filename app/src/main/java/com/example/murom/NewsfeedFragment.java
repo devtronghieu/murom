@@ -58,6 +58,7 @@ public class NewsfeedFragment extends Fragment {
 
     public interface  NewsfeedFragmentCallback {
         void onViewStory(String uid);
+        void onViewProfile(String uid);
     }
 
     NewsfeedFragmentCallback callback;
@@ -179,6 +180,7 @@ public class NewsfeedFragment extends Fragment {
                     ArrayList<String> images = new ArrayList<>();
                     images.add(post.url);
                     postModels.add(new PostAdapter.PostModel(
+                            post.userId,
                             post.id,
                             postOwnerProfile.profilePicture,
                             postOwnerProfile.username,
@@ -267,7 +269,17 @@ public class NewsfeedFragment extends Fragment {
     }
 
     void setNewsfeeds(ArrayList<PostAdapter.PostModel> newsfeeds) {
-        PostAdapter postAdapter = new PostAdapter(newsfeeds, this::showCommentBottomSheet);
+        PostAdapter postAdapter = new PostAdapter(newsfeeds, new PostAdapter.PostModelCallback() {
+            @Override
+            public void showCommentBottomSheet(String postID) {
+                NewsfeedFragment.this.showCommentBottomSheet(postID);
+            }
+
+            @Override
+            public void showProfile(String uid) {
+                callback.onViewProfile(uid);
+            }
+        });
         postRecycler.setAdapter(postAdapter);
     }
 
