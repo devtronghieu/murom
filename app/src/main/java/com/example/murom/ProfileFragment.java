@@ -22,7 +22,6 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
-import com.example.murom.Firebase.Auth;
 import com.example.murom.Firebase.Database;
 import com.example.murom.Firebase.Schema;
 import com.example.murom.Firebase.Storage;
@@ -48,7 +47,6 @@ import io.reactivex.rxjava3.disposables.Disposable;
 public class ProfileFragment extends Fragment {
     Disposable profileDisposable;
     Schema.User profile;
-    ProfileState profileState = ProfileState.getInstance();
     RecyclerView postsRecycler, highlightsRecycler;
     ImageView pickedImageView, avatar, picture;
     BottomSheetDialog bottomSheet;
@@ -131,6 +129,8 @@ public class ProfileFragment extends Fragment {
         // Inflate the layout for this fragment
         View rootView = inflater.inflate(R.layout.fragment_profile, container, false);
 
+        ProfileState profileState = ProfileState.getInstance();
+
         avatar = rootView.findViewById(R.id.profile_avatar);
         post = rootView.findViewById(R.id.profile_post);
         post_num = rootView.findViewById(R.id.num_post);
@@ -152,21 +152,12 @@ public class ProfileFragment extends Fragment {
         editBtn.setOnClickListener(v -> callback.onEditProfile());
         burgerBtn.setOnClickListener(v -> callback.onArchiveClick());
 
-        StorageReference avatarRef = Storage.getRef("avatar/" + Auth.getUser().getEmail());
-        avatarRef.getDownloadUrl()
-                .addOnSuccessListener(uri -> {
-                    String imageUrl = uri.toString();
-                    Glide.with(avatar.getContext())
-                            .load(imageUrl)
-                            .centerCrop()
-                            .into(avatar);
-                })
-                .addOnFailureListener(e -> {
-                    Log.d("-->", "failed to get avatar: " + e);
-                });
-
         username.setText(profileState.profile.username);
         bio.setText(profileState.profile.bio);
+        Glide.with(avatar.getContext())
+                .load(profile.profilePicture)
+                .centerCrop()
+                .into(avatar);
 
         highlightsRecycler.setLayoutManager(new LinearLayoutManager(getContext(),RecyclerView.HORIZONTAL, false));
         highlightsRecycler.addItemDecoration(new SpacingItemDecoration(40, 0 ));
