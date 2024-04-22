@@ -12,6 +12,7 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.example.murom.R;
 
 import java.util.ArrayList;
@@ -86,6 +87,8 @@ public class StoryBubbleAdapter extends RecyclerView.Adapter<StoryBubbleAdapter.
         Glide.with(this.context)
                 .load(data.imageUrl)
                 .centerCrop()
+                .diskCacheStrategy(DiskCacheStrategy.NONE)
+                .skipMemoryCache(true)
                 .into(viewHolder.storyImage);
 
         viewHolder.storyImage.setOnClickListener(v -> callback.handleViewStories(data.uid));

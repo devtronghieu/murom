@@ -14,6 +14,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.example.murom.Firebase.Database;
 import com.example.murom.Firebase.Schema;
 import com.example.murom.Recycler.HighlightBubbleAdapter;
@@ -110,6 +111,8 @@ public class OtherProfileFragment extends Fragment {
                 Glide.with(avatar.getContext())
                         .load(otherProfileState.profile.profilePicture)
                         .centerCrop()
+                        .diskCacheStrategy(DiskCacheStrategy.NONE)
+                        .skipMemoryCache(true)
                         .into(avatar);
                 Database.isFollowing(userId, followBtn, isFollowing -> {
                     if (!isFollowing) {

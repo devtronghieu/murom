@@ -73,7 +73,7 @@ public class ReelsAdapter extends RecyclerView.Adapter<ReelsAdapter.ViewHolder> 
             progressBar = view.findViewById(R.id.reels_progressbar);
         }
     }
-    public ReelsAdapter(ArrayList<ReelModel> dataSet) {
+    public ReelsAdapter(ArrayList<ReelModel> dataSet, ReelModelCallback callback) {
         localDataSet = dataSet;
         this.callback = callback;
     }
