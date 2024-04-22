@@ -511,8 +511,14 @@ public class Database {
                 .addOnFailureListener(e -> Log.d("-->", "Failed to add Story doc: " + e));;
     }
 
-    public static void archivePost(String postID) {
-        postCollection.document(postID).update("is_archived", true);
+    public interface ArchivePostCallback {
+        void onArchivePostSuccess();
+        void onArchivePostFailure();
+    }
+    public static void archivePost(String postID, ArchivePostCallback callback) {
+        postCollection.document(postID).update("is_archived", true)
+                .addOnSuccessListener(runnable -> callback.onArchivePostSuccess())
+                .addOnFailureListener(e -> callback.onArchivePostFailure());
     }
 
     public interface GetPostsByUIDCallback {

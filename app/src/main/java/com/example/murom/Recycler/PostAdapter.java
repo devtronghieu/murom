@@ -175,8 +175,19 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.ViewHolder> {
             });
             
             viewHolder.archiveButton.setOnClickListener(v -> {
-                Database.archivePost(data.postID);
-                viewHolder.editContainer.setVisibility(View.GONE);
+                Database.archivePost(data.postID, new Database.ArchivePostCallback() {
+                    @Override
+                    public void onArchivePostSuccess() {
+                        localDataSet.remove(viewHolder.getBindingAdapterPosition());
+                        notifyItemRemoved(viewHolder.getBindingAdapterPosition());
+                        Toast.makeText(context, "Archived", Toast.LENGTH_SHORT).show();
+                    }
+
+                    @Override
+                    public void onArchivePostFailure() {
+                        Toast.makeText(context, "Failed to archive post", Toast.LENGTH_SHORT).show();
+                    }
+                });
             });
         }
     }
