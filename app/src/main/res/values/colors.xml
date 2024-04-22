@@ -19,4 +19,5 @@
     <color name="gray_200">#DCDCD9</color>
     <color name="gray_100">#E1E0DF</color>
     <color name="error_200">#F57F67</color>
+    <color name="success_400">#2CBB39</color>
 </resources>
