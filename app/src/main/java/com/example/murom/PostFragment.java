@@ -164,25 +164,16 @@ public class PostFragment extends Fragment {
                     if (result.getResultCode() == Activity.RESULT_OK &&
                             result.getData() != null) {
                         postUri = Uri.parse(TrimVideo.getTrimmedVideoPath(result.getData()));
-                        Log.d("-->", "trimmed video: " + postUri.toString());
 
-                        // Test
                         File downloadsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
                         File destFile = new File(downloadsDir, "instamurom_trimmed_video.mp4");
-                        moveFile(postUri, destFile, new MoveCompletionListener() {
-                            @Override
-                            public void onMoveComplete(Uri destinationUri) {
-                                // Update the URI to the destination file
-                                postUri = destinationUri;
-                                isEdited = true;
-                                Log.d("-->", "move to: " + postUri);
+                        moveFile(postUri, destFile, destinationUri -> {
+                            postUri = destinationUri;
+                            isEdited = true;
 
-                                // Continue with your code here
-                                postVideo.setVideoPath(postUri.toString());
-                                postVideo.start();
-                            }
+                            postVideo.setVideoPath(postUri.toString());
+                            postVideo.start();
                         });
-                        // End of test
 
                         postVideo.setVideoPath(postUri.toString());
                         postVideo.start();
@@ -346,6 +337,15 @@ public class PostFragment extends Fragment {
             imageEditToolsContainer.setVisibility(View.GONE);
             videoEditToolsContainer.setVisibility(View.VISIBLE);
 
+            postVideo.setOnPreparedListener(mediaPlayer -> {
+                long videoLength = mediaPlayer.getDuration();
+                if (videoLength > 15000) {
+                    TrimVideo.activity(postUri.toString())
+                            .setTrimType(TrimType.MIN_MAX_DURATION)
+                            .setMinToMax(1, 15)
+                            .start(this, trimForResult);
+                }
+            });
             postVideo.setVideoPath(postUri.toString());
             postVideo.start();
         } else {
@@ -383,7 +383,13 @@ public class PostFragment extends Fragment {
     }
 
     private void uploadPost() {
+        if (postUri == null) {
+            Toast.makeText(activity, "Please add image/video!", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
         loadingBar.setVisibility(View.VISIBLE);
+        uploadButton.setEnabled(false);
 
         Date currentDate = new Date();
         Timestamp createdAt = new Timestamp(currentDate);
@@ -420,6 +426,7 @@ public class PostFragment extends Fragment {
                                 setEditOptionsNone();
 
                                 type = "";
+                                postUri = null;
                                 showComponentsByType(type);
 
                                 Toast.makeText(context, "Uploaded!", Toast.LENGTH_SHORT).show();
@@ -442,19 +449,32 @@ public class PostFragment extends Fragment {
 
     void removeFileIfItIsEdited() {
         if (isEdited) {
-            try {
-                File fileToDelete = new File(Objects.requireNonNull(postUri.getPath()));
-                if (fileToDelete.exists()) {
-                    if (fileToDelete.delete()) {
-                        Log.d("-->", "File deleted successfully");
-                    } else {
-                        Log.d("-->", "Failed to delete file");
+            if (Objects.equals(type, "image")) {
+                try {
+                    int rowsDeleted = context.getContentResolver().delete(postUri, null, null);
+                    if (rowsDeleted == 0) {
+                        Toast.makeText(context, "Failed to delete edited file", Toast.LENGTH_SHORT).show();
                     }
-                } else {
-                    Log.d("-->", "File does not exist");
+                } catch (SecurityException e) {
+                    Log.d("-->", "failed to delete edited file: " + e);
                 }
-            } catch (Error e) {
-                Log.d("-->", "failed to delete edited file: " + e);
+            }
+
+            if (Objects.equals(type, "video")) {
+                try {
+                    File fileToDelete = new File(Objects.requireNonNull(postUri.getPath()));
+                    if (fileToDelete.exists()) {
+                        if (fileToDelete.delete()) {
+                            Log.d("-->", "File deleted successfully");
+                        } else {
+                            Log.d("-->", "Failed to delete file");
+                        }
+                    } else {
+                        Log.d("-->", "File does not exist: " + postUri.getPath());
+                    }
+                } catch (Error e) {
+                    Log.d("-->", "failed to delete edited file: " + e);
+                }
             }
         }
     }
