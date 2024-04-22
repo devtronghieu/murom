@@ -57,7 +57,7 @@ public class ReelsFragment extends Fragment {
                                     post.caption,
                                     post.lovedByUIDs
                             ));
-                                reelViewPager.setAdapter(new ReelsAdapter(reels));
+                            reelViewPager.setAdapter(new ReelsAdapter(reels));
                         }
 
                         @Override

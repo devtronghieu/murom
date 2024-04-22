@@ -2,6 +2,7 @@ package com.example.murom.Recycler;
 
 import android.content.Context;
 import android.media.MediaPlayer;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -15,6 +16,7 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.example.murom.Firebase.Database;
 import com.example.murom.R;
 import com.example.murom.State.ProfileState;
@@ -90,6 +92,7 @@ public class ReelsAdapter extends RecyclerView.Adapter<ReelsAdapter.ViewHolder> 
     public void onBindViewHolder(@NonNull ViewHolder viewHolder, int position) {
         ReelModel data = localDataSet.get(position);
         viewHolder.video.setVideoPath(data.videoUrl);
+
         viewHolder.username.setText(data.username);
         viewHolder.caption.setText(data.caption);
         viewHolder.video.setOnPreparedListener(mp -> {
@@ -105,9 +108,8 @@ public class ReelsAdapter extends RecyclerView.Adapter<ReelsAdapter.ViewHolder> 
             }
         });
         viewHolder.video.setOnCompletionListener(MediaPlayer::start);
-        Glide.with(this.context)
-                .load(data.avatarUrl)
-                .into(viewHolder.avatar);
+
+        Log.d("-->", "avatar: " + data.avatarUrl);
 
         String uid = ProfileState.getInstance().profile.id;
         boolean isLoved = data.lovedByUsers.contains(uid);
@@ -131,6 +133,13 @@ public class ReelsAdapter extends RecyclerView.Adapter<ReelsAdapter.ViewHolder> 
         viewHolder.commentBtn.setOnClickListener(v -> {
             callback.showCommentBottomSheet(data.reelID);
         });
+        Glide.with(this.context)
+                .load(data.avatarUrl)
+                .centerCrop()
+                .diskCacheStrategy(DiskCacheStrategy.NONE)
+                .skipMemoryCache(true)
+                .into(viewHolder.avatar);
+
     }
     @Override
     public int getItemCount() {

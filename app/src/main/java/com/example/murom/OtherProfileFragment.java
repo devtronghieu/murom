@@ -127,16 +127,34 @@ public class OtherProfileFragment extends Fragment {
                         .load(otherProfileState.profile.profilePicture)
                         .centerCrop()
                         .into(avatar);
-                if (Objects.equals(otherProfileState.profile.status, "Private")) {
-                    posts_label.setVisibility(View.GONE);
-                    postsRecycler.setVisibility(View.GONE);
-                    photo_icon.setVisibility(View.GONE);
-                }
-                else {
-                    private_text.setVisibility(View.GONE);
-                    private_icon.setVisibility(View.GONE);
-                }
-                Database.isFollowing(userId, followBtn, null);
+                Database.isFollowing(userId, followBtn, isFollowing -> {
+                    if (!isFollowing) {
+                        if (Objects.equals(otherProfileState.profile.status, "Private")) {
+                            posts_label.setVisibility(View.GONE);
+                            postsRecycler.setVisibility(View.GONE);
+                            photo_icon.setVisibility(View.GONE);
+                            highlightsRecycler.setVisibility(View.GONE);
+                            private_text.setVisibility(View.VISIBLE);
+                            private_icon.setVisibility(View.VISIBLE);
+                        }
+                        else {
+                            posts_label.setVisibility(View.VISIBLE);
+                            postsRecycler.setVisibility(View.VISIBLE);
+                            photo_icon.setVisibility(View.VISIBLE);
+                            highlightsRecycler.setVisibility(View.VISIBLE);
+                            private_text.setVisibility(View.GONE);
+                            private_icon.setVisibility(View.GONE);
+                        }
+                    }
+                    else {
+                        posts_label.setVisibility(View.VISIBLE);
+                        postsRecycler.setVisibility(View.VISIBLE);
+                        photo_icon.setVisibility(View.VISIBLE);
+                        highlightsRecycler.setVisibility(View.VISIBLE);
+                        private_text.setVisibility(View.GONE);
+                        private_icon.setVisibility(View.GONE);
+                    }
+                });
 
                 Database.countFollower(userId, new Database.CountFollowerCallback() {
                     @Override
