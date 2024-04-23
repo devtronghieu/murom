@@ -151,6 +151,11 @@ public class MainActivity extends AppCompatActivity {
             public void onArchiveClick() {
                 handleOnArchiveClick();
             }
+
+            @Override
+            public void onViewHighlight(String id) {
+                handleViewHighlight(id);
+            }
             @Override
             public void onPostClick(String postId) {handleOnPostClick(postId);}
         });
@@ -249,6 +254,11 @@ public class MainActivity extends AppCompatActivity {
     private void handleViewStory(String uid) {
         ActiveStoryState.getInstance().updateObservableActiveStoryOwner(uid);
         storyFragment = new StoryFragment(() -> removeFullscreenFragment(storyFragment));
+        addFullscreenFragment(storyFragment);
+    }
+
+    public void handleViewHighlight(String highlightId) {
+        storyFragment = new HighlightFragment(() -> removeFullscreenFragment(storyFragment), highlightId, ProfileState.getInstance().profile);
         addFullscreenFragment(storyFragment);
     }
 
