@@ -256,6 +256,7 @@ public class ProfileFragment extends Fragment {
             postsProfileModel.add(new PostsProfileAdapter.PostsProfileModel(post.url));
         });
 
+        post_num.setText(String.valueOf(postsProfileModel.size()));
         PostsProfileAdapter postsProfileAdapter = new PostsProfileAdapter(postsProfileModel);
         postsRecycler.setAdapter(postsProfileAdapter);
     }
