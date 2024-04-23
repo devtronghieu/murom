@@ -208,6 +208,7 @@ public class HighlightFragment extends Fragment {
         deleteButton.setText("Removing...");
 
         Schema.Story story = stories.get(currentStoryIndex);
+        stories.remove(currentStoryIndex);
         curHighlight.storiesID.remove(story.id);
 
         ArrayList<Schema.HighlightStory> highlightStories = HighlightState.getInstance().highlights;
@@ -218,7 +219,9 @@ public class HighlightFragment extends Fragment {
             }
         }
 
+        CurrentSelectedStoriesState.getInstance().updateObservableStoriesMap(stories);
         HighlightState.getInstance().updateObservableHighlights(highlightStories);
         Database.addHighlight(curHighlight);
+        hideDeleteStoryButton();
     }
 }

@@ -55,17 +55,11 @@ public class HighlightBubbleAdapter extends RecyclerView.Adapter<HighlightBubble
         private final ImageView highlightImage;
         private final TextView highlightText;
         private final ConstraintLayout container;
-//        private final Button editHighlight;
-//        private final Button deleteHighlight;
-//        private final LinearLayout buttonsContainer;
         public ViewHolder(View view){
             super(view);
             highlightImage = view.findViewById(R.id.highlight_bubble_image);
             highlightText = view.findViewById(R.id.highlight_bubble_text);
             container = view.findViewById(R.id.highlight_bubble_container);
-//            editHighlight = view.findViewById(R.id.edit_highlight_btn);
-//            deleteHighlight = view.findViewById(R.id.delete_highlight_btn);
-//            buttonsContainer = view.findViewById(R.id.buttons_container);
         }
     }
 
@@ -94,26 +88,23 @@ public class HighlightBubbleAdapter extends RecyclerView.Adapter<HighlightBubble
         Button editHighlight = popupView.findViewById(R.id.edit_highlight_btn);
         Button deleteHighlight = popupView.findViewById(R.id.delete_highlight_btn);
 
-        editHighlight.setOnClickListener(v -> callback.handleEditHighlight(data.highlightId, data.imageUrl, data.name, data.stories));
-        deleteHighlight.setOnClickListener(v -> callback.handleDeleteHighlight(data.highlightId));
+        editHighlight.setOnClickListener(v -> {
+            callback.handleEditHighlight(data.highlightId, data.imageUrl, data.name, data.stories);
+            popupWindow.dismiss();
+        });
+        deleteHighlight.setOnClickListener(v -> {
+            callback.handleDeleteHighlight(data.highlightId);
+            popupWindow.dismiss();
+        });
         viewHolder.container.setOnClickListener(v -> {
             callback.handleViewHighlight(data.highlightId);
         });
 
-//        viewHolder.editHighlight.setOnClickListener(v -> callback.handleEditHighlight(data.highlightId, data.imageUrl, data.name, data.stories));
-//        viewHolder.deleteHighlight.setOnClickListener(v -> {
-//            callback.handleDeleteHighlight(data.highlightId);
-////            viewHolder.buttonsContainer.setVisibility(View.GONE);
-//
-//        });
-
         viewHolder.highlightImage.setOnClickListener(v -> callback.handleViewHighlight(data.highlightId));
         viewHolder.highlightImage.setOnLongClickListener(v -> {
-//            viewHolder.buttonsContainer.setVisibility(View.VISIBLE);
             popupView.setElevation(20);
             popupWindow.showAtLocation(viewHolder.container, Gravity.CENTER, 0, 0);
 
-//            viewHolder.buttonsContainer.setElevation(12);
             return true;
         });
 
