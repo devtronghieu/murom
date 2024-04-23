@@ -13,11 +13,15 @@ import android.view.View;
 
 import androidx.annotation.NonNull;
 import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentTransaction;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
+import com.example.murom.HighlightFragment;
 import com.example.murom.MainActivity;
 import com.example.murom.R;
+import com.example.murom.State.ProfileState;
 
 import java.util.ArrayList;
 
@@ -93,6 +97,7 @@ public class HighlightBubbleAdapter extends RecyclerView.Adapter<HighlightBubble
         editHighlight.setOnClickListener(v -> callback.handleEditHighlight(data.highlightId, data.imageUrl, data.name, data.stories));
         deleteHighlight.setOnClickListener(v -> callback.handleDeleteHighlight(data.highlightId));
         viewHolder.container.setOnClickListener(v -> {
+            callback.handleViewHighlight(data.highlightId);
         });
 
 //        viewHolder.editHighlight.setOnClickListener(v -> callback.handleEditHighlight(data.highlightId, data.imageUrl, data.name, data.stories));

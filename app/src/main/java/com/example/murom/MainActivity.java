@@ -151,6 +151,11 @@ public class MainActivity extends AppCompatActivity {
             public void onArchiveClick() {
                 handleOnArchiveClick();
             }
+
+            @Override
+            public void onViewHighlight(String id) {
+                handleViewHighlight(id);
+            }
         });
     }
 
@@ -249,9 +254,8 @@ public class MainActivity extends AppCompatActivity {
         addFullscreenFragment(storyFragment);
     }
 
-    private void handleViewHighlight(String highlightId) {
-
-        storyFragment = new StoryFragment(() -> removeFullscreenFragment(storyFragment));
+    public void handleViewHighlight(String highlightId) {
+        storyFragment = new HighlightFragment(() -> removeFullscreenFragment(storyFragment), highlightId, ProfileState.getInstance().profile);
         addFullscreenFragment(storyFragment);
     }
 

@@ -65,6 +65,7 @@ public class ProfileFragment extends Fragment {
     public interface ProfileFragmentCallback {
         void onEditProfile();
         void onArchiveClick();
+        void onViewHighlight(String id);
     }
 
     ProfileFragmentCallback callback;
@@ -188,7 +189,6 @@ public class ProfileFragment extends Fragment {
                 .skipMemoryCache(true)
                 .into(avatar);
 
-
         highlightsRecycler.setLayoutManager(new LinearLayoutManager(getContext(),RecyclerView.HORIZONTAL, false));
         highlightsRecycler.addItemDecoration(new SpacingItemDecoration(40, 0 ));
 
@@ -200,7 +200,6 @@ public class ProfileFragment extends Fragment {
 
             @Override
             public void handleGetFail() {
-
             }
         });
 
@@ -231,7 +230,6 @@ public class ProfileFragment extends Fragment {
 
             @Override
             public void onPostCountRetrieved(int postCount) {
-
             }
         });
 
@@ -410,8 +408,8 @@ public class ProfileFragment extends Fragment {
             }
 
             @Override
-            public void handleViewHighlight(String uid) {
-                // view highlight
+            public void handleViewHighlight(String id) {
+                callback.onViewHighlight(id);
             }
         });
         highlightsRecycler.setAdapter(highlightBubbleAdapter);
@@ -531,9 +529,24 @@ public class ProfileFragment extends Fragment {
                 new Schema.HighlightStory(highlightId, profile.id, name, coverUrl, stories, Timestamp.now());
 
         ArrayList<Schema.HighlightStory> highlightStories = HighlightState.getInstance().highlights;
-        highlightStories.add(0, newHighlight);
-        HighlightState.getInstance().updateObservableHighlights(highlightStories);
+        boolean isEdit = false;
+        int editedPosition = 0;
+        for (int i = 0; i < highlightStories.size(); i++) {
+            if (highlightStories.get(i).id == newHighlight.id) {
+                isEdit = true;
+                break;
+            }
+        }
 
+        if (isEdit) {
+            highlightStories.get(editedPosition).storiesID = newHighlight.storiesID;
+            highlightStories.get(editedPosition).name = newHighlight.name;
+            highlightStories.get(editedPosition).coverUrl = newHighlight.coverUrl;
+            highlightStories.get(editedPosition).lastEditedTime = newHighlight.lastEditedTime;
+        } else {
+            highlightStories.add(0, newHighlight);
+        }
+        HighlightState.getInstance().updateObservableHighlights(highlightStories);
         Database.addHighlight(newHighlight);
     }
 
