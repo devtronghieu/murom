@@ -203,13 +203,7 @@ public class ProfileFragment extends Fragment {
             }
         });
 
-
-        highlighgtsDisposable = HighlightState.getInstance().getObservableHighlights().subscribe(highlightStories -> {
-            handleRenderHighlightBubbles(highlightStories);
-        });
-
         highlighgtsDisposable = HighlightState.getInstance().getObservableHighlights().subscribe(this::handleRenderHighlightBubbles);
-
 
         // My Posts
         postsRecycler = rootView.findViewById(R.id.profile_posts_recycler);
@@ -392,6 +386,16 @@ public class ProfileFragment extends Fragment {
 
             @Override
             public void handleEditHighlight(String highlightId, String url, String name, ArrayList<String> stories) {
+                Database.getStoriesByStoriesID(stories, new Database.GetStoriesByUIDCallback() {
+                    @Override
+                    public void onGetStoriesSuccess(ArrayList<Schema.Story> stories) {
+                        CurrentSelectedStoriesState.getInstance().updateObservableStoriesMap(stories);
+                    }
+
+                    @Override
+                    public void onGetStoriesFailure() {}
+                });
+
                 createBottomSheet(highlightId, url, name, stories);
                 bottomSheet.show();
                 bottomSheet.setOnCancelListener(v -> {
@@ -401,6 +405,7 @@ public class ProfileFragment extends Fragment {
 
             @Override
             public void handleAddHighlight() {
+                CurrentSelectedStoriesState.getInstance().updateObservableStoriesMap(new ArrayList<>());
                 createBottomSheet("", "", "", new ArrayList<>());
                 bottomSheet.show();
                 bottomSheet.setOnCancelListener(v -> {
@@ -417,6 +422,7 @@ public class ProfileFragment extends Fragment {
     }
 
     void handleRenderAllObservableStories(RecyclerView recyclerView) {
+        Log.d("--> im here", "handleRenderAllObservableStories: ");
         ArrayList<Schema.Story> highlightStories = CurrentSelectedStoriesState.getInstance().stories;
         ArrayList<Schema.Story> stories = StoryState.getInstance().stories;
 
@@ -427,8 +433,11 @@ public class ProfileFragment extends Fragment {
             for (int j = 0; j < highlightStories.size(); j++) {
                 if (highlightStories.get(j).id == stories.get(i).id) {
                     isChecked = true;
+                    break;
                 }
             }
+
+            Log.d("--> isChecked", stories.get(i).id + ": "+ isChecked);
 
             ArchiveStoryAdapter.ArchiveStoryModel storyData = new ArchiveStoryAdapter.ArchiveStoryModel(
                     stories.get(i).id,
@@ -550,5 +559,4 @@ public class ProfileFragment extends Fragment {
         HighlightState.getInstance().updateObservableHighlights(highlightStories);
         Database.addHighlight(newHighlight);
     }
-
 }
