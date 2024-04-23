@@ -113,6 +113,7 @@ public class NewsfeedFragment extends Fragment {
                                                 myStories = new ArrayList<>();
                                             }
                                             myStories.add(story);
+                                            activeStoryState.activeStoriesMap.put(uid, myStories);
                                             activeStoryState.updateObservableActiveStoriesMap(newStoriesMap);
 
                                             Toast.makeText(requireContext(), "Uploaded!", Toast.LENGTH_SHORT).show();
