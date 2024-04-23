@@ -112,7 +112,7 @@ public class StoryFragment extends Fragment {
                 if (currentStoryIndex < stories.size() - 1) {
                     currentStoryIndex++;
                 } else {
-                    currentStoryIndex = 0;
+                    callback.onClose();
                 }
 
                 hideDeleteStoryButton();
