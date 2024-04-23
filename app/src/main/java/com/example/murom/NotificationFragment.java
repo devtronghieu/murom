@@ -5,13 +5,15 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.TextView;
 
-import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.DialogFragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.murom.Firebase.Auth;
+import com.example.murom.Firebase.Database;
 import com.example.murom.Recycler.NotificationFollowAdapter;
 import com.example.murom.Recycler.NotificationRequestAdapter;
 
@@ -28,26 +30,50 @@ public class NotificationFragment extends DialogFragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
+        String uid = Auth.getUser().getUid();
         View rootView = inflater.inflate(R.layout.fragment_notification, container, false);
-        Log.d("-->", "create dialog");
+        TextView requestsText = rootView.findViewById(R.id.notification_request_text);
         RecyclerView requestRecyclerView = rootView.findViewById(R.id.notification_request_recycler);
         RecyclerView followRecyclerView = rootView.findViewById(R.id.notification_follow_recycler);
-
         requestRecyclerView.setLayoutManager(new LinearLayoutManager(requireContext()));
         followRecyclerView.setLayoutManager(new LinearLayoutManager(requireContext()));
 
-        ArrayList<NotificationRequestAdapter.NotificationRequestModel> requests = new ArrayList<>();
-        requests.add(new NotificationRequestAdapter.NotificationRequestModel("https://picsum.photos/200", "sdaada", "1 day"));
-        requests.add(new NotificationRequestAdapter.NotificationRequestModel("https://picsum.photos/200", "sdaeedada", "1 hour"));
+        Database.getRequestNotification(uid, new Database.RequestsCallback() {
+            @Override
+            public void onRequestsLoaded(ArrayList<NotificationRequestAdapter.NotificationRequestModel> requests) {
+                Log.d("-->", "request size" + requests.size());
+                if (requests.size() != 0) {
+                    Log.d("-->", "request size" + requests.size());
+                    requestRecyclerView.setAdapter(new NotificationRequestAdapter(requests));
+                    requestsText.setVisibility(View.VISIBLE);
+                }
+                else {
+                    requestsText.setVisibility(View.GONE);
+                    requestRecyclerView.setVisibility(View.GONE);
+                }
 
-        ArrayList<NotificationFollowAdapter.NotificationFollowModel> follows = new ArrayList<>();
-        follows.add(new NotificationFollowAdapter.NotificationFollowModel("https://picsum.photos/200", "ersdfd", "1 day"));
-        follows.add(new NotificationFollowAdapter.NotificationFollowModel("https://picsum.photos/200", "lftrv", "1 hour"));
-        Log.d("-->", "create temp data");
+            }
 
-        requestRecyclerView.setAdapter(new NotificationRequestAdapter(requests));
-        followRecyclerView.setAdapter(new NotificationFollowAdapter(follows));
-        Log.d("-->", "set adapter");
+            @Override
+            public void onRequestsLoadedFailure(String errorMessage) {
+                Log.d("-->", errorMessage);
+                requestsText.setVisibility(View.GONE);
+                requestRecyclerView.setVisibility(View.GONE);
+            }
+        });
+        Database.getFollowerNotification(uid, new Database.FollowsCallback() {
+            @Override
+            public void onFollowsLoaded(ArrayList<NotificationFollowAdapter.NotificationFollowModel> follows) {
+                Log.d("-->", "follow size: " + follows.size());
+                followRecyclerView.setAdapter(new NotificationFollowAdapter(follows));
+            }
+
+            @Override
+            public void onFollowsLoadedFailure(String errorMessage) {
+
+            }
+        });
+
         return rootView;
     }
 }

@@ -1,10 +1,13 @@
 package com.example.murom.Firebase;
 
 import android.net.Uri;
+import android.text.format.DateUtils;
 import android.util.Log;
 import android.widget.Button;
 
 import com.example.murom.R;
+import com.example.murom.Recycler.NotificationFollowAdapter;
+import com.example.murom.Recycler.NotificationRequestAdapter;
 import com.example.murom.Recycler.PostImageAdapter;
 import com.example.murom.State.ProfileState;
 import com.google.android.gms.tasks.OnSuccessListener;
@@ -26,6 +29,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class Database {
     private static final FirebaseFirestore db = FirebaseFirestore.getInstance();
@@ -1064,6 +1068,105 @@ public class Database {
     public interface CountFollowerCallback {
         void onCountFollowerSuccess(int count);
         void onCountFollowerFailure(String errorMessage);
+    }
+
+    public interface FollowsCallback {
+        void onFollowsLoaded(ArrayList<NotificationFollowAdapter.NotificationFollowModel> follows);
+        void onFollowsLoadedFailure(String errorMessage);
+    }
+
+    public static void getFollowerNotification(String userId, FollowsCallback callback) {
+        followCollection
+                .whereEqualTo("following_user_id", userId)
+                .get()
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        QuerySnapshot snapshot = task.getResult();
+                        if (snapshot != null) {
+                            ArrayList<NotificationFollowAdapter.NotificationFollowModel> follows = new ArrayList<>();
+                            AtomicInteger counter = new AtomicInteger(snapshot.size());
+                            for (QueryDocumentSnapshot document : snapshot) {
+                                String followUserId = document.getString("user_id");
+                                Timestamp timestamp = document.getTimestamp("datetime_added");
+                                Date date = timestamp.toDate();
+                                long milliseconds = date.getTime();
+                                String relativeTime = getRelativeTime(milliseconds);
+                                getUser(followUserId, new GetUserCallback() {
+                                    @Override
+                                    public void onGetUserSuccess(Schema.User user) {
+                                        follows.add(new NotificationFollowAdapter.NotificationFollowModel(user.profilePicture, user.username, relativeTime));
+                                        if (counter.decrementAndGet() == 0) {
+                                            callback.onFollowsLoaded(follows);
+                                        }
+                                    }
+
+                                    @Override
+                                    public void onGetUserFailure() {
+                                        if (counter.decrementAndGet() == 0) {
+                                            callback.onFollowsLoaded(follows);
+                                        }
+                                    }
+                                });
+                            }
+                        } else {
+                            callback.onFollowsLoadedFailure("Snapshot is null");
+                        }
+                    } else {
+                        callback.onFollowsLoadedFailure(task.getException().getMessage());
+                    }
+                });
+    }
+
+    public interface RequestsCallback {
+        void onRequestsLoaded(ArrayList<NotificationRequestAdapter.NotificationRequestModel> requests);
+        void onRequestsLoadedFailure(String errorMessage);
+    }
+
+    public static void getRequestNotification(String userId, RequestsCallback callback) {
+        followRequestCollection
+                .whereEqualTo("follow_user_id", userId)
+                .get()
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        QuerySnapshot snapshot = task.getResult();
+                        if (snapshot != null) {
+                            ArrayList<NotificationRequestAdapter.NotificationRequestModel> requests = new ArrayList<>();
+                            AtomicInteger counter = new AtomicInteger(snapshot.size());
+                            for (QueryDocumentSnapshot document : snapshot) {
+                                String followUserId = document.getString("user_id");
+                                Timestamp timestamp = document.getTimestamp("datetime_added");
+                                Date date = timestamp.toDate();
+                                long milliseconds = date.getTime();
+                                String relativeTime = getRelativeTime(milliseconds);
+                                getUser(followUserId, new GetUserCallback() {
+                                    @Override
+                                    public void onGetUserSuccess(Schema.User user) {
+                                        requests.add(new NotificationRequestAdapter.NotificationRequestModel(user.profilePicture, user.username, relativeTime));
+                                        if (counter.decrementAndGet() == 0) {
+                                            callback.onRequestsLoaded(requests);
+                                        }
+                                    }
+
+                                    @Override
+                                    public void onGetUserFailure() {
+                                        if (counter.decrementAndGet() == 0) {
+                                            callback.onRequestsLoaded(requests);
+                                        }
+                                    }
+                                });
+                            }
+                        } else {
+                            callback.onRequestsLoadedFailure("Snapshot is null");
+                        }
+                    } else {
+                        callback.onRequestsLoadedFailure(task.getException().getMessage());
+                    }
+                });
+    }
+
+    private static String getRelativeTime(long timestamp) {
+        long currentTime = System.currentTimeMillis();
+        return DateUtils.getRelativeTimeSpanString(timestamp, currentTime, DateUtils.MINUTE_IN_MILLIS).toString();
     }
 
     public interface CreateCommentCallback {
