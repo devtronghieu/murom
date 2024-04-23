@@ -2,6 +2,7 @@
 <androidx.constraintlayout.widget.ConstraintLayout
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/highlight_bubble_container"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
     >
@@ -57,36 +58,35 @@
 
     </LinearLayout>
 
+<!--    <LinearLayout-->
+<!--        android:id="@+id/buttons_container"-->
+<!--        android:layout_width="wrap_content"-->
+<!--        android:layout_height="wrap_content"-->
+<!--        android:layout_marginTop="28dp"-->
+<!--        android:background="@color/white"-->
+<!--        android:orientation="vertical"-->
+<!--        android:elevation="20dp"-->
+<!--        app:layout_constraintEnd_toEndOf="parent"-->
+<!--        app:layout_constraintStart_toStartOf="parent"-->
+<!--        app:layout_constraintTop_toTopOf="parent"-->
+<!--        android:visibility="gone">-->
 
-    <LinearLayout
-        android:id="@+id/buttons_container"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="28dp"
-        android:background="@color/white"
-        android:orientation="vertical"
-        android:elevation="20dp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        android:visibility="gone">
+<!--        <Button-->
+<!--            android:id="@+id/edit_highlight_btn"-->
+<!--            android:layout_width="wrap_content"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:backgroundTint="@color/transparent"-->
+<!--            android:text="Edit"-->
+<!--            android:textColor="@color/black" />-->
 
-        <Button
-            android:id="@+id/edit_highlight_btn"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:backgroundTint="@color/transparent"
-            android:text="Edit"
-            android:textColor="@color/black" />
+<!--        <Button-->
+<!--            android:id="@+id/delete_highlight_btn"-->
+<!--            android:layout_width="wrap_content"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:backgroundTint="@color/transparent"-->
+<!--            android:text="Delete"-->
+<!--            android:textColor="@color/black" />-->
 
-        <Button
-            android:id="@+id/delete_highlight_btn"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:backgroundTint="@color/transparent"
-            android:text="Delete"
-            android:textColor="@color/black" />
-
-    </LinearLayout>
+<!--    </LinearLayout>-->
 
 </androidx.constraintlayout.widget.ConstraintLayout>

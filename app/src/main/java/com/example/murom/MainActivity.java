@@ -248,6 +248,12 @@ public class MainActivity extends AppCompatActivity {
         addFullscreenFragment(storyFragment);
     }
 
+    private void handleViewHighlight(String highlightId) {
+
+        storyFragment = new StoryFragment(() -> removeFullscreenFragment(storyFragment));
+        addFullscreenFragment(storyFragment);
+    }
+
     private void handleEditProfile(){
         editProfileFragment = new EditProfileFragment(() -> removeFullscreenFragment(editProfileFragment));
         addFullscreenFragment(editProfileFragment);
