@@ -66,6 +66,7 @@ public class ProfileFragment extends Fragment {
         void onEditProfile();
         void onArchiveClick();
         void onViewHighlight(String id);
+        void onPostClick(String postId);
     }
 
     ProfileFragmentCallback callback;
@@ -247,11 +248,19 @@ public class ProfileFragment extends Fragment {
 
         myPosts.forEach(post -> {
             if (post.isArchived) return;
-            postsProfileModel.add(new PostsProfileAdapter.PostsProfileModel(post.url));
+            postsProfileModel.add(new PostsProfileAdapter.PostsProfileModel(post.id, post.url));
         });
 
         post_num.setText(String.valueOf(postsProfileModel.size()));
         PostsProfileAdapter postsProfileAdapter = new PostsProfileAdapter(postsProfileModel);
+        PostsProfileAdapter postsProfileAdapter = new PostsProfileAdapter(postsProfileModel, new PostsProfileAdapter.OnPostItemClickListener() {
+            @Override
+            public void onPostClick(String postId) {
+                Log.d("-------------------------------", postId);
+                callback.onPostClick(postId);
+
+            }
+        });
         postsRecycler.setAdapter(postsProfileAdapter);
     }
 

@@ -127,10 +127,10 @@ public class ArchiveFragment extends Fragment {
 
         myPosts.forEach(post -> {
             if (!post.isArchived) return;
-            archivePostModel.add(new PostsProfileAdapter.PostsProfileModel(post.url));
+            archivePostModel.add(new PostsProfileAdapter.PostsProfileModel(post.id, post.url));
         });
 
-        PostsProfileAdapter postsProfileAdapter = new PostsProfileAdapter(archivePostModel);
+        PostsProfileAdapter postsProfileAdapter = new PostsProfileAdapter(archivePostModel, null);
         postsRecycler.setAdapter(postsProfileAdapter);
     }
 

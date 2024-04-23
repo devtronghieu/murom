@@ -51,6 +51,7 @@ public class MainActivity extends AppCompatActivity {
     Fragment editProfileFragment;
     Fragment archiveFragment;
     Fragment otherProfileFragment;
+    Fragment detailPostFragment;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -146,7 +147,6 @@ public class MainActivity extends AppCompatActivity {
             public void onEditProfile() {
                 handleEditProfile();
             }
-
             @Override
             public void onArchiveClick() {
                 handleOnArchiveClick();
@@ -156,7 +156,10 @@ public class MainActivity extends AppCompatActivity {
             public void onViewHighlight(String id) {
                 handleViewHighlight(id);
             }
+            @Override
+            public void onPostClick(String postId) {handleOnPostClick(postId);}
         });
+
     }
 
     private void setupBottomNavigation() {
@@ -270,9 +273,10 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void handleOnSearchUserClick(String uid) {
-        otherProfileFragment = OtherProfileFragment.newInstance(uid);
+        otherProfileFragment = OtherProfileFragment.newInstance(uid, this::handleOnPostClick);
         replaceFragmentWithBackStack(otherProfileFragment);
     }
+
     private void replaceFragmentWithBackStack(Fragment fragment) {
         fullscreenFragmentContainer.setVisibility(View.GONE);
         toggleBottomMenu(true);
@@ -282,4 +286,11 @@ public class MainActivity extends AppCompatActivity {
         fragmentTransaction.replace(R.id.main_layout_fragment, fragment);
         fragmentTransaction.commit();
     }
+
+    private void handleOnPostClick(String postId){
+        detailPostFragment = DetailPostFragment.newInstance(postId);
+        replaceFragmentWithBackStack(detailPostFragment);
+    }
+
+
 }
