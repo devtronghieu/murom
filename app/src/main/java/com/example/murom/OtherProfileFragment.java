@@ -1,6 +1,7 @@
 package com.example.murom;
 
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -40,7 +41,7 @@ public class OtherProfileFragment extends Fragment {
     TextView username;
     TextView bio;
     public interface OtherProfileFragmentCallback {
-
+        void onPostClick(String postId);
     }
     OtherProfileFragmentCallback callback;
     public OtherProfileFragment(OtherProfileFragmentCallback callback) {
@@ -50,8 +51,8 @@ public class OtherProfileFragment extends Fragment {
         });
     }
 
-    public static OtherProfileFragment newInstance(String userId) {
-        OtherProfileFragment fragment = new OtherProfileFragment(null);
+    public static OtherProfileFragment newInstance(String userId, OtherProfileFragmentCallback callback) {
+        OtherProfileFragment fragment = new OtherProfileFragment(callback);
         Bundle args = new Bundle();
         args.putString("userId", userId);
         fragment.setArguments(args);
@@ -173,10 +174,16 @@ public class OtherProfileFragment extends Fragment {
 
                         posts.forEach(post -> {
                             if (post.isArchived) return;
-                            postsProfileModel.add(new PostsProfileAdapter.PostsProfileModel(post.url));
+                            postsProfileModel.add(new PostsProfileAdapter.PostsProfileModel(post.id, post.url));
                         });
 
-                        PostsProfileAdapter postsProfileAdapter = new PostsProfileAdapter(postsProfileModel);
+                        PostsProfileAdapter postsProfileAdapter = new PostsProfileAdapter(postsProfileModel, new PostsProfileAdapter.OnPostItemClickListener() {
+                            @Override
+                            public void onPostClick(String postId) {
+                                callback.onPostClick(postId);
+                                Log.d("test", postId);
+                            }
+                        });
                         postsRecycler.setAdapter(postsProfileAdapter);
                     }
 
