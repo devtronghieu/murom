@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.LinearGradient;
 import android.graphics.Shader;
+import android.net.Uri;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
@@ -24,12 +25,14 @@ import androidx.core.content.ContextCompat;
 
 import com.example.murom.Firebase.Auth;
 import com.example.murom.Firebase.Database;
+import com.example.murom.Firebase.Storage;
 import com.google.android.gms.auth.api.identity.BeginSignInRequest;
 import com.google.android.gms.auth.api.identity.Identity;
 import com.google.android.gms.auth.api.identity.SignInClient;
 import com.google.android.gms.auth.api.identity.SignInCredential;
 import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.android.gms.tasks.Tasks;
 import com.google.android.material.textfield.TextInputEditText;
@@ -225,14 +228,24 @@ public class LoginActivity extends AppCompatActivity {
                 userDefaultInfo.put("email", userEmail);
                 userDefaultInfo.put("password", "");
                 userDefaultInfo.put("username", uniqueUsername);
-                userDocRef.set(userDefaultInfo)
-                        .addOnSuccessListener(aVoid -> {
-                            Log.d("-->", "Document successfully created!");
-                            navigateToMain();
-                        })
-                        .addOnFailureListener(e -> {
-                            Log.d("-->", "Failed to create new user document: " + e.getMessage());
-                        });
+                userDefaultInfo.put("status","Public");
+                String storagePath = "avatar/"+ userEmail;
+                Uri defaultImageUri = Uri.parse("android.resource://com.example.murom/" + R.drawable.default_avatar);
+                Storage.uploadAvatarAsset(defaultImageUri, storagePath, new OnSuccessListener<Uri>() {
+                    @Override
+                    public void onSuccess(Uri uri) {
+                        userDefaultInfo.put("profile_picture", uri.toString());
+                        userDocRef.set(userDefaultInfo)
+                                .addOnSuccessListener(aVoid -> {
+                                    Log.d("-->", "Document successfully created!");
+                                    navigateToMain();
+                                })
+                                .addOnFailureListener(e -> {
+                                    Log.d("-->", "Failed to create new user document: " + e.getMessage());
+                                });
+                    }
+                });
+
             }
         });
     }

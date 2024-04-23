@@ -4,6 +4,7 @@ import android.net.Uri;
 import android.util.Log;
 import android.widget.Button;
 
+import com.example.murom.DetailPostFragment;
 import com.example.murom.R;
 import com.example.murom.Recycler.PostImageAdapter;
 import com.example.murom.State.ProfileState;
@@ -521,6 +522,51 @@ public class Database {
                 .addOnFailureListener(e -> callback.onArchivePostFailure());
     }
 
+    public interface GetPostByIDCallback{
+        void onGetPostSuccess(Schema.Post post);
+        void onGetPostFailure();
+    }
+
+    public  static void getPostByID(String postId, GetPostByIDCallback callback){
+        DocumentReference docRef = postCollection.document(postId);
+        docRef.get().addOnCompleteListener(task -> {
+            if (task.isSuccessful()) {
+                DocumentSnapshot document = task.getResult();
+                if (document.exists()) {
+                    Schema.Post post = new Schema.Post(
+                            "",
+                            "",
+                            "",
+                            "",
+                            "",
+                            new ArrayList<>(),
+                            false,
+                            Timestamp.now()
+                    );
+                    post.createdAt = document.getTimestamp("created_at");
+                    post.userId = document.getString("user_id");
+                    post.url = document.getString("url");
+                    post.type = document.getString("type");
+                    ArrayList<String> lovedByUIDs = (ArrayList<String>)document.get("loved_by");
+                    if (lovedByUIDs != null) {
+                        post.lovedByUIDs = lovedByUIDs;
+                    }
+                    post.caption = document.getString("caption");
+                    post.isArchived = Boolean.TRUE.equals(document.getBoolean("is_archived"));
+                    callback.onGetPostSuccess(post);
+                    Log.d("Firestore", "Document data: " + document.getData());
+                } else {
+                    // Document does not exist
+                    callback.onGetPostFailure();
+                    Log.d("Firestore", "No such document");
+                }
+            } else {
+                // Error getting document
+                callback.onGetPostFailure();
+                Log.e("Firestore", "Error getting document", task.getException());
+            }
+        });
+    }
     public interface GetPostsByUIDCallback {
         void onGetPostsSuccess(ArrayList<Schema.Post> posts);
         void onGetPostsFailure();
