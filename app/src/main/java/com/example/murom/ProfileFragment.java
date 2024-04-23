@@ -35,6 +35,7 @@ import com.example.murom.State.HighlightState;
 import com.example.murom.State.PostState;
 import com.example.murom.State.ProfileState;
 import com.example.murom.State.StoryState;
+import com.google.android.gms.common.internal.Objects;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.example.murom.Firebase.Auth;
 import com.google.firebase.Timestamp;
@@ -252,7 +253,6 @@ public class ProfileFragment extends Fragment {
         });
 
         post_num.setText(String.valueOf(postsProfileModel.size()));
-        PostsProfileAdapter postsProfileAdapter = new PostsProfileAdapter(postsProfileModel);
         PostsProfileAdapter postsProfileAdapter = new PostsProfileAdapter(postsProfileModel, new PostsProfileAdapter.OnPostItemClickListener() {
             @Override
             public void onPostClick(String postId) {
@@ -312,10 +312,10 @@ public class ProfileFragment extends Fragment {
         });
 
         allStoriesDisposable = StoryState.getInstance().getObservableStoriesMap().subscribe(stories -> {
-            handleRenderAllObservableStories(restStoriesRecycler);
+            handleRenderAllObservableStories(restStoriesRecycler, storiesID);
         });
         restStoriesDisposable = CurrentSelectedStoriesState.getInstance().getObservableStoriesMap().subscribe(stories -> {
-            handleRenderAllObservableStories(restStoriesRecycler);
+            handleRenderAllObservableStories(restStoriesRecycler, storiesID);
         });
         selectedStoriesDisposable = CurrentSelectedStoriesState.getInstance().getObservableStoriesMap().subscribe(stories -> {
             handleRenderSelectedObservableStories(stories, selectedStoriesRecycler);
@@ -430,20 +430,18 @@ public class ProfileFragment extends Fragment {
         highlightsRecycler.setAdapter(highlightBubbleAdapter);
     }
 
-    void handleRenderAllObservableStories(RecyclerView recyclerView) {
-        Log.d("--> im here", "handleRenderAllObservableStories: ");
-        ArrayList<Schema.Story> highlightStories = CurrentSelectedStoriesState.getInstance().stories;
+    void handleRenderAllObservableStories(RecyclerView recyclerView, ArrayList<String> ids) {
         ArrayList<Schema.Story> stories = StoryState.getInstance().stories;
 
         ArrayList<ArchiveStoryAdapter.ArchiveStoryModel> storyModel = new ArrayList<ArchiveStoryAdapter.ArchiveStoryModel>();
 
         for (int i = 0; i < stories.size(); i++) {
             boolean isChecked = false;
-            for (int j = 0; j < highlightStories.size(); j++) {
-                if (highlightStories.get(j).id == stories.get(i).id) {
+            for (int j = 0; j < ids.size(); j++) {
+                if (Objects.equal(ids.get(j), stories.get(i).id)) {
                     isChecked = true;
-                    break;
                 }
+                Log.d("--> isChecked", stories.get(i).id + ", " + ids.get(j)+ ": "+ isChecked);
             }
 
             Log.d("--> isChecked", stories.get(i).id + ": "+ isChecked);
