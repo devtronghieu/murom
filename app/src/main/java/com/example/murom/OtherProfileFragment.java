@@ -117,8 +117,6 @@ public class OtherProfileFragment extends Fragment {
                         .skipMemoryCache(true)
                         .into(avatar);
                 Database.isFollowing(userId, followBtn, isFollowing -> {
-                    ProfileState profileState = ProfileState.getInstance();
-
                     if (!isFollowing) {
                         if (Objects.equals(otherProfileState.profile.status, "Private")) {
                             posts_label.setVisibility(View.GONE);
@@ -136,9 +134,6 @@ public class OtherProfileFragment extends Fragment {
                             private_text.setVisibility(View.GONE);
                             private_icon.setVisibility(View.GONE);
                         }
-
-                        profileState.followerProfileMap.remove(user.id);
-                        profileState.followerIDs.remove(user.id);
                     }
                     else {
                         posts_label.setVisibility(View.VISIBLE);
@@ -147,9 +142,17 @@ public class OtherProfileFragment extends Fragment {
                         highlightsRecycler.setVisibility(View.VISIBLE);
                         private_text.setVisibility(View.GONE);
                         private_icon.setVisibility(View.GONE);
+                    }
 
+                    ProfileState profileState = ProfileState.getInstance();
+                    if (!isFollowing) {
+                        profileState.followerProfileMap.remove(user.id);
+                        profileState.followerIDs.remove(user.id);
+                    } else {
                         profileState.followerProfileMap.put(user.id, user);
-                        profileState.followerIDs.add(user.id);
+                        if (!profileState.followerIDs.contains(user.id)) {
+                            profileState.followerIDs.add(user.id);
+                        }
                     }
                 });
 

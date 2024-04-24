@@ -17,6 +17,7 @@ import com.example.murom.Firebase.Auth;
 import com.example.murom.Firebase.Database;
 import com.example.murom.Firebase.Schema;
 import com.example.murom.R;
+import com.example.murom.State.ProfileState;
 
 import java.util.ArrayList;
 
@@ -70,9 +71,33 @@ public class SearchUserAdapter extends RecyclerView.Adapter<SearchUserAdapter.Vi
             viewHolder.btn_follow.setVisibility(View.GONE);
         }
         Glide.with(this.context).load(data.avatarUrl).centerCrop().into(viewHolder.avatar);
-        Database.isFollowing(data.userId, viewHolder.btn_follow, null);
+
+        Database.getUser(data.userId, new Database.GetUserCallback() {
+            @Override
+            public void onGetUserSuccess(Schema.User user) {
+                Database.isFollowing(data.userId, viewHolder.btn_follow, isFollowing -> {
+                    ProfileState profileState = ProfileState.getInstance();
+                    if (!isFollowing) {
+                        profileState.followerProfileMap.remove(user.id);
+                        profileState.followerIDs.remove(user.id);
+                    } else {
+                        profileState.followerProfileMap.put(user.id, user);
+                        if (!profileState.followerIDs.contains(user.id)) {
+                            profileState.followerIDs.add(user.id);
+                        }
+                    }
+                });
+            }
+
+            @Override
+            public void onGetUserFailure() {
+
+            }
+        });
+
+
         viewHolder.itemView.setOnClickListener(v -> {
-            int adapterPosition = viewHolder.getAdapterPosition();
+            int adapterPosition = viewHolder.getBindingAdapterPosition();
             if (adapterPosition != RecyclerView.NO_POSITION && listener != null) {
                 listener.onSearchUserItemClick(localDataSet.get(position).userId);
             }
