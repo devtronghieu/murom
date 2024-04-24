@@ -10,6 +10,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -57,11 +58,11 @@ public class ProfileFragment extends Fragment {
     TextView post, post_num, follower, follower_num, following, following_num, username, bio, photo;
     ImageButton burgerBtn;
     Button editBtn;
-    Disposable restStoriesDisposable, allStoriesDisposable, selectedStoriesDisposable, highlighgtsDisposable;
+    Disposable restStoriesDisposable, allStoriesDisposable, selectedStoriesDisposable, highlighgtsDisposable, myPostsDisposable;
     String currentHighlightId = "";
     String currentHighlightCoverUrl;
     ActivityResultLauncher<PickVisualMediaRequest> launcher;
-    Disposable myPostsDisposable;
+    ProgressBar progressBar;
 
     public interface ProfileFragmentCallback {
         void onEditProfile();
@@ -152,6 +153,7 @@ public class ProfileFragment extends Fragment {
         picture = rootView.findViewById(R.id.profile_imageView);
         photo = rootView.findViewById(R.id.profile_phototext);
         highlightsRecycler = rootView.findViewById(R.id.highlights_recycler);
+
         bottomSheet = new BottomSheetDialog(this.getContext());
 
         editBtn.setOnClickListener(v -> callback.onEditProfile());
@@ -276,6 +278,7 @@ public class ProfileFragment extends Fragment {
         Button allBtn = view.findViewById(R.id.all_stories_btn);
         Button editCoverBtn = view.findViewById(R.id.edit_cover_btn);
         Button saveHighlightBtn = view.findViewById(R.id.save_highlight_btn);
+        progressBar = view.findViewById(R.id.highlight_loading);
 
         editName.setText(name);
         Glide.with(this).load(url).into(cover);
@@ -305,17 +308,15 @@ public class ProfileFragment extends Fragment {
             });
 
             saveChanges(currentHighlightId, finalName, currentHighlightCoverUrl, finalStories);
-
             currentHighlightCoverUrl = "";
             currentHighlightId = "";
-            destroyBottomSheet();
         });
 
         allStoriesDisposable = StoryState.getInstance().getObservableStoriesMap().subscribe(stories -> {
-            handleRenderAllObservableStories(restStoriesRecycler, storiesID);
+            handleRenderAllObservableStories(restStoriesRecycler);
         });
         restStoriesDisposable = CurrentSelectedStoriesState.getInstance().getObservableStoriesMap().subscribe(stories -> {
-            handleRenderAllObservableStories(restStoriesRecycler, storiesID);
+            handleRenderAllObservableStories(restStoriesRecycler);
         });
         selectedStoriesDisposable = CurrentSelectedStoriesState.getInstance().getObservableStoriesMap().subscribe(stories -> {
             handleRenderSelectedObservableStories(stories, selectedStoriesRecycler);
@@ -430,10 +431,13 @@ public class ProfileFragment extends Fragment {
         highlightsRecycler.setAdapter(highlightBubbleAdapter);
     }
 
-    void handleRenderAllObservableStories(RecyclerView recyclerView, ArrayList<String> ids) {
+    void handleRenderAllObservableStories(RecyclerView recyclerView) {
         ArrayList<Schema.Story> stories = StoryState.getInstance().stories;
-
         ArrayList<ArchiveStoryAdapter.ArchiveStoryModel> storyModel = new ArrayList<ArchiveStoryAdapter.ArchiveStoryModel>();
+        ArrayList<String> ids = new ArrayList<>();
+        CurrentSelectedStoriesState.getInstance().stories.forEach(story -> {
+            ids.add(story.id);
+        });
 
         for (int i = 0; i < stories.size(); i++) {
             boolean isChecked = false;
@@ -441,10 +445,7 @@ public class ProfileFragment extends Fragment {
                 if (Objects.equal(ids.get(j), stories.get(i).id)) {
                     isChecked = true;
                 }
-                Log.d("--> isChecked", stories.get(i).id + ", " + ids.get(j)+ ": "+ isChecked);
             }
-
-            Log.d("--> isChecked", stories.get(i).id + ": "+ isChecked);
 
             ArchiveStoryAdapter.ArchiveStoryModel storyData = new ArchiveStoryAdapter.ArchiveStoryModel(
                     stories.get(i).id,
@@ -453,7 +454,6 @@ public class ProfileFragment extends Fragment {
                     isChecked
             );
 
-            Log.d("--> all", "handleRenderAllObservableStories: " + stories.get(i).id);
             storyModel.add(storyData);
         }
 
@@ -465,10 +465,6 @@ public class ProfileFragment extends Fragment {
 
                 highlightStories.add(newStory);
                 CurrentSelectedStoriesState.getInstance().updateObservableStoriesMap(highlightStories);
-
-                for (int i = 0; i < highlightStories.size(); i++) {
-                    Log.d("--> add", "handleSelectStory: " + highlightStories.get(i));
-                }
             }
 
             @Override
@@ -476,7 +472,7 @@ public class ProfileFragment extends Fragment {
                 ArrayList<Schema.Story> highlightStories = CurrentSelectedStoriesState.getInstance().stories;
 
                 for (int i = 0; i < highlightStories.size(); i++) {
-                    if (highlightStories.get(i).id == id) {
+                    if (Objects.equal(highlightStories.get(i).id, id)) {
                         if (highlightStories.size() == 1) {
                             highlightStories = new ArrayList<>();
                         } else {
@@ -485,9 +481,7 @@ public class ProfileFragment extends Fragment {
                     }
                 }
 
-                Log.d("--> unselect", "handleUnselectStory: " + highlightStories.size());
                 CurrentSelectedStoriesState.getInstance().updateObservableStoriesMap(highlightStories);
-                Log.d("--> unselect", "handleUnselectStory: 5");
             }
         });
         recyclerView.setAdapter(storyAdapter);
@@ -525,10 +519,7 @@ public class ProfileFragment extends Fragment {
                     }
                 }
 
-                Log.d("--> unselect", "handleUnselectStory: " + highlightStories.size());
                 CurrentSelectedStoriesState.getInstance().updateObservableStoriesMap(highlightStories);
-                Log.d("--> unselect", "handleUnselectStory: 5");
-
             }
         });
         recyclerView.setAdapter(storyAdapter);
@@ -564,6 +555,24 @@ public class ProfileFragment extends Fragment {
             highlightStories.add(0, newHighlight);
         }
         HighlightState.getInstance().updateObservableHighlights(highlightStories);
-        Database.addHighlight(newHighlight);
+        progressBar.setVisibility(View.VISIBLE);
+        Database.addHighlight(newHighlight, new Database.AddHighlightCallback() {
+            @Override
+            public void onAddHighlightSuccess() {
+                Database.getHighlightsByUID(profile.id, new Database.GetHighlightsCallback() {
+                    @Override
+                    public void handleGetSuccessfully(ArrayList<Schema.HighlightStory> highlights) {
+                        HighlightState.getInstance().updateObservableHighlights(highlights);
+                        destroyBottomSheet();
+                    }
+
+                    @Override
+                    public void handleGetFail() {}
+                });
+            }
+
+            @Override
+            public void onAddHighlightFailed() {}
+        });
     }
 }

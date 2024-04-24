@@ -221,7 +221,17 @@ public class HighlightFragment extends Fragment {
 
         CurrentSelectedStoriesState.getInstance().updateObservableStoriesMap(stories);
         HighlightState.getInstance().updateObservableHighlights(highlightStories);
-        Database.addHighlight(curHighlight);
+        Database.addHighlight(curHighlight, new Database.AddHighlightCallback() {
+            @Override
+            public void onAddHighlightSuccess() {
+                Toast.makeText(requireContext(), "Add highlights successfully", Toast.LENGTH_SHORT).show();
+            }
+
+            @Override
+            public void onAddHighlightFailed() {
+
+            }
+        });
         hideDeleteStoryButton();
     }
 }

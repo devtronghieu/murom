@@ -77,10 +77,8 @@ public class ArchiveStoryAdapter extends RecyclerView.Adapter<ArchiveStoryAdapte
             viewHolder.checkBox.setOnCheckedChangeListener((buttonView, isChecked) -> {
                 if (isChecked) {
                     callback.handleSelectStory(data.id);
-                    viewHolder.checkBox.setChecked(isChecked);
                 } else {
                     callback.handleUnselectStory(data.id);
-                    viewHolder.checkBox.setChecked(isChecked);
                 }
             });
         }

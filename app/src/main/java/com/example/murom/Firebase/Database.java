@@ -160,7 +160,12 @@ public class Database {
         void onGetStoriesFailure();
     }
 
-    public static void addHighlight(Schema.HighlightStory highlightStory) {
+    public interface AddHighlightCallback {
+        void onAddHighlightSuccess();
+        void onAddHighlightFailed();
+    }
+
+    public static void addHighlight(Schema.HighlightStory highlightStory, AddHighlightCallback callback) {
         Map<String, Object> documentData = new HashMap<>();
         documentData.put("user_id", highlightStory.userId);
         documentData.put("name", highlightStory.name);
@@ -171,8 +176,8 @@ public class Database {
         highlightCollection
                 .document(highlightStory.id)
                 .set(documentData)
-                .addOnSuccessListener(documentReference -> Log.d("--> add highlight", "addHighlight: " + highlightStory.id))
-                .addOnFailureListener(e -> Log.d("--> add highlight", "addHighlight: " + e));
+                .addOnSuccessListener(documentReference -> callback.onAddHighlightSuccess())
+                .addOnFailureListener(e -> callback.onAddHighlightFailed());
     }
     public static void deleteHighlight(String highlightId) {
         highlightCollection.document(highlightId).delete()
