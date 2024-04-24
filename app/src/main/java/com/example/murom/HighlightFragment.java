@@ -21,7 +21,10 @@ import com.example.murom.Firebase.Database;
 import com.example.murom.Firebase.Schema;
 import com.example.murom.Firebase.Storage;
 import com.example.murom.State.ActiveStoryState;
+import com.example.murom.State.CurrentSelectedStoriesState;
+import com.example.murom.State.HighlightState;
 import com.example.murom.State.ProfileState;
+import com.google.firebase.Timestamp;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -30,29 +33,39 @@ import java.util.Objects;
 import io.reactivex.rxjava3.disposables.Disposable;
 
 
-public class StoryFragment extends Fragment {
-    public interface  StoryFragmentCallback {
+public class HighlightFragment extends Fragment {
+    public interface HighlightFragmentCallback {
         void onClose();
     }
 
     Disposable storyOwnerDisposable;
-
     ProgressBar progressBar;
     ImageView imageView;
     VideoView videoView;
     ConstraintLayout touchSurface;
     ImageButton editButton;
     Button deleteButton;
-
     ArrayList<Schema.Story> stories;
-    StoryFragmentCallback callback;
+    HighlightFragmentCallback callback;
+    String highlightId;
+    Schema.User user;
 
+    Schema.HighlightStory curHighlight = new Schema.HighlightStory(
+            "",
+            "",
+            "",
+            "",
+            new ArrayList<>(),
+            Timestamp.now()
+    );
     boolean isDeleteButtonShowing = false;
 
     int currentStoryIndex = 0;
 
-    public StoryFragment(StoryFragmentCallback callback) {
+    public HighlightFragment(HighlightFragmentCallback callback, String highlightId, Schema.User user) {
         this.callback = callback;
+        this.highlightId = highlightId;
+        this.user = user;
     }
 
     @Override
@@ -84,27 +97,46 @@ public class StoryFragment extends Fragment {
         });
 
         deleteButton = rootView.findViewById(R.id.story_fragment_delete_button);
+        deleteButton.setText("Remove from highlight");
         deleteButton.setOnClickListener(v -> {
             handleDeleteStory();
         });
 
-        ActiveStoryState activeStoryState = ActiveStoryState.getInstance();
+        ArrayList<Schema.HighlightStory> highlights = HighlightState.getInstance().highlights;
 
-        storyOwnerDisposable = activeStoryState.getObservableActiveStoryOwner().subscribe(profile -> {
-            stories = activeStoryState.activeStoriesMap.get(profile.id);
+        for (int i = 0; i < highlights.size(); i++) {
+            if (highlights.get(i).id == highlightId) {
+                curHighlight = highlights.get(i);
+                break;
+            }
+        }
+
+        Database.getStoriesByStoriesID(curHighlight.storiesID, new Database.GetStoriesByUIDCallback() {
+            @Override
+            public void onGetStoriesSuccess(ArrayList<Schema.Story> result) {
+                CurrentSelectedStoriesState.getInstance().updateObservableStoriesMap(result);
+            }
+
+            @Override
+            public void onGetStoriesFailure() {}
+        });
+
+
+        storyOwnerDisposable = CurrentSelectedStoriesState.getInstance().getObservableStoriesMap().subscribe(highlightStories -> {
+            stories = highlightStories;
 
             if (stories == null || stories.size() == 0) {
-                Toast.makeText(requireContext(), "No stories found!", Toast.LENGTH_SHORT).show();
+                Toast.makeText(requireContext(), "loading!", Toast.LENGTH_SHORT).show();
                 return;
             }
 
-            if (Objects.equals(profile.id, ProfileState.getInstance().profile.id)) {
+            if (Objects.equals(user.id, ProfileState.getInstance().profile.id)) {
                 editButton.setVisibility(View.VISIBLE);
             }
 
-            username.setText(profile.username);
+            username.setText(user.username);
             Glide.with(this)
-                    .load(profile.profilePicture)
+                    .load(user.profilePicture)
                     .centerCrop()
                     .into(avatar);
 
@@ -173,56 +205,23 @@ public class StoryFragment extends Fragment {
     void handleDeleteStory() {
         deleteButton.setEnabled(false);
         deleteButton.setBackgroundColor(getResources().getColor(R.color.error_200, null));
-        deleteButton.setText(R.string.deleting);
+        deleteButton.setText("Removing...");
 
         Schema.Story story = stories.get(currentStoryIndex);
-        Database.deleteStory(story.id, new Database.DeleteStoryCallback() {
-            @Override
-            public void onDeleteStorySuccess(String storyID) {
-                ActiveStoryState instance = ActiveStoryState.getInstance();
-                HashMap<String, ArrayList<Schema.Story>> storiesMap = instance.activeStoriesMap;
-                String uid = ProfileState.getInstance().profile.id;
+        stories.remove(currentStoryIndex);
+        curHighlight.storiesID.remove(story.id);
 
-                String storagePath = "story/" + uid + "/" + story.createdAt;
-                Storage.getRef(storagePath).delete()
-                        .addOnSuccessListener(runnable -> {
-                            if (storiesMap.get(uid) != null) {
-                                Objects.requireNonNull(storiesMap.get(uid)).remove(currentStoryIndex);
-                            }
+        ArrayList<Schema.HighlightStory> highlightStories = HighlightState.getInstance().highlights;
 
-                            instance.updateObservableActiveStoriesMap(storiesMap);
-
-                            if (stories.size() == 0) {
-                                callback.onClose();
-                            } else {
-                                if (currentStoryIndex != 0) {
-                                    currentStoryIndex--;
-                                }
-
-                                hideDeleteStoryButton();
-                                viewCurrentStory();
-                            }
-
-                            deleteButton.setEnabled(true);
-                            deleteButton.setBackgroundColor(getResources().getColor(R.color.white, null));
-                            deleteButton.setText(R.string.delete_this_story);
-
-                            Toast.makeText(requireContext(), "Delete story success", Toast.LENGTH_SHORT).show();
-                        })
-                        .addOnFailureListener(e -> {
-                            deleteButton.setEnabled(true);
-                            deleteButton.setBackgroundColor(getResources().getColor(R.color.white, null));
-                            deleteButton.setText(R.string.delete_this_story);
-
-                            Log.d("-->", "failed to delete story ref");
-                            Toast.makeText(requireContext(), "Failed to delete story", Toast.LENGTH_SHORT).show();
-                        });
+        for (int i = 0; i < highlightStories.size(); i++) {
+            if (highlightStories.get(i).id == curHighlight.id) {
+                highlightStories.get(i).storiesID = curHighlight.storiesID;
             }
+        }
 
-            @Override
-            public void onDeleteStoryFailure() {
-                Toast.makeText(requireContext(), "Failed to delete story", Toast.LENGTH_SHORT).show();
-            }
-        });
+        CurrentSelectedStoriesState.getInstance().updateObservableStoriesMap(stories);
+        HighlightState.getInstance().updateObservableHighlights(highlightStories);
+        Database.addHighlight(curHighlight);
+        hideDeleteStoryButton();
     }
 }

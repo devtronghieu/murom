@@ -1,6 +1,7 @@
 package com.example.murom;
 
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -14,6 +15,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.example.murom.Firebase.Database;
 import com.example.murom.Firebase.Schema;
 import com.example.murom.Recycler.HighlightBubbleAdapter;
@@ -39,7 +41,7 @@ public class OtherProfileFragment extends Fragment {
     TextView username;
     TextView bio;
     public interface OtherProfileFragmentCallback {
-
+        void onPostClick(String postId);
     }
     OtherProfileFragmentCallback callback;
     public OtherProfileFragment(OtherProfileFragmentCallback callback) {
@@ -49,8 +51,8 @@ public class OtherProfileFragment extends Fragment {
         });
     }
 
-    public static OtherProfileFragment newInstance(String userId) {
-        OtherProfileFragment fragment = new OtherProfileFragment(null);
+    public static OtherProfileFragment newInstance(String userId, OtherProfileFragmentCallback callback) {
+        OtherProfileFragment fragment = new OtherProfileFragment(callback);
         Bundle args = new Bundle();
         args.putString("userId", userId);
         fragment.setArguments(args);
@@ -110,17 +112,37 @@ public class OtherProfileFragment extends Fragment {
                 Glide.with(avatar.getContext())
                         .load(otherProfileState.profile.profilePicture)
                         .centerCrop()
+                        .diskCacheStrategy(DiskCacheStrategy.NONE)
+                        .skipMemoryCache(true)
                         .into(avatar);
-                if (Objects.equals(otherProfileState.profile.status, "Private")) {
-                    posts_label.setVisibility(View.GONE);
-                    postsRecycler.setVisibility(View.GONE);
-                    photo_icon.setVisibility(View.GONE);
-                }
-                else {
-                    private_text.setVisibility(View.GONE);
-                    private_icon.setVisibility(View.GONE);
-                }
-                Database.isFollowing(userId, followBtn, null);
+                Database.isFollowing(userId, followBtn, isFollowing -> {
+                    if (!isFollowing) {
+                        if (Objects.equals(otherProfileState.profile.status, "Private")) {
+                            posts_label.setVisibility(View.GONE);
+                            postsRecycler.setVisibility(View.GONE);
+                            photo_icon.setVisibility(View.GONE);
+                            highlightsRecycler.setVisibility(View.GONE);
+                            private_text.setVisibility(View.VISIBLE);
+                            private_icon.setVisibility(View.VISIBLE);
+                        }
+                        else {
+                            posts_label.setVisibility(View.VISIBLE);
+                            postsRecycler.setVisibility(View.VISIBLE);
+                            photo_icon.setVisibility(View.VISIBLE);
+                            highlightsRecycler.setVisibility(View.VISIBLE);
+                            private_text.setVisibility(View.GONE);
+                            private_icon.setVisibility(View.GONE);
+                        }
+                    }
+                    else {
+                        posts_label.setVisibility(View.VISIBLE);
+                        postsRecycler.setVisibility(View.VISIBLE);
+                        photo_icon.setVisibility(View.VISIBLE);
+                        highlightsRecycler.setVisibility(View.VISIBLE);
+                        private_text.setVisibility(View.GONE);
+                        private_icon.setVisibility(View.GONE);
+                    }
+                });
 
                 Database.countFollower(userId, new Database.CountFollowerCallback() {
                     @Override
@@ -152,10 +174,16 @@ public class OtherProfileFragment extends Fragment {
 
                         posts.forEach(post -> {
                             if (post.isArchived) return;
-                            postsProfileModel.add(new PostsProfileAdapter.PostsProfileModel(post.url));
+                            postsProfileModel.add(new PostsProfileAdapter.PostsProfileModel(post.id, post.url));
                         });
 
-                        PostsProfileAdapter postsProfileAdapter = new PostsProfileAdapter(postsProfileModel);
+                        PostsProfileAdapter postsProfileAdapter = new PostsProfileAdapter(postsProfileModel, new PostsProfileAdapter.OnPostItemClickListener() {
+                            @Override
+                            public void onPostClick(String postId) {
+                                callback.onPostClick(postId);
+                                Log.d("test", postId);
+                            }
+                        });
                         postsRecycler.setAdapter(postsProfileAdapter);
                     }
 

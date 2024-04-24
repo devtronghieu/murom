@@ -6,38 +6,61 @@ import android.os.Bundle;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-import androidx.viewpager2.widget.ViewPager2;
 
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.murom.Firebase.Database;
 import com.example.murom.Firebase.Schema;
 import com.example.murom.Recycler.CommentAdapter;
 import com.example.murom.Recycler.PostAdapter;
-import com.example.murom.Recycler.ReelsAdapter;
 import com.example.murom.Recycler.SpacingItemDecoration;
 import com.example.murom.State.CommentState;
+import com.example.murom.State.PostState;
 import com.example.murom.State.ProfileState;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.firebase.Timestamp;
 
+import org.w3c.dom.Text;
+
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Locale;
 
 import io.reactivex.rxjava3.disposables.Disposable;
 
 
-public class ReelsFragment extends Fragment {
-
+public class DetailPostFragment extends Fragment {
     Activity activity;
+    RecyclerView detailPostRecycler;
     BottomSheetDialog commentBottomSheet;
-    ViewPager2 reelViewPager;
+    Disposable socialPostsDisposable;
+
+    public DetailPostFragment(DetailPostFragmentCallback callback) {
+        this.callback = callback;
+    }
+
+    public interface DetailPostFragmentCallback{
+        void onClose();
+        void onViewProfile(String uid);
+    }
+
+    DetailPostFragment.DetailPostFragmentCallback callback;
+
+    public static DetailPostFragment newInstance(String postId){
+        DetailPostFragment detailPostFragment = new DetailPostFragment(null);
+        Bundle args = new Bundle();
+        args.putString("postId", postId);
+        detailPostFragment.setArguments(args);
+        return detailPostFragment;
+    }
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -46,55 +69,100 @@ public class ReelsFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        View rootView = inflater.inflate(R.layout.fragment_reels, container, false);
-        reelViewPager = rootView.findViewById(R.id.reels_viewpager);
-        ArrayList<ReelsAdapter.ReelModel> reels = new ArrayList<>();
+        View rootView = inflater.inflate(R.layout.fragment_detail_post, container, false);
         activity = getActivity();
+        String postId = getArguments().getString("postId");
         commentBottomSheet = new BottomSheetDialog(this.getContext());
-        Database.getReels(10, new Database.GetReelsCallback() {
-            @Override
-            public void onGetReelsSuccess(ArrayList<Schema.Post> posts) {
-                for (Schema.Post post : posts) {
-                    Database.getUser(post.userId, new Database.GetUserCallback() {
-                        @Override
-                        public void onGetUserSuccess(Schema.User user) {
-                            ArrayList<String> images = new ArrayList<>();
-                            images.add(post.url);
-                            reels.add(new ReelsAdapter.ReelModel(
-                                    post.id,
-                                    user.profilePicture,
-                                    user.username,
-                                    images.get(0),
-                                    post.caption,
-                                    post.lovedByUIDs
-                            ));
-                            setReels(reels);
-                        }
+        detailPostRecycler = rootView.findViewById(R.id.post_detail_recycler);
+        detailPostRecycler.setLayoutManager(new LinearLayoutManager(getContext(), RecyclerView.VERTICAL, false));
+        detailPostRecycler.addItemDecoration(new SpacingItemDecoration(0, 45));
+        ImageButton backBtn = rootView.findViewById(R.id.back_detail_post_btn);
 
-                        @Override
-                        public void onGetUserFailure() {
-                        }
-                    });
-                }
+        backBtn.setOnClickListener(v -> callback.onClose());
+        ProfileState profileState = ProfileState.getInstance();
+
+        PostState postState = PostState.getInstance();
+        SimpleDateFormat dateFormat = new SimpleDateFormat("MMMM d'th', yyyy", Locale.ENGLISH);
+
+        Database.getPostsByUID(postId, new Database.GetPostsByUIDCallback() {
+            @Override
+            public void onGetPostsSuccess(ArrayList<Schema.Post> posts) {
+
             }
 
             @Override
-            public void onGetReelsFailure(Exception exception) {
-                // Handle failure to fetch reels
+            public void onGetPostsFailure() {
+
+            }
+
+            @Override
+            public void onPostCountRetrieved(int postCount) {
+
+            }
+        });
+        Database.getPostByID(postId, new Database.GetPostByIDCallback() {
+            @Override
+            public void onGetPostSuccess(Schema.Post post) {
+                ArrayList<PostAdapter.PostModel> postModels = new ArrayList<>();
+                Database.getUser(post.userId, new Database.GetUserCallback() {
+                    @Override
+                    public void onGetUserSuccess(Schema.User user) {
+                        ArrayList<String> images = new ArrayList<>();
+                        images.add(post.url);
+                        postModels.add(new PostAdapter.PostModel(
+                                post.userId,
+                                post.id,
+                                user.profilePicture,
+                                user.username,
+                                images,
+                                post.caption,
+                                dateFormat.format(post.createdAt.toDate()),
+                                post.lovedByUIDs
+                        ));
+                        setNewsfeeds(postModels);
+                    }
+
+                    @Override
+                    public void onGetUserFailure() {
+
+                    }
+                });
+                Log.d("-----------------",post.id+ "   " + post.userId);
+            }
+
+            @Override
+            public void onGetPostFailure() {
+
             }
         });
 
         return rootView;
     }
-    void setReels(ArrayList<ReelsAdapter.ReelModel>reels){
-        Log.d(".............", "reelsize: " + reels.size());
-            ReelsAdapter reelsAdapter = new ReelsAdapter(reels, ReelsFragment.this::showCommentBottomSheet);
-            reelViewPager.setAdapter(reelsAdapter);
 
+    @Override
+    public void onDestroyView(){
+        if (!socialPostsDisposable.isDisposed()) {
+            socialPostsDisposable.dispose();
+        }
+
+        super.onDestroyView();
     }
 
+    void setNewsfeeds(ArrayList<PostAdapter.PostModel> newsfeeds) {
+        PostAdapter postAdapter = new PostAdapter(newsfeeds, new PostAdapter.PostModelCallback() {
+            @Override
+            public void showCommentBottomSheet(String postID) {
+                DetailPostFragment.this.showCommentBottomSheet(postID);
+            }
+
+            @Override
+            public void showProfile(String uid) {
+                callback.onViewProfile(uid);
+            }
+        });
+        detailPostRecycler.setAdapter(postAdapter);
+    }
     void showCommentBottomSheet(String postID) {
-        Log.d(".............", "here");
         View view = getLayoutInflater().inflate(R.layout.component_comment_bottom_sheet, null, false);
 
         RecyclerView commentRecyclerView = view.findViewById(R.id.comment_recycler);
@@ -176,4 +244,5 @@ public class ReelsFragment extends Fragment {
         });
         commentBottomSheet.show();
     }
+
 }

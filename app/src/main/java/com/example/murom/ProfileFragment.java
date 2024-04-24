@@ -21,6 +21,7 @@ import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.bumptech.glide.Glide;
 import com.example.murom.Firebase.Database;
 import com.example.murom.Firebase.Schema;
@@ -34,7 +35,9 @@ import com.example.murom.State.HighlightState;
 import com.example.murom.State.PostState;
 import com.example.murom.State.ProfileState;
 import com.example.murom.State.StoryState;
+import com.google.android.gms.common.internal.Objects;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
+import com.example.murom.Firebase.Auth;
 import com.google.firebase.Timestamp;
 import com.google.firebase.storage.StorageReference;
 
@@ -63,6 +66,8 @@ public class ProfileFragment extends Fragment {
     public interface ProfileFragmentCallback {
         void onEditProfile();
         void onArchiveClick();
+        void onViewHighlight(String id);
+        void onPostClick(String postId);
     }
 
     ProfileFragmentCallback callback;
@@ -154,9 +159,36 @@ public class ProfileFragment extends Fragment {
 
         username.setText(profileState.profile.username);
         bio.setText(profileState.profile.bio);
+
+        post_num.setText(String.valueOf(PostState.getInstance().myPosts.size()));
+        Database.countFollower(Auth.getUser().getUid(), new Database.CountFollowerCallback() {
+            @Override
+            public void onCountFollowerSuccess(int count) {
+                follower_num.setText(String.valueOf(count));
+            }
+
+            @Override
+            public void onCountFollowerFailure(String errorMessage) {
+
+            }
+        });
+        Database.countFollowing(Auth.getUser().getUid(), new Database.CountFollowingCallback() {
+            @Override
+            public void onCountFollowingSuccess(int count) {
+                following_num.setText(String.valueOf(count));
+            }
+
+            @Override
+            public void onCountFollowingFailure(String errorMessage) {
+
+            }
+        });
+
         Glide.with(avatar.getContext())
                 .load(profile.profilePicture)
                 .centerCrop()
+                .diskCacheStrategy(DiskCacheStrategy.NONE)
+                .skipMemoryCache(true)
                 .into(avatar);
 
         highlightsRecycler.setLayoutManager(new LinearLayoutManager(getContext(),RecyclerView.HORIZONTAL, false));
@@ -170,7 +202,6 @@ public class ProfileFragment extends Fragment {
 
             @Override
             public void handleGetFail() {
-
             }
         });
 
@@ -195,7 +226,6 @@ public class ProfileFragment extends Fragment {
 
             @Override
             public void onPostCountRetrieved(int postCount) {
-
             }
         });
 
@@ -219,10 +249,18 @@ public class ProfileFragment extends Fragment {
 
         myPosts.forEach(post -> {
             if (post.isArchived) return;
-            postsProfileModel.add(new PostsProfileAdapter.PostsProfileModel(post.url));
+            postsProfileModel.add(new PostsProfileAdapter.PostsProfileModel(post.id, post.url));
         });
 
-        PostsProfileAdapter postsProfileAdapter = new PostsProfileAdapter(postsProfileModel);
+        post_num.setText(String.valueOf(postsProfileModel.size()));
+        PostsProfileAdapter postsProfileAdapter = new PostsProfileAdapter(postsProfileModel, new PostsProfileAdapter.OnPostItemClickListener() {
+            @Override
+            public void onPostClick(String postId) {
+                Log.d("-------------------------------", postId);
+                callback.onPostClick(postId);
+
+            }
+        });
         postsRecycler.setAdapter(postsProfileAdapter);
     }
 
@@ -274,10 +312,10 @@ public class ProfileFragment extends Fragment {
         });
 
         allStoriesDisposable = StoryState.getInstance().getObservableStoriesMap().subscribe(stories -> {
-            handleRenderAllObservableStories(restStoriesRecycler);
+            handleRenderAllObservableStories(restStoriesRecycler, storiesID);
         });
         restStoriesDisposable = CurrentSelectedStoriesState.getInstance().getObservableStoriesMap().subscribe(stories -> {
-            handleRenderAllObservableStories(restStoriesRecycler);
+            handleRenderAllObservableStories(restStoriesRecycler, storiesID);
         });
         selectedStoriesDisposable = CurrentSelectedStoriesState.getInstance().getObservableStoriesMap().subscribe(stories -> {
             handleRenderSelectedObservableStories(stories, selectedStoriesRecycler);
@@ -357,6 +395,16 @@ public class ProfileFragment extends Fragment {
 
             @Override
             public void handleEditHighlight(String highlightId, String url, String name, ArrayList<String> stories) {
+                Database.getStoriesByStoriesID(stories, new Database.GetStoriesByUIDCallback() {
+                    @Override
+                    public void onGetStoriesSuccess(ArrayList<Schema.Story> stories) {
+                        CurrentSelectedStoriesState.getInstance().updateObservableStoriesMap(stories);
+                    }
+
+                    @Override
+                    public void onGetStoriesFailure() {}
+                });
+
                 createBottomSheet(highlightId, url, name, stories);
                 bottomSheet.show();
                 bottomSheet.setOnCancelListener(v -> {
@@ -366,6 +414,7 @@ public class ProfileFragment extends Fragment {
 
             @Override
             public void handleAddHighlight() {
+                CurrentSelectedStoriesState.getInstance().updateObservableStoriesMap(new ArrayList<>());
                 createBottomSheet("", "", "", new ArrayList<>());
                 bottomSheet.show();
                 bottomSheet.setOnCancelListener(v -> {
@@ -374,26 +423,28 @@ public class ProfileFragment extends Fragment {
             }
 
             @Override
-            public void handleViewHighlight(String uid) {
-                // view highlight
+            public void handleViewHighlight(String id) {
+                callback.onViewHighlight(id);
             }
         });
         highlightsRecycler.setAdapter(highlightBubbleAdapter);
     }
 
-    void handleRenderAllObservableStories(RecyclerView recyclerView) {
-        ArrayList<Schema.Story> highlightStories = CurrentSelectedStoriesState.getInstance().stories;
+    void handleRenderAllObservableStories(RecyclerView recyclerView, ArrayList<String> ids) {
         ArrayList<Schema.Story> stories = StoryState.getInstance().stories;
 
         ArrayList<ArchiveStoryAdapter.ArchiveStoryModel> storyModel = new ArrayList<ArchiveStoryAdapter.ArchiveStoryModel>();
 
         for (int i = 0; i < stories.size(); i++) {
             boolean isChecked = false;
-            for (int j = 0; j < highlightStories.size(); j++) {
-                if (highlightStories.get(j).id == stories.get(i).id) {
+            for (int j = 0; j < ids.size(); j++) {
+                if (Objects.equal(ids.get(j), stories.get(i).id)) {
                     isChecked = true;
                 }
+                Log.d("--> isChecked", stories.get(i).id + ", " + ids.get(j)+ ": "+ isChecked);
             }
+
+            Log.d("--> isChecked", stories.get(i).id + ": "+ isChecked);
 
             ArchiveStoryAdapter.ArchiveStoryModel storyData = new ArchiveStoryAdapter.ArchiveStoryModel(
                     stories.get(i).id,
@@ -495,10 +546,24 @@ public class ProfileFragment extends Fragment {
                 new Schema.HighlightStory(highlightId, profile.id, name, coverUrl, stories, Timestamp.now());
 
         ArrayList<Schema.HighlightStory> highlightStories = HighlightState.getInstance().highlights;
-        highlightStories.add(0, newHighlight);
-        HighlightState.getInstance().updateObservableHighlights(highlightStories);
+        boolean isEdit = false;
+        int editedPosition = 0;
+        for (int i = 0; i < highlightStories.size(); i++) {
+            if (highlightStories.get(i).id == newHighlight.id) {
+                isEdit = true;
+                break;
+            }
+        }
 
+        if (isEdit) {
+            highlightStories.get(editedPosition).storiesID = newHighlight.storiesID;
+            highlightStories.get(editedPosition).name = newHighlight.name;
+            highlightStories.get(editedPosition).coverUrl = newHighlight.coverUrl;
+            highlightStories.get(editedPosition).lastEditedTime = newHighlight.lastEditedTime;
+        } else {
+            highlightStories.add(0, newHighlight);
+        }
+        HighlightState.getInstance().updateObservableHighlights(highlightStories);
         Database.addHighlight(newHighlight);
     }
-
 }

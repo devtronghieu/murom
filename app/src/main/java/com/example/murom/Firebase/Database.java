@@ -5,6 +5,7 @@ import android.text.format.DateUtils;
 import android.util.Log;
 import android.widget.Button;
 
+import com.example.murom.DetailPostFragment;
 import com.example.murom.R;
 import com.example.murom.Recycler.NotificationFollowAdapter;
 import com.example.murom.Recycler.NotificationRequestAdapter;
@@ -525,6 +526,51 @@ public class Database {
                 .addOnFailureListener(e -> callback.onArchivePostFailure());
     }
 
+    public interface GetPostByIDCallback{
+        void onGetPostSuccess(Schema.Post post);
+        void onGetPostFailure();
+    }
+
+    public  static void getPostByID(String postId, GetPostByIDCallback callback){
+        DocumentReference docRef = postCollection.document(postId);
+        docRef.get().addOnCompleteListener(task -> {
+            if (task.isSuccessful()) {
+                DocumentSnapshot document = task.getResult();
+                if (document.exists()) {
+                    Schema.Post post = new Schema.Post(
+                            "",
+                            "",
+                            "",
+                            "",
+                            "",
+                            new ArrayList<>(),
+                            false,
+                            Timestamp.now()
+                    );
+                    post.createdAt = document.getTimestamp("created_at");
+                    post.userId = document.getString("user_id");
+                    post.url = document.getString("url");
+                    post.type = document.getString("type");
+                    ArrayList<String> lovedByUIDs = (ArrayList<String>)document.get("loved_by");
+                    if (lovedByUIDs != null) {
+                        post.lovedByUIDs = lovedByUIDs;
+                    }
+                    post.caption = document.getString("caption");
+                    post.isArchived = Boolean.TRUE.equals(document.getBoolean("is_archived"));
+                    callback.onGetPostSuccess(post);
+                    Log.d("Firestore", "Document data: " + document.getData());
+                } else {
+                    // Document does not exist
+                    callback.onGetPostFailure();
+                    Log.d("Firestore", "No such document");
+                }
+            } else {
+                // Error getting document
+                callback.onGetPostFailure();
+                Log.e("Firestore", "Error getting document", task.getException());
+            }
+        });
+    }
     public interface GetPostsByUIDCallback {
         void onGetPostsSuccess(ArrayList<Schema.Post> posts);
         void onGetPostsFailure();
@@ -1246,4 +1292,65 @@ public class Database {
         updates.put("loved_by", lovedBy);
         commentCollection.document(commentID).update(updates);
     }
+
+    public static void getReels(int limit, GetReelsCallback callback) {
+        postCollection
+                .whereEqualTo("type", "video")
+                .orderBy("created_at", Query.Direction.DESCENDING)
+                .limit(limit)
+                .get()
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        ArrayList<Schema.Post> posts = new ArrayList<>();
+
+                        QuerySnapshot snap = task.getResult();
+                        List<DocumentSnapshot> docs = snap.getDocuments();
+
+                        for (DocumentSnapshot doc : docs) {
+
+                            Schema.Post post = new Schema.Post(
+                                    "",
+                                    "",
+                                    "",
+                                    "",
+                                    "",
+                                    new ArrayList<>(),
+                                    false,
+                                    Timestamp.now()
+                            );
+
+                            post.id = doc.getId();
+                            post.createdAt = doc.getTimestamp("created_at");
+                            post.userId = doc.getString("user_id");
+                            post.url = doc.getString("url");
+                            post.type = doc.getString("type");
+                            ArrayList<String> lovedByUIDs = (ArrayList<String>)doc.get("loved_by");
+                            if (lovedByUIDs != null) {
+                                post.lovedByUIDs = lovedByUIDs;
+                            }
+                            post.caption = doc.getString("caption");
+                            post.isArchived = Boolean.TRUE.equals(doc.getBoolean("is_archived"));
+
+                            posts.add(post);
+                        }
+
+                        callback.onGetReelsSuccess(posts);
+                    } else {
+                        Exception exception = task.getException();
+                        if (exception != null) {
+                            Log.e("-->", "Failed to get reels:", exception);
+                        } else {
+                            Log.e("-->", "Failed to get reels: Unknown reason");
+                        }
+                        callback.onGetReelsFailure(exception);
+                    }
+                });
+    }
+
+    public interface GetReelsCallback {
+        void onGetReelsSuccess(ArrayList<Schema.Post> posts);
+        void onGetReelsFailure(Exception exception);
+    }
+
+
 }

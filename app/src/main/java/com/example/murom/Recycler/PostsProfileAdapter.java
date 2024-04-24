@@ -1,6 +1,7 @@
 package com.example.murom.Recycler;
 
 import android.content.Context;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -18,9 +19,13 @@ public class PostsProfileAdapter extends RecyclerView.Adapter<PostsProfileAdapte
     private Context context;
     private  final ArrayList<PostsProfileModel> localDataSet;
     public  static class PostsProfileModel{
+        private final String postId;
         private final String imageUrl;
 
-        public PostsProfileModel(String imageUrl){ this.imageUrl = imageUrl; }
+        public PostsProfileModel(String postId, String imageUrl){
+            this.postId = postId;
+            this.imageUrl = imageUrl;
+        }
     }
 
     public static class ViewHolder extends RecyclerView.ViewHolder{
@@ -31,10 +36,14 @@ public class PostsProfileAdapter extends RecyclerView.Adapter<PostsProfileAdapte
         }
     }
 
-    public PostsProfileAdapter(ArrayList<PostsProfileAdapter.PostsProfileModel> dataSet){
+    public PostsProfileAdapter(ArrayList<PostsProfileAdapter.PostsProfileModel> dataSet, OnPostItemClickListener listener){
         localDataSet = dataSet;
+        this.listener = listener;
     }
-
+    private  OnPostItemClickListener listener;
+    public interface OnPostItemClickListener {
+        void onPostClick(String postId);
+    }
     @NonNull
     @Override
     public ViewHolder onCreateViewHolder(ViewGroup viewGroup, int viewType){
@@ -53,6 +62,12 @@ public class PostsProfileAdapter extends RecyclerView.Adapter<PostsProfileAdapte
                 .override(viewHolder.postImageButton.getWidth(), viewHolder.postImageButton.getHeight())
                 .fitCenter()
                 .into(viewHolder.postImageButton);
+        viewHolder.postImageButton.setOnClickListener(v -> {
+            int adapterPosition = viewHolder.getAdapterPosition();
+            if (adapterPosition != RecyclerView.NO_POSITION && listener != null) {
+                listener.onPostClick(localDataSet.get(position).postId);
+            }
+        });
     }
     @Override
     public int getItemCount(){ return localDataSet.size(); }
