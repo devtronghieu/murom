@@ -2,13 +2,14 @@
 <androidx.constraintlayout.widget.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:background="@color/black"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
     <VideoView
         android:id="@+id/reels_video"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
@@ -23,6 +24,7 @@
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"/>
+
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -48,7 +50,7 @@
                 android:layout_gravity="center"
                 android:contentDescription="@string/notification_icon"
                 android:src="@drawable/murom_ic_love"
-                android:tint="@color/white"/>
+                app:tint="@color/white" />
 
             <TextView
                 android:id="@+id/reels_love_text"
@@ -68,8 +70,9 @@
                 android:contentDescription="@string/notification_icon"
                 android:src="@drawable/murom_comment"
                 android:background="@null"
-                android:tint="@color/white"/>
+                app:tint="@color/white" />
         </LinearLayout>
+
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
