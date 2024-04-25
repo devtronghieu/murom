@@ -430,6 +430,7 @@ public class PostFragment extends Fragment {
                                 showComponentsByType(type);
 
                                 Toast.makeText(context, "Uploaded!", Toast.LENGTH_SHORT).show();
+                                postID = UUID.randomUUID().toString();
                             })
                             .addOnFailureListener(e -> {
                                 removeFileIfItIsEdited();
