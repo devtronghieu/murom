@@ -138,7 +138,12 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void onViewProfile(String uid) {
-                handleOnSearchUserClick(uid);
+                if (uid.equals(Auth.getUser().getUid())) {
+                    replaceFragment(profileFragment);
+                }
+                else {
+                    handleOnSearchUserClick(uid);
+                }
             }
         });
         reelsFragment = new ReelsFragment();
