@@ -4,7 +4,6 @@ import android.net.Uri;
 import android.util.Log;
 import android.widget.Button;
 
-import com.example.murom.DetailPostFragment;
 import com.example.murom.R;
 import com.example.murom.Recycler.PostImageAdapter;
 import com.example.murom.State.ProfileState;
@@ -75,9 +74,16 @@ public class Database {
 
                     callback.onGetUserSuccess(user);
                 } else {
+                    Log.d("-->", "Failed to get user: Document not exists");
                     callback.onGetUserFailure();
                 }
             } else {
+                Exception exception = task.getException();
+                if (exception != null) {
+                    Log.d("-->", "Failed to get user: " + exception);
+                } else {
+                    Log.d("-->", "Failed to get user: Unknown reason");
+                }
                 callback.onGetUserFailure();
             }
         });

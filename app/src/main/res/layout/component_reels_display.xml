@@ -60,7 +60,7 @@
                 android:textColor="@color/white"
                 android:layout_gravity="center"
                 android:gravity="center_horizontal"
-                android:text="0" />
+                android:text="@string/_0" />
 
             <ImageButton
                 android:id="@+id/reels_comment_icon"
