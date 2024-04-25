@@ -27,6 +27,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class Database {
     private static final FirebaseFirestore db = FirebaseFirestore.getInstance();
@@ -1198,18 +1199,19 @@ public class Database {
     public static void getReels(int limit, GetReelsCallback callback) {
         postCollection
                 .whereEqualTo("type", "video")
+                .whereEqualTo("is_archived", false)
                 .orderBy("created_at", Query.Direction.DESCENDING)
                 .limit(limit)
                 .get()
                 .addOnCompleteListener(task -> {
                     if (task.isSuccessful()) {
                         ArrayList<Schema.Post> posts = new ArrayList<>();
-
                         QuerySnapshot snap = task.getResult();
                         List<DocumentSnapshot> docs = snap.getDocuments();
 
-                        for (DocumentSnapshot doc : docs) {
+                        AtomicInteger getStatusCounter = new AtomicInteger(docs.size());
 
+                        for (DocumentSnapshot doc : docs) {
                             Schema.Post post = new Schema.Post(
                                     "",
                                     "",
@@ -1233,20 +1235,59 @@ public class Database {
                             post.caption = doc.getString("caption");
                             post.isArchived = Boolean.TRUE.equals(doc.getBoolean("is_archived"));
 
-                            posts.add(post);
-                        }
+                            getUserStatus(post.userId, new GetUserStatusCallback() {
+                                @Override
+                                public void onGetUserStatusSuccess(String status) {
+                                    if ("Public".equals(status)) {
+                                        // Add the post to the list if user status is public
+                                        posts.add(post);
+                                    }
+                                    if (getStatusCounter.decrementAndGet() == 0) {
+                                        // All user visibility queries are completed
+                                        callback.onGetReelsSuccess(posts);
+                                    }
+                                }
 
-                        callback.onGetReelsSuccess(posts);
+                                @Override
+                                public void onGetUserStatusFailure(Exception e) {
+                                    if (getStatusCounter.decrementAndGet() == 0) {
+                                        callback.onGetReelsSuccess(posts);
+                                    }
+                                }
+                            });
+                        }
                     } else {
                         Exception exception = task.getException();
-                        if (exception != null) {
-                            Log.e("-->", "Failed to get reels:", exception);
-                        } else {
-                            Log.e("-->", "Failed to get reels: Unknown reason");
-                        }
+                        Log.e("-->", "Failed to get reels:", exception);
                         callback.onGetReelsFailure(exception);
                     }
                 });
+    }
+
+    private static void getUserStatus(String userId, GetUserStatusCallback callback) {
+        userCollection
+                .document(userId)
+                .get()
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        DocumentSnapshot document = task.getResult();
+                        if (document != null && document.exists()) {
+                            String status = document.getString("status");
+                            callback.onGetUserStatusSuccess(status != null ? status : "");
+                        } else {
+                            callback.onGetUserStatusSuccess("");
+                        }
+                    } else {
+                        Exception exception = task.getException();
+                        Log.e("-->", "Failed to get user status:", exception);
+                        callback.onGetUserStatusFailure(exception);
+                    }
+                });
+    }
+
+    public interface GetUserStatusCallback {
+        void onGetUserStatusSuccess(String status);
+        void onGetUserStatusFailure(Exception e);
     }
 
     public interface GetReelsCallback {
