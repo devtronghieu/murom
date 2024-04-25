@@ -17,6 +17,7 @@ import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.fragment.app.Fragment;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.example.murom.Firebase.Database;
 import com.example.murom.Firebase.Schema;
 import com.example.murom.Firebase.Storage;
@@ -138,6 +139,8 @@ public class HighlightFragment extends Fragment {
             Glide.with(this)
                     .load(user.profilePicture)
                     .centerCrop()
+                    .diskCacheStrategy(DiskCacheStrategy.NONE)
+                    .skipMemoryCache(true)
                     .into(avatar);
 
             touchSurface.setOnClickListener(v -> {
@@ -174,7 +177,8 @@ public class HighlightFragment extends Fragment {
         progressBar.setVisibility(View.VISIBLE);
 
         if (Objects.equals(story.type, "image")) {
-            Glide.with(this).load(story.url).into(imageView);
+            Glide.with(this)
+                    .load(story.url).into(imageView);
             imageView.setVisibility(View.VISIBLE);
             progressBar.setVisibility(View.GONE);
         } else {

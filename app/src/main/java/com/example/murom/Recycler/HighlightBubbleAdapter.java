@@ -18,6 +18,7 @@ import androidx.fragment.app.FragmentTransaction;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.example.murom.HighlightFragment;
 import com.example.murom.MainActivity;
 import com.example.murom.R;
@@ -81,7 +82,11 @@ public class HighlightBubbleAdapter extends RecyclerView.Adapter<HighlightBubble
     public void onBindViewHolder(ViewHolder viewHolder, final int position){
         HighlightBubbleModel data = localDataSet.get(position);
         viewHolder.highlightText.setText(data.name);
-        Glide.with(this.context).load(data.imageUrl).into(viewHolder.highlightImage);
+        Glide.with(this.context).load(data.imageUrl)
+                .centerCrop()
+                .diskCacheStrategy(DiskCacheStrategy.NONE)
+                .skipMemoryCache(true)
+                .into(viewHolder.highlightImage);
 
         View popupView = LayoutInflater.from(context).inflate(R.layout.popup, null);
         PopupWindow popupWindow = new PopupWindow(popupView, ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, true);
