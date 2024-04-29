@@ -7,6 +7,7 @@ import android.view.ViewGroup;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
@@ -77,16 +78,32 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.ViewHold
 
         Schema.Comment comment = commentAdapterModel.comment;
 
-        Schema.User myProfile = ProfileState.getInstance().profile;
-        Schema.User profile = ProfileState.getInstance().followerProfileMap.get(comment.userID);
-        if (profile == null) return;
+        ProfileState profileState = ProfileState.getInstance();
+        
+        Schema.User myProfile = profileState.profile;
+        
+        Schema.User profile = profileState.followerProfileMap.get(comment.userID);
+        if (profile == null) {
+            profile = profileState.strangerProfileMap.get(comment.userID);
+            if (profile != null) {
+                renderUserMetadata(viewHolder, profile);
+            } else {
+                Database.getUser(comment.userID, new Database.GetUserCallback() {
+                    @Override
+                    public void onGetUserSuccess(Schema.User user) {
+                        profileState.strangerProfileMap.put(user.id, user);
+                        renderUserMetadata(viewHolder, user);
+                    }
 
-        Glide.with(this.context)
-                .load(profile.profilePicture)
-                .centerCrop()
-                .into(viewHolder.avatar);
-
-        viewHolder.username.setText(profile.username);
+                    @Override
+                    public void onGetUserFailure() {
+                        Toast.makeText(context, "Failed to get stranger data", Toast.LENGTH_SHORT).show();
+                    }
+                });
+            }
+        } else {
+            renderUserMetadata(viewHolder, profile);
+        }
 
         viewHolder.content.setText(comment.content);
 
@@ -108,6 +125,14 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.ViewHold
         });
 
         viewHolder.loveCount.setText(String.valueOf(comment.lovedBy.size()));
+    }
+    
+    void renderUserMetadata(ViewHolder viewHolder, Schema.User profile) {
+        Glide.with(this.context)
+                .load(profile.profilePicture)
+                .centerCrop()
+                .into(viewHolder.avatar);
+        viewHolder.username.setText(profile.username);
     }
 
     @Override

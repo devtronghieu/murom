@@ -185,15 +185,16 @@ public class NewsfeedFragment extends Fragment {
                 if (postOwnerProfile != null) {
                     ArrayList<String> images = new ArrayList<>();
                     images.add(post.url);
-                    postModels.add(new PostAdapter.PostModel(
-                            post.userId,
-                            post.id,
-                            postOwnerProfile.profilePicture,
-                            postOwnerProfile.username,
-                            images,
-                            post.caption,
-                            dateFormat.format(post.createdAt.toDate()),
-                            post.lovedByUIDs
+                    if (post.type.equals("image"))
+                        postModels.add(new PostAdapter.PostModel(
+                                post.userId,
+                                post.id,
+                                postOwnerProfile.profilePicture,
+                                postOwnerProfile.username,
+                                images,
+                                post.caption,
+                                dateFormat.format(post.createdAt.toDate()),
+                                post.lovedByUIDs
                     ));
                 }
             });

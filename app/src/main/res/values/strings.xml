@@ -42,4 +42,5 @@
     <string name="username">username</string>
     <string name="comment_content">Comment content</string>
     <string name="comment_timestamp">Comment timestamp</string>
+    <string name="_0">0</string>
 </resources>

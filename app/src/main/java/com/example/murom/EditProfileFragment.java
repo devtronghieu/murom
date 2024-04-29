@@ -131,7 +131,8 @@ public class EditProfileFragment extends Fragment {
 
     private void handleSignOut(View view) {
         Auth.signOut();
-        Intent i = new Intent(requireContext(), LoginActivity.class);
+        Intent i = new Intent(getActivity(), LoginActivity.class);
+        i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         startActivity(i);
     }
 

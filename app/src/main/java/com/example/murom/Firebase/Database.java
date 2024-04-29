@@ -5,7 +5,6 @@ import android.text.format.DateUtils;
 import android.util.Log;
 import android.widget.Button;
 
-import com.example.murom.DetailPostFragment;
 import com.example.murom.R;
 import com.example.murom.Recycler.NotificationFollowAdapter;
 import com.example.murom.Recycler.NotificationRequestAdapter;
@@ -79,9 +78,16 @@ public class Database {
 
                     callback.onGetUserSuccess(user);
                 } else {
+                    Log.d("-->", "Failed to get user: Document not exists");
                     callback.onGetUserFailure();
                 }
             } else {
+                Exception exception = task.getException();
+                if (exception != null) {
+                    Log.d("-->", "Failed to get user: " + exception);
+                } else {
+                    Log.d("-->", "Failed to get user: Unknown reason");
+                }
                 callback.onGetUserFailure();
             }
         });
@@ -164,7 +170,12 @@ public class Database {
         void onGetStoriesFailure();
     }
 
-    public static void addHighlight(Schema.HighlightStory highlightStory) {
+    public interface AddHighlightCallback {
+        void onAddHighlightSuccess();
+        void onAddHighlightFailed();
+    }
+
+    public static void addHighlight(Schema.HighlightStory highlightStory, AddHighlightCallback callback) {
         Map<String, Object> documentData = new HashMap<>();
         documentData.put("user_id", highlightStory.userId);
         documentData.put("name", highlightStory.name);
@@ -175,8 +186,8 @@ public class Database {
         highlightCollection
                 .document(highlightStory.id)
                 .set(documentData)
-                .addOnSuccessListener(documentReference -> Log.d("--> add highlight", "addHighlight: " + highlightStory.id))
-                .addOnFailureListener(e -> Log.d("--> add highlight", "addHighlight: " + e));
+                .addOnSuccessListener(documentReference -> callback.onAddHighlightSuccess())
+                .addOnFailureListener(e -> callback.onAddHighlightFailed());
     }
     public static void deleteHighlight(String highlightId) {
         highlightCollection.document(highlightId).delete()
@@ -1296,18 +1307,19 @@ public class Database {
     public static void getReels(int limit, GetReelsCallback callback) {
         postCollection
                 .whereEqualTo("type", "video")
+                .whereEqualTo("is_archived", false)
                 .orderBy("created_at", Query.Direction.DESCENDING)
                 .limit(limit)
                 .get()
                 .addOnCompleteListener(task -> {
                     if (task.isSuccessful()) {
                         ArrayList<Schema.Post> posts = new ArrayList<>();
-
                         QuerySnapshot snap = task.getResult();
                         List<DocumentSnapshot> docs = snap.getDocuments();
 
-                        for (DocumentSnapshot doc : docs) {
+                        AtomicInteger getStatusCounter = new AtomicInteger(docs.size());
 
+                        for (DocumentSnapshot doc : docs) {
                             Schema.Post post = new Schema.Post(
                                     "",
                                     "",
@@ -1331,20 +1343,59 @@ public class Database {
                             post.caption = doc.getString("caption");
                             post.isArchived = Boolean.TRUE.equals(doc.getBoolean("is_archived"));
 
-                            posts.add(post);
-                        }
+                            getUserStatus(post.userId, new GetUserStatusCallback() {
+                                @Override
+                                public void onGetUserStatusSuccess(String status) {
+                                    if ("Public".equals(status)) {
+                                        // Add the post to the list if user status is public
+                                        posts.add(post);
+                                    }
+                                    if (getStatusCounter.decrementAndGet() == 0) {
+                                        // All user visibility queries are completed
+                                        callback.onGetReelsSuccess(posts);
+                                    }
+                                }
 
-                        callback.onGetReelsSuccess(posts);
+                                @Override
+                                public void onGetUserStatusFailure(Exception e) {
+                                    if (getStatusCounter.decrementAndGet() == 0) {
+                                        callback.onGetReelsSuccess(posts);
+                                    }
+                                }
+                            });
+                        }
                     } else {
                         Exception exception = task.getException();
-                        if (exception != null) {
-                            Log.e("-->", "Failed to get reels:", exception);
-                        } else {
-                            Log.e("-->", "Failed to get reels: Unknown reason");
-                        }
+                        Log.e("-->", "Failed to get reels:", exception);
                         callback.onGetReelsFailure(exception);
                     }
                 });
+    }
+
+    private static void getUserStatus(String userId, GetUserStatusCallback callback) {
+        userCollection
+                .document(userId)
+                .get()
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        DocumentSnapshot document = task.getResult();
+                        if (document != null && document.exists()) {
+                            String status = document.getString("status");
+                            callback.onGetUserStatusSuccess(status != null ? status : "");
+                        } else {
+                            callback.onGetUserStatusSuccess("");
+                        }
+                    } else {
+                        Exception exception = task.getException();
+                        Log.e("-->", "Failed to get user status:", exception);
+                        callback.onGetUserStatusFailure(exception);
+                    }
+                });
+    }
+
+    public interface GetUserStatusCallback {
+        void onGetUserStatusSuccess(String status);
+        void onGetUserStatusFailure(Exception e);
     }
 
     public interface GetReelsCallback {

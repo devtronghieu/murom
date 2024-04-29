@@ -1,5 +1,6 @@
 package com.example.murom;
 
+
 import android.app.Activity;
 import android.os.Bundle;
 
@@ -41,8 +42,8 @@ public class DetailPostFragment extends Fragment {
     Activity activity;
     RecyclerView detailPostRecycler;
     BottomSheetDialog commentBottomSheet;
-    Disposable socialPostsDisposable;
 
+    TextView detailPost;
     public DetailPostFragment(DetailPostFragmentCallback callback) {
         this.callback = callback;
     }
@@ -77,29 +78,13 @@ public class DetailPostFragment extends Fragment {
         detailPostRecycler.setLayoutManager(new LinearLayoutManager(getContext(), RecyclerView.VERTICAL, false));
         detailPostRecycler.addItemDecoration(new SpacingItemDecoration(0, 45));
         ImageButton backBtn = rootView.findViewById(R.id.back_detail_post_btn);
-
+        detailPost = rootView.findViewById(R.id.detail_post);
         backBtn.setOnClickListener(v -> callback.onClose());
         ProfileState profileState = ProfileState.getInstance();
 
         PostState postState = PostState.getInstance();
         SimpleDateFormat dateFormat = new SimpleDateFormat("MMMM d'th', yyyy", Locale.ENGLISH);
 
-        Database.getPostsByUID(postId, new Database.GetPostsByUIDCallback() {
-            @Override
-            public void onGetPostsSuccess(ArrayList<Schema.Post> posts) {
-
-            }
-
-            @Override
-            public void onGetPostsFailure() {
-
-            }
-
-            @Override
-            public void onPostCountRetrieved(int postCount) {
-
-            }
-        });
         Database.getPostByID(postId, new Database.GetPostByIDCallback() {
             @Override
             public void onGetPostSuccess(Schema.Post post) {
@@ -127,7 +112,9 @@ public class DetailPostFragment extends Fragment {
 
                     }
                 });
-                Log.d("-----------------",post.id+ "   " + post.userId);
+                if (!post.userId.equals(profileState.profile.id)){
+                    detailPost.setText("Post");
+                }
             }
 
             @Override
@@ -139,14 +126,6 @@ public class DetailPostFragment extends Fragment {
         return rootView;
     }
 
-    @Override
-    public void onDestroyView(){
-        if (!socialPostsDisposable.isDisposed()) {
-            socialPostsDisposable.dispose();
-        }
-
-        super.onDestroyView();
-    }
 
     void setNewsfeeds(ArrayList<PostAdapter.PostModel> newsfeeds) {
         PostAdapter postAdapter = new PostAdapter(newsfeeds, new PostAdapter.PostModelCallback() {

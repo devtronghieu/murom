@@ -22,6 +22,7 @@ import com.example.murom.Recycler.HighlightBubbleAdapter;
 import com.example.murom.Recycler.PostsProfileAdapter;
 import com.example.murom.Recycler.SpacingItemDecoration;
 import com.example.murom.State.OtherProfileState;
+import com.example.murom.State.ProfileState;
 
 import java.util.ArrayList;
 import java.util.Objects;
@@ -141,6 +142,17 @@ public class OtherProfileFragment extends Fragment {
                         highlightsRecycler.setVisibility(View.VISIBLE);
                         private_text.setVisibility(View.GONE);
                         private_icon.setVisibility(View.GONE);
+                    }
+
+                    ProfileState profileState = ProfileState.getInstance();
+                    if (!isFollowing) {
+                        profileState.followerProfileMap.remove(user.id);
+                        profileState.followerIDs.remove(user.id);
+                    } else {
+                        profileState.followerProfileMap.put(user.id, user);
+                        if (!profileState.followerIDs.contains(user.id)) {
+                            profileState.followerIDs.add(user.id);
+                        }
                     }
                 });
 

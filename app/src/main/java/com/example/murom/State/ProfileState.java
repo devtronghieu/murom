@@ -42,6 +42,9 @@ public class ProfileState {
     }
     public Observable<HashMap<String, Schema.User>> getObservableFollowerProfileMap() { return observableFollowerProfileMap; }
 
+    // Strangers' profiles
+    public HashMap<String, Schema.User> strangerProfileMap = new HashMap<>();
+
     // Singleton
     private static ProfileState instance = null;
 
