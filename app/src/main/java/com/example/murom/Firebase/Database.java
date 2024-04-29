@@ -1128,7 +1128,7 @@ public class Database {
     }
 
     public interface FollowsCallback {
-        void onFollowsLoaded(ArrayList<NotificationFollowAdapter.NotificationFollowModel> follows);
+        void onFollowsLoaded(ArrayList<Schema.Notification> follows);
         void onFollowsLoadedFailure(String errorMessage);
     }
 
@@ -1140,7 +1140,7 @@ public class Database {
                     if (task.isSuccessful()) {
                         QuerySnapshot snapshot = task.getResult();
                         if (snapshot != null) {
-                            ArrayList<NotificationFollowAdapter.NotificationFollowModel> follows = new ArrayList<>();
+                            ArrayList<Schema.Notification> follows = new ArrayList<>();
                             AtomicInteger counter = new AtomicInteger(snapshot.size());
                             for (QueryDocumentSnapshot document : snapshot) {
                                 String followUserId = document.getString("user_id");
@@ -1151,7 +1151,7 @@ public class Database {
                                 getUser(followUserId, new GetUserCallback() {
                                     @Override
                                     public void onGetUserSuccess(Schema.User user) {
-                                        follows.add(new NotificationFollowAdapter.NotificationFollowModel(user.profilePicture, user.username, relativeTime));
+                                        follows.add(new Schema.Notification(user.id, user.username, user.profilePicture, relativeTime));
                                         if (counter.decrementAndGet() == 0) {
                                             callback.onFollowsLoaded(follows);
                                         }

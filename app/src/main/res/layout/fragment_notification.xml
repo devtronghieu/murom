@@ -15,6 +15,7 @@
             app:layout_constraintEnd_toEndOf="parent">
         <TextView
             android:id="@+id/notification_request_text"
+            android:visibility="gone"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Follow Request"

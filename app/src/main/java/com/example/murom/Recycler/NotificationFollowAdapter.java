@@ -11,28 +11,21 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
+import com.example.murom.Firebase.Schema;
 import com.example.murom.R;
 
 import java.util.ArrayList;
 
 public class NotificationFollowAdapter extends RecyclerView.Adapter<NotificationFollowAdapter.ViewHolder> {
     private Context context;
-    private final ArrayList<NotificationFollowAdapter.NotificationFollowModel> localDataSet;
-    public static class NotificationFollowModel {
-        private final String avatarUrl;
-        private final String username;
-        private final String timestamp;
+    private final ArrayList<Schema.Notification> notifications;
 
-        public NotificationFollowModel(
-                String avatarUrl,
-                String username,
-                String timestamp
-        ) {
-            this.avatarUrl = avatarUrl;
-            this.username = username;
-            this.timestamp = timestamp;
-        }
+    public NotificationFollowAdapter(Context context, ArrayList<Schema.Notification> notifications) {
+        this.context = context;
+        this.notifications = notifications;
     }
+
     public static class ViewHolder extends RecyclerView.ViewHolder {
         private final ImageView avatar;
         private final TextView username, timestamp;
@@ -43,9 +36,6 @@ public class NotificationFollowAdapter extends RecyclerView.Adapter<Notification
             username = view.findViewById(R.id.follow_username);
             timestamp = view.findViewById(R.id.follow_timestamp);
         }
-    }
-    public NotificationFollowAdapter(ArrayList<NotificationFollowAdapter.NotificationFollowModel> dataSet) {
-        localDataSet = dataSet;
     }
 
     @NonNull
@@ -61,16 +51,23 @@ public class NotificationFollowAdapter extends RecyclerView.Adapter<Notification
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder viewHolder, int position) {
-        NotificationFollowAdapter.NotificationFollowModel data = localDataSet.get(position);
+        Schema.Notification data = notifications.get(position);
         viewHolder.username.setText(data.username);
         viewHolder.timestamp.setText(data.timestamp);
         Glide.with(this.context)
-                .load(data.avatarUrl)
+                .load(data.avatarUrl).centerCrop()
+                .skipMemoryCache(true)
                 .into(viewHolder.avatar);
 
     }
     @Override
     public int getItemCount() {
-        return localDataSet.size();
+        return notifications.size();
+    }
+
+    public void updateNotifications(ArrayList<Schema.Notification> updatedNotifications) {
+        notifications.clear();
+        notifications.addAll(updatedNotifications);
+        notifyDataSetChanged();
     }
 }
