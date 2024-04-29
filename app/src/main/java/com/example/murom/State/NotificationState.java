@@ -38,6 +38,32 @@ public class NotificationState {
         });
     }
 
+    //Request Notifications --> for private user only
+    public ArrayList<Schema.Notification> requestNotifications = new ArrayList<>();
+    private final BehaviorSubject<ArrayList<Schema.Notification>> observableRequestNotifications = BehaviorSubject.createDefault(requestNotifications);
+
+    public void updateObservableRequestNotifications(ArrayList<Schema.Notification> requestNotifications) {
+        this.requestNotifications = requestNotifications;
+        observableRequestNotifications.onNext(requestNotifications);
+    }
+
+    public Observable<ArrayList<Schema.Notification>> getObservableRequestNotifications() {
+        return observableRequestNotifications;
+    }
+
+    public void fetchRequestNotifications(String uid) {
+        Database.getRequestNotification(uid, new Database.RequestsCallback() {
+            @Override
+            public void onRequestsLoaded(ArrayList<Schema.Notification> requestNotifications) {
+                updateObservableRequestNotifications(requestNotifications);
+            }
+
+            @Override
+            public void onRequestsLoadedFailure(String errorMessage) {
+                Log.d("-->", "Failed to load notifications: " + errorMessage);
+            }
+        });
+    }
     // Singleton
     private static NotificationState instance = null;
 

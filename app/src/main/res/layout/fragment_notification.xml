@@ -24,6 +24,7 @@
             android:layout_marginTop="20dp"/>
 
         <androidx.recyclerview.widget.RecyclerView
+            android:visibility="gone"
             android:id="@+id/notification_request_recycler"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -35,6 +36,7 @@
             android:layout_height="wrap_content"
             android:text="Follow Notification"
             style="@style/caption_medium"
+            android:layout_marginTop="10dp"
             android:layout_marginStart="20dp"/>
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/notification_follow_recycler"

@@ -23,37 +23,18 @@
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="parent" />
 
-    <TextView
-        android:id="@+id/request_username"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="8dp"
-        android:text="username"
-        android:textStyle="bold"
-        app:layout_constraintStart_toEndOf="@id/request_avatar"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent" />
 
     <TextView
-        android:id="@+id/request_action"
+        android:id="@+id/request_textView"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
+        android:layout_marginStart="10dp"
         android:text=" sends a request to follow you."
-        app:layout_constraintStart_toEndOf="@id/request_username"
-        app:layout_constraintEnd_toStartOf="@id/request_timestamp"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent" />
-
-    <TextView
-        android:id="@+id/request_timestamp"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textColor="@color/gray_500"
-        android:text=" 1 day"
-        app:layout_constraintStart_toEndOf="@id/request_action"
+        app:layout_constraintStart_toEndOf="@id/request_avatar"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="parent" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>
 <LinearLayout
     android:id="@+id/request_buttons"
@@ -65,12 +46,14 @@
     app:layout_constraintTop_toBottomOf="@+id/request_info"
     app:layout_constraintBottom_toBottomOf="parent">
     <Button
+        android:id="@+id/request_accept_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:backgroundTint="@color/success_400"
         android:layout_marginEnd="10dp"
         android:text="Accept"/>
     <Button
+        android:id="@+id/request_deny_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:backgroundTint="@color/error_200"
