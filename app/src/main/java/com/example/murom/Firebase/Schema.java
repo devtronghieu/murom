@@ -122,4 +122,17 @@ public class Schema {
             this.timestamp = timestamp;
         }
     }
+
+    public static class  Notification {
+        public String userId;
+        public String username;
+        public String avatarUrl;
+        public String timestamp;
+        public Notification(String userId, String username, String avatarUrl, String timestamp) {
+            this.userId = userId;
+            this.username = username;
+            this.avatarUrl = avatarUrl;
+            this.timestamp = timestamp;
+        }
+    }
 }

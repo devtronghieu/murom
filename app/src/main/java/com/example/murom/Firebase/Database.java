@@ -1,11 +1,15 @@
 package com.example.murom.Firebase;
 
 import android.net.Uri;
+import android.text.format.DateUtils;
 import android.util.Log;
 import android.widget.Button;
 
 import com.example.murom.R;
+import com.example.murom.Recycler.NotificationFollowAdapter;
+import com.example.murom.Recycler.NotificationRequestAdapter;
 import com.example.murom.Recycler.PostImageAdapter;
+import com.example.murom.State.NotificationState;
 import com.example.murom.State.ProfileState;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.Timestamp;
@@ -989,7 +993,7 @@ public class Database {
             }
         });
     }
-    private static void followUser(String userId, FollowStatusUpdateCallback callback) {
+    public static void followUser(String userId, FollowStatusUpdateCallback callback) {
         String myId = Auth.getUser().getUid();
         LocalDateTime currentDateTime = LocalDateTime.now();
         Date currentDate = Date.from(currentDateTime.atZone(ZoneId.systemDefault()).toInstant());
@@ -1078,6 +1082,45 @@ public class Database {
             }
         });
     }
+    public static void acceptFollowRequest(String userId) {
+        String myId = Auth.getUser().getUid();
+        LocalDateTime currentDateTime = LocalDateTime.now();
+        Date currentDate = Date.from(currentDateTime.atZone(ZoneId.systemDefault()).toInstant());
+        Map<String, Object> followData = new HashMap<>();
+        followData.put("user_id", userId);
+        followData.put("following_user_id", myId);
+        followData.put("datetime_added", currentDate);
+        followCollection.add(followData)
+                .addOnSuccessListener(documentReference -> {
+                    Log.d("Follow", "Document added with ID: " + documentReference.getId());
+                })
+                .addOnFailureListener(e -> {
+                    Log.e("Follow", "Error adding document: " + e.getMessage());
+                });
+    }
+    public static void deleteFollowRequest(String userId) {
+        String myId = Auth.getUser().getUid();
+
+        Query query = followRequestCollection.whereEqualTo("user_id", userId)
+                .whereEqualTo("follow_user_id", myId);
+        query.get().addOnSuccessListener(queryDocumentSnapshots -> {
+            if (!queryDocumentSnapshots.isEmpty()) {
+                DocumentSnapshot documentSnapshot = queryDocumentSnapshots.getDocuments().get(0);
+                documentSnapshot.getReference().delete()
+                        .addOnSuccessListener(aVoid -> {
+                            Log.d("Deny Follow Request", "Document successfully deleted!");
+                            NotificationState.getInstance().fetchRequestNotifications(myId);
+                            NotificationState.getInstance().fetchFollowNotifications(myId);
+                        })
+                        .addOnFailureListener(e -> {
+                            Log.e("Deny Follow Request", "Error deleting document: " + e.getMessage());
+                        });
+            } else {
+                Log.d("Deny Follow Request", "Document not found, nothing to delete!");
+            }
+        });
+
+    }
     public static void countFollowing(String userId, CountFollowingCallback callback) {
         followCollection
                 .whereEqualTo("user_id", userId)
@@ -1100,7 +1143,6 @@ public class Database {
         void onCountFollowingSuccess(int count);
         void onCountFollowingFailure(String errorMessage);
     }
-
     public static void countFollower(String userId, CountFollowerCallback callback) {
         followCollection
                 .whereEqualTo("following_user_id", userId)
@@ -1122,6 +1164,107 @@ public class Database {
     public interface CountFollowerCallback {
         void onCountFollowerSuccess(int count);
         void onCountFollowerFailure(String errorMessage);
+    }
+
+    public interface FollowsCallback {
+        void onFollowsLoaded(ArrayList<Schema.Notification> follows);
+        void onFollowsLoadedFailure(String errorMessage);
+    }
+
+    public static void getFollowerNotification(String userId, FollowsCallback callback) {
+        followCollection
+                .whereEqualTo("following_user_id", userId)
+                .orderBy("datetime_added", Query.Direction.DESCENDING)
+                .get()
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        QuerySnapshot snapshot = task.getResult();
+                        if (snapshot != null) {
+                            ArrayList<Schema.Notification> follows = new ArrayList<>();
+                            AtomicInteger counter = new AtomicInteger(snapshot.size());
+                            for (QueryDocumentSnapshot document : snapshot) {
+                                String followUserId = document.getString("user_id");
+                                Timestamp timestamp = document.getTimestamp("datetime_added");
+                                Date date = timestamp.toDate();
+                                long milliseconds = date.getTime();
+                                String relativeTime = getRelativeTime(milliseconds);
+                                getUser(followUserId, new GetUserCallback() {
+                                    @Override
+                                    public void onGetUserSuccess(Schema.User user) {
+                                        follows.add(new Schema.Notification(user.id, user.username, user.profilePicture, relativeTime));
+                                        if (counter.decrementAndGet() == 0) {
+                                            callback.onFollowsLoaded(follows);
+                                        }
+                                    }
+
+                                    @Override
+                                    public void onGetUserFailure() {
+                                        if (counter.decrementAndGet() == 0) {
+                                            callback.onFollowsLoaded(follows);
+                                        }
+                                    }
+                                });
+                            }
+                        } else {
+                            callback.onFollowsLoadedFailure("Snapshot is null");
+                        }
+                    } else {
+                        callback.onFollowsLoadedFailure(task.getException().getMessage());
+                    }
+                });
+    }
+
+    public interface RequestsCallback {
+        void onRequestsLoaded(ArrayList<Schema.Notification> requests);
+        void onRequestsLoadedFailure(String errorMessage);
+    }
+
+    public static void getRequestNotification(String userId, RequestsCallback callback) {
+        followRequestCollection
+                .whereEqualTo("follow_user_id", userId)
+                .orderBy("datetime_added", Query.Direction.DESCENDING)
+                .get()
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        QuerySnapshot snapshot = task.getResult();
+                        if (snapshot != null) {
+                            ArrayList<Schema.Notification> requests = new ArrayList<>();
+                            AtomicInteger counter = new AtomicInteger(snapshot.size());
+                            for (QueryDocumentSnapshot document : snapshot) {
+                                String followUserId = document.getString("user_id");
+                                Timestamp timestamp = document.getTimestamp("datetime_added");
+                                Date date = timestamp.toDate();
+                                long milliseconds = date.getTime();
+                                String relativeTime = getRelativeTime(milliseconds);
+                                getUser(followUserId, new GetUserCallback() {
+                                    @Override
+                                    public void onGetUserSuccess(Schema.User user) {
+                                        requests.add(new Schema.Notification(user.id, user.username, user.profilePicture, relativeTime));
+                                        if (counter.decrementAndGet() == 0) {
+                                            callback.onRequestsLoaded(requests);
+                                        }
+                                    }
+
+                                    @Override
+                                    public void onGetUserFailure() {
+                                        if (counter.decrementAndGet() == 0) {
+                                            callback.onRequestsLoaded(requests);
+                                        }
+                                    }
+                                });
+                            }
+                        } else {
+                            callback.onRequestsLoadedFailure("Snapshot is null");
+                        }
+                    } else {
+                        callback.onRequestsLoadedFailure(task.getException().getMessage());
+                    }
+                });
+    }
+
+    private static String getRelativeTime(long timestamp) {
+        long currentTime = System.currentTimeMillis();
+        return DateUtils.getRelativeTimeSpanString(timestamp, currentTime, DateUtils.MINUTE_IN_MILLIS).toString();
     }
 
     public interface CreateCommentCallback {
