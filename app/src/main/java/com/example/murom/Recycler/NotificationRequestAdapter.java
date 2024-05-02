@@ -30,7 +30,7 @@ public class NotificationRequestAdapter extends RecyclerView.Adapter<Notificatio
     private final ArrayList<Schema.Notification> notifications;
     public static class ViewHolder extends RecyclerView.ViewHolder {
         private final ImageView avatar;
-        TextView notificationTextView;
+        TextView notificationTextView, time;
         Button acceptButton;
         Button denyButton;
 
@@ -40,7 +40,7 @@ public class NotificationRequestAdapter extends RecyclerView.Adapter<Notificatio
             notificationTextView = view.findViewById(R.id.request_textView);
             acceptButton = view.findViewById(R.id.request_accept_button);
             denyButton = view.findViewById(R.id.request_deny_button);
-
+            time = view.findViewById(R.id.time_request);
         }
     }
     public NotificationRequestAdapter(Context context, ArrayList<Schema.Notification> notifications){
@@ -62,7 +62,7 @@ public class NotificationRequestAdapter extends RecyclerView.Adapter<Notificatio
     @Override
     public void onBindViewHolder(@NonNull ViewHolder viewHolder, int position) {
         Schema.Notification data = notifications.get(position);
-        formatNotificationText(data.username, data.timestamp, viewHolder.notificationTextView, this.context);
+        formatNotificationText(data.username, viewHolder.notificationTextView);
         Glide.with(this.context)
                 .load(data.avatarUrl).centerCrop()
                 .skipMemoryCache(true)
@@ -78,6 +78,7 @@ public class NotificationRequestAdapter extends RecyclerView.Adapter<Notificatio
             Database.deleteFollowRequest(data.userId);
             updateNotifications(notifications);
         });
+        viewHolder.time.setText(data.timestamp);
         Log.d("-->", "test" + data.username);
 
     }
@@ -90,26 +91,15 @@ public class NotificationRequestAdapter extends RecyclerView.Adapter<Notificatio
         notifications.addAll(updatedNotifications);
         notifyDataSetChanged();
     }
-    public void formatNotificationText(String username, String timestamp, TextView textView, Context context) {
+    public void formatNotificationText(String username, TextView textView) {
         SpannableStringBuilder builder = new SpannableStringBuilder();
         String action = "sends a request to follow you.";
         int start = 0;
 
         builder.append(username);
         builder.setSpan(new StyleSpan(Typeface.BOLD), start, start + username.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-        start += username.length();
-
         builder.append(" ");
-        start++;
-
         builder.append(action);
-        start += action.length();
-
-        builder.append(" ");
-        start++;
-
-        builder.append(timestamp);
-        builder.setSpan(new ForegroundColorSpan(ContextCompat.getColor(context, R.color.gray_500)), start, start + timestamp.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
 
         textView.setText(builder);
     }

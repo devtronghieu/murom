@@ -19,21 +19,38 @@
         android:background="@color/primary_500"
         app:shapeAppearanceOverlay="@style/circular"
         app:srcCompat="@drawable/baseline_person_24"
+        android:layout_marginRight="8dp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="parent" />
 
-
-    <TextView
-        android:id="@+id/request_textView"
-        android:layout_width="0dp"
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="10dp"
-        android:text=" sends a request to follow you."
-        app:layout_constraintStart_toEndOf="@id/request_avatar"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent" />
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/request_avatar"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <TextView
+            android:id="@+id/request_textView"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text=" sends a request to follow you."
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <TextView
+            android:id="@+id/time_request"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="1 day"
+            android:textColor="@color/gray_500"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="@+id/request_textView"
+            app:layout_constraintTop_toBottomOf="@id/request_textView" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
 
 </androidx.constraintlayout.widget.ConstraintLayout>
 <LinearLayout
