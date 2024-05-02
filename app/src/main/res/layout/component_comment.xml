@@ -65,6 +65,7 @@
             android:layout_width="24dp"
             android:layout_height="24dp"
             android:contentDescription="@string/love"
+            android:background="@color/transparent"
             android:src="@drawable/murom_ic_love" />
 
         <TextView
