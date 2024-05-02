@@ -97,7 +97,6 @@ public class ArchiveFragment extends Fragment {
     }
 
     private void selectArchiveStories() {
-        Log.d("-->", "selectArchiveStories: ");
         Database.getArchivedStoriesByUID(profile.id, new Database.GetStoriesByUIDCallback() {
             @Override
             public void onGetStoriesSuccess(ArrayList<Schema.Story> stories) {
@@ -117,9 +116,6 @@ public class ArchiveFragment extends Fragment {
         storiesRecycler.setVisibility(View.VISIBLE);
         postsRecycler.setVisibility(View.GONE);
         selectionDropdown.setVisibility(View.GONE);
-
-        Log.d("-->", "selectArchiveStories: ");
-
     }
 
     void renderMyPosts(ArrayList<Schema.Post> myPosts) {
