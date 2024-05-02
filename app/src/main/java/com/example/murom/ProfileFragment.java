@@ -91,7 +91,7 @@ public class ProfileFragment extends Fragment {
                     }
 
                     currentHighlightCoverUrl = uri.toString();
-                    Glide.with(requireContext()).load(uri).into(pickedImageView);
+                    Glide.with(requireContext()).load(uri).fitCenter().centerCrop().into(pickedImageView);
                     String highlightPath = "highlight/" + currentHighlightId;
                     Storage.uploadAsset(uri, highlightPath);
 
@@ -291,7 +291,7 @@ public class ProfileFragment extends Fragment {
         progressBar = view.findViewById(R.id.highlight_loading);
 
         editName.setText(name);
-        Glide.with(this).load(url).into(cover);
+        Glide.with(this).load(url).centerCrop().into(cover);
         title.setText("Add new highlight");
 
         if (highlightId != "") {
@@ -426,7 +426,7 @@ public class ProfileFragment extends Fragment {
             @Override
             public void handleAddHighlight() {
                 CurrentSelectedStoriesState.getInstance().updateObservableStoriesMap(new ArrayList<>());
-                createBottomSheet("", "", "", new ArrayList<>());
+                createBottomSheet("", "", "New highlight", new ArrayList<>());
                 bottomSheet.show();
                 bottomSheet.setOnCancelListener(v -> {
                     destroyBottomSheet();
