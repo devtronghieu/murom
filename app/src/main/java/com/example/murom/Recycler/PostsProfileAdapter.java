@@ -60,7 +60,7 @@ public class PostsProfileAdapter extends RecyclerView.Adapter<PostsProfileAdapte
         Glide.with(this.context)
                 .load(data.imageUrl)
                 .override(viewHolder.postImageButton.getWidth(), viewHolder.postImageButton.getHeight())
-                .fitCenter()
+                .fitCenter().centerCrop()
                 .into(viewHolder.postImageButton);
         viewHolder.postImageButton.setOnClickListener(v -> {
             int adapterPosition = viewHolder.getAdapterPosition();

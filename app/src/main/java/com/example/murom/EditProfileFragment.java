@@ -36,21 +36,14 @@ public class EditProfileFragment extends Fragment {
     ProfileState profileState = ProfileState.getInstance();
     String currentUserUid = profileState.profile.id;
     Spinner privacy;
-    String imageURL ="";
+    String imageURL = "";
     ImageView pickedImageView;
-    ActivityResultLauncher<PickVisualMediaRequest> launcher =
-            registerForActivityResult(new ActivityResultContracts.PickVisualMedia(), new ActivityResultCallback<Uri>() {
-                @Override
-                public void onActivityResult(Uri uri) {
-                    if (uri == null) {
-                        Toast.makeText(requireContext(), "No image selected!", Toast.LENGTH_SHORT).show();
-                    } else {
-                        Glide.with(requireContext()).load(uri).into(pickedImageView);
-                        Storage.uploadAsset(uri, "avatar/" + Auth.getUser().getEmail());
-
-                    }
-                }
-            });
+    ActivityResultLauncher<PickVisualMediaRequest> launcher;
+    Schema.User profile;
+    ImageButton backBtn;
+    ImageView avatar;
+    Button saveChangeBtn, changeBtn;
+    EditText username, description;
 
     public interface EditProfileFragmentCallback{
         void onClose();
@@ -73,21 +66,21 @@ public class EditProfileFragment extends Fragment {
         // Inflate the layout for this fragment
         View rootView =  inflater.inflate(R.layout.fragment_edit_profile, container, false);
 
-        Schema.User profile = ProfileState.getInstance().profile;
+        profile = ProfileState.getInstance().profile;
 
-        ImageButton backBtn = rootView.findViewById(R.id.back_btn);
+        backBtn = rootView.findViewById(R.id.back_btn);
         backBtn.setOnClickListener(v -> callback.onClose());
 
-        ImageView avatar = rootView.findViewById(R.id.edit_profile_avatar);
-        Button saveChangeBtn = rootView.findViewById(R.id.save_edit_profile_button);
+        avatar = rootView.findViewById(R.id.edit_profile_avatar);
+        saveChangeBtn = rootView.findViewById(R.id.save_edit_profile_button);
 
-        Button changeBtn = rootView.findViewById(R.id.change_avatar_button);
+        changeBtn = rootView.findViewById(R.id.change_avatar_button);
         changeBtn.setOnClickListener(view -> setupImagePicker(avatar));
 
-        EditText username = rootView.findViewById(R.id.edit_profile_username);
+        username = rootView.findViewById(R.id.edit_profile_username);
         username.setText(profile.username);
 
-        EditText description = rootView.findViewById(R.id.edit_profile_description);
+        description = rootView.findViewById(R.id.edit_profile_description);
         description.setText(profile.bio);
 
         privacy = rootView.findViewById(R.id.edit_profile_privacy);
@@ -108,6 +101,18 @@ public class EditProfileFragment extends Fragment {
                 .skipMemoryCache(true)
                 .into(avatar);
 
+        launcher = registerForActivityResult(new ActivityResultContracts.PickVisualMedia(), new ActivityResultCallback<Uri>() {
+            @Override
+            public void onActivityResult(Uri uri) {
+                if (uri == null) {
+                    Toast.makeText(requireContext(), "No image selected!", Toast.LENGTH_SHORT).show();
+                } else {
+                    Glide.with(requireContext()).load(uri).centerCrop().into(avatar);
+                    Storage.uploadAsset(uri, "avatar/" + Auth.getUser().getEmail());
+                }
+            }
+        });
+
         return rootView;
     }
 
@@ -125,7 +130,7 @@ public class EditProfileFragment extends Fragment {
     }
 
     private void setupImagePicker(ImageView imageView) {
-        this.pickedImageView = imageView;
+        avatar = imageView;
         launcher.launch(new PickVisualMediaRequest.Builder().setMediaType(ActivityResultContracts.PickVisualMedia.ImageOnly.INSTANCE).build());
     }
 

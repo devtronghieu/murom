@@ -1,6 +1,7 @@
 package com.example.murom.Recycler;
 
 import android.content.Context;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.ViewGroup;
@@ -105,8 +106,7 @@ public class HighlightBubbleAdapter extends RecyclerView.Adapter<HighlightBubble
             callback.handleViewHighlight(data.highlightId);
         });
 
-        viewHolder.highlightImage.setOnClickListener(v -> callback.handleViewHighlight(data.highlightId));
-        viewHolder.highlightImage.setOnLongClickListener(v -> {
+        viewHolder.container.setOnLongClickListener(v -> {
             popupView.setElevation(20);
             popupWindow.showAtLocation(viewHolder.container, Gravity.CENTER, 0, 0);
 
@@ -114,8 +114,8 @@ public class HighlightBubbleAdapter extends RecyclerView.Adapter<HighlightBubble
         });
 
         if(position == 0){
-            viewHolder.highlightImage.setOnClickListener(v -> callback.handleAddHighlight());
-            viewHolder.highlightImage.setOnLongClickListener(v -> {
+            viewHolder.container.setOnClickListener(v -> callback.handleAddHighlight());
+            viewHolder.container.setOnLongClickListener(v -> {
                 return true;
             });
         }

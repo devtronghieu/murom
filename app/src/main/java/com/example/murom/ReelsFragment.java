@@ -94,7 +94,6 @@ public class ReelsFragment extends Fragment {
     }
 
     void showCommentBottomSheet(String postID) {
-        Log.d(".............", "here");
         View view = getLayoutInflater().inflate(R.layout.component_comment_bottom_sheet, null, false);
 
         RecyclerView commentRecyclerView = view.findViewById(R.id.comment_recycler);

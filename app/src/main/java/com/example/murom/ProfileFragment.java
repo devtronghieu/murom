@@ -52,10 +52,10 @@ public class ProfileFragment extends Fragment {
     Disposable profileDisposable;
     Schema.User profile;
     RecyclerView postsRecycler, highlightsRecycler;
-    ImageView pickedImageView, avatar, picture;
+    ImageView pickedImageView, avatar, picture, privateIcon, publicIcon;
     BottomSheetDialog bottomSheet;
     HighlightBubbleAdapter highlightBubbleAdapter;
-    TextView post, post_num, follower, follower_num, following, following_num, username, bio, photo;
+    TextView post, post_num, follower, follower_num, following, following_num, username, bio, photo, headerUsername;
     ImageButton burgerBtn;
     Button editBtn;
     Disposable restStoriesDisposable, allStoriesDisposable, selectedStoriesDisposable, highlighgtsDisposable, myPostsDisposable;
@@ -91,7 +91,6 @@ public class ProfileFragment extends Fragment {
                     }
 
                     currentHighlightCoverUrl = uri.toString();
-                    Glide.with(requireContext()).load(uri).into(pickedImageView);
                     String highlightPath = "highlight/" + currentHighlightId;
                     Storage.uploadAsset(uri, highlightPath);
 
@@ -100,6 +99,7 @@ public class ProfileFragment extends Fragment {
                                 StorageReference storyRef = Storage.getRef(highlightPath);
                                 storyRef.getDownloadUrl().addOnSuccessListener(highlightURI -> {
                                     currentHighlightCoverUrl = highlightURI.toString();
+                                    Glide.with(requireContext()).load(highlightURI).fitCenter().centerCrop().into(pickedImageView);
                                 });
                             });
                 });
@@ -145,6 +145,9 @@ public class ProfileFragment extends Fragment {
         following = rootView.findViewById(R.id.profile_following);
         following_num = rootView.findViewById(R.id.num_following);
         burgerBtn = rootView.findViewById(R.id.burger_button);
+        privateIcon = rootView.findViewById(R.id.private_icon);
+        publicIcon = rootView.findViewById(R.id.public_icon);
+        headerUsername = rootView.findViewById(R.id.header_username);
 
         username = rootView.findViewById(R.id.profile_username);
         bio = rootView.findViewById(R.id.profile_bio);
@@ -161,6 +164,13 @@ public class ProfileFragment extends Fragment {
 
         username.setText(profileState.profile.username);
         bio.setText(profileState.profile.bio);
+
+        headerUsername.setText(profileState.profile.username);
+
+        if (profile.status == "Private") {
+            privateIcon.setVisibility(View.VISIBLE);
+            publicIcon.setVisibility(View.GONE);
+        }
 
         post_num.setText(String.valueOf(PostState.getInstance().myPosts.size()));
         Database.countFollower(Auth.getUser().getUid(), new Database.CountFollowerCallback() {
@@ -281,7 +291,7 @@ public class ProfileFragment extends Fragment {
         progressBar = view.findViewById(R.id.highlight_loading);
 
         editName.setText(name);
-        Glide.with(this).load(url).into(cover);
+        Glide.with(this).load(url).centerCrop().into(cover);
         title.setText("Add new highlight");
 
         if (highlightId != "") {
@@ -375,7 +385,6 @@ public class ProfileFragment extends Fragment {
 
         highlightStories.forEach(highlight -> {
             highlights.add(new HighlightBubbleAdapter.HighlightBubbleModel(highlight.id, highlight.coverUrl, highlight.name, highlight.storiesID));
-            Log.d("--> highlight model", "onCreateView: " + highlight.id);
         });
 
         highlightBubbleAdapter = new HighlightBubbleAdapter(highlights, new HighlightBubbleAdapter.HighlightBubbleCallback() {
@@ -416,7 +425,7 @@ public class ProfileFragment extends Fragment {
             @Override
             public void handleAddHighlight() {
                 CurrentSelectedStoriesState.getInstance().updateObservableStoriesMap(new ArrayList<>());
-                createBottomSheet("", "", "", new ArrayList<>());
+                createBottomSheet("", "", "New highlight", new ArrayList<>());
                 bottomSheet.show();
                 bottomSheet.setOnCancelListener(v -> {
                     destroyBottomSheet();
@@ -542,9 +551,12 @@ public class ProfileFragment extends Fragment {
         for (int i = 0; i < highlightStories.size(); i++) {
             if (highlightStories.get(i).id == newHighlight.id) {
                 isEdit = true;
+                editedPosition = i;
                 break;
             }
         }
+
+        Log.d("--> update " + editedPosition, "saveChanges: " + highlightId);
 
         if (isEdit) {
             highlightStories.get(editedPosition).storiesID = newHighlight.storiesID;

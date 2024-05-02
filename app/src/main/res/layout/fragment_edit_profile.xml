@@ -20,8 +20,9 @@
             android:id="@+id/back_btn"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
             android:background="@color/transparent"
-            android:src="@drawable/ic_back"
+            android:src="@drawable/murom_ic_arrow_left_circle"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
@@ -33,6 +34,7 @@
             android:text="Edit your profile"
             android:layout_marginStart="8dp"
             android:textSize="20sp"
+            style="@style/fragment_title"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toEndOf="@+id/back_btn"
             app:layout_constraintTop_toTopOf="parent" />
