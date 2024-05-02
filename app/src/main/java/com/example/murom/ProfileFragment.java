@@ -52,10 +52,10 @@ public class ProfileFragment extends Fragment {
     Disposable profileDisposable;
     Schema.User profile;
     RecyclerView postsRecycler, highlightsRecycler;
-    ImageView pickedImageView, avatar, picture;
+    ImageView pickedImageView, avatar, picture, privateIcon, publicIcon;
     BottomSheetDialog bottomSheet;
     HighlightBubbleAdapter highlightBubbleAdapter;
-    TextView post, post_num, follower, follower_num, following, following_num, username, bio, photo;
+    TextView post, post_num, follower, follower_num, following, following_num, username, bio, photo, headerUsername;
     ImageButton burgerBtn;
     Button editBtn;
     Disposable restStoriesDisposable, allStoriesDisposable, selectedStoriesDisposable, highlighgtsDisposable, myPostsDisposable;
@@ -145,6 +145,9 @@ public class ProfileFragment extends Fragment {
         following = rootView.findViewById(R.id.profile_following);
         following_num = rootView.findViewById(R.id.num_following);
         burgerBtn = rootView.findViewById(R.id.burger_button);
+        privateIcon = rootView.findViewById(R.id.private_icon);
+        publicIcon = rootView.findViewById(R.id.public_icon);
+        headerUsername = rootView.findViewById(R.id.header_username);
 
         username = rootView.findViewById(R.id.profile_username);
         bio = rootView.findViewById(R.id.profile_bio);
@@ -161,6 +164,13 @@ public class ProfileFragment extends Fragment {
 
         username.setText(profileState.profile.username);
         bio.setText(profileState.profile.bio);
+
+        headerUsername.setText(profileState.profile.username);
+
+        if (profile.status == "Private") {
+            privateIcon.setVisibility(View.VISIBLE);
+            publicIcon.setVisibility(View.GONE);
+        }
 
         post_num.setText(String.valueOf(PostState.getInstance().myPosts.size()));
         Database.countFollower(Auth.getUser().getUid(), new Database.CountFollowerCallback() {
