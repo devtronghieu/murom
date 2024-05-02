@@ -385,7 +385,6 @@ public class ProfileFragment extends Fragment {
 
         highlightStories.forEach(highlight -> {
             highlights.add(new HighlightBubbleAdapter.HighlightBubbleModel(highlight.id, highlight.coverUrl, highlight.name, highlight.storiesID));
-            Log.d("--> highlight model", "onCreateView: " + highlight.id);
         });
 
         highlightBubbleAdapter = new HighlightBubbleAdapter(highlights, new HighlightBubbleAdapter.HighlightBubbleCallback() {
