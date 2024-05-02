@@ -91,7 +91,6 @@ public class ProfileFragment extends Fragment {
                     }
 
                     currentHighlightCoverUrl = uri.toString();
-                    Glide.with(requireContext()).load(uri).fitCenter().centerCrop().into(pickedImageView);
                     String highlightPath = "highlight/" + currentHighlightId;
                     Storage.uploadAsset(uri, highlightPath);
 
@@ -100,6 +99,7 @@ public class ProfileFragment extends Fragment {
                                 StorageReference storyRef = Storage.getRef(highlightPath);
                                 storyRef.getDownloadUrl().addOnSuccessListener(highlightURI -> {
                                     currentHighlightCoverUrl = highlightURI.toString();
+                                    Glide.with(requireContext()).load(highlightURI).fitCenter().centerCrop().into(pickedImageView);
                                 });
                             });
                 });
@@ -551,9 +551,12 @@ public class ProfileFragment extends Fragment {
         for (int i = 0; i < highlightStories.size(); i++) {
             if (highlightStories.get(i).id == newHighlight.id) {
                 isEdit = true;
+                editedPosition = i;
                 break;
             }
         }
+
+        Log.d("--> update " + editedPosition, "saveChanges: " + highlightId);
 
         if (isEdit) {
             highlightStories.get(editedPosition).storiesID = newHighlight.storiesID;
